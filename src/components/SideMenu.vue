@@ -45,10 +45,10 @@
       <!-- Bottom Profile Configuration Interaction Target -->
       <div class="pt-4 border-t-[1.5px] border-[#111111] flex-shrink-0">
         <div 
-          @click="isUserConfigOpen = true"
+          @click="$emit('open-user-config')"
           class="flex items-center gap-3 p-2.5 border-[1.5px] border-[#111111] bg-[#FAF6F0] rounded-2xl cursor-pointer hover:bg-[#FAFFA0]/20 transition-all hover:shadow-[2px_2px_0_0_#111111] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
         >
-          <!-- Avatar Frame: Orange outer frame with a solid black internal graphic circle placeholder -->
+          <!-- Avatar Frame -->
           <div class="w-10 h-10 rounded-full bg-[#E75A24] border-[1.5px] border-[#111111] flex items-center justify-center flex-shrink-0 shadow-[1px_1px_0_0_#111111]">
             <div class="w-7 h-7 rounded-full bg-[#111111] flex items-center justify-center">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -66,12 +66,6 @@
         </div>
       </div>
 
-      <!-- Profile Configuration Dialog Wrapper Link -->
-      <UserConfigDialog 
-        v-if="isUserConfigOpen" 
-        @close="isUserConfigOpen = false" 
-      />
-
     </div>
     
     <div class="flex-1 bg-black/20 backdrop-blur-[1px] overlay" @click="$emit('close')"></div>
@@ -82,16 +76,15 @@
 import { ref } from 'vue';
 import { liveQuery } from 'dexie';
 import { db, type ChatSession } from '../db';
-import UserConfigDialog from './UserConfigDialog.vue';
 
 const props = defineProps<{
   currentSessionId: number | null;
 }>();
 
-const emit = defineEmits(['close', 'select-session', 'create-new-chat']);
+// Added open-user-config declaration
+const emit = defineEmits(['close', 'select-session', 'create-new-chat', 'open-user-config']);
 
 const sessions = ref<ChatSession[]>([]);
-const isUserConfigOpen = ref(false);
 
 liveQuery(() => db.sessions.orderBy('createdAt').reverse().toArray()).subscribe(
   (data) => {
@@ -109,27 +102,3 @@ const selectSession = (id: number) => {
   emit('close');
 };
 </script>
-
-<style scoped>
-.menu-container {
-  animation: slideIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-}
-.menu-panel {
-  animation: slideLeft 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-}
-.overlay {
-  animation: fadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-}
-@keyframes slideLeft {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes slideIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-</style>
