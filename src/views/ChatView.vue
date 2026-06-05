@@ -2,13 +2,18 @@
   <div class="flex min-h-screen items-center justify-center bg-[#F3EDE2] p-4 text-[#111111] md:min-h-screen md:p-4 sm:min-h-dvh sm:p-0">
     <div class="relative flex h-[800px] w-full max-w-[390px] flex-col overflow-hidden rounded-[32px] border-[1.5px] border-[#111111] bg-[#FAF6F0] shadow-[0_8px_0_0_#111111] md:h-[800px] sm:h-dvh sm:max-w-full sm:rounded-none sm:border-0 sm:shadow-none">
       
-      <SideMenu 
-        v-if="isMenuOpen" 
-        :current-session-id="currentSessionId"
-        @select-session="loadSession"
-        @create-new-chat="startNewChat"
-        @close="isMenuOpen = false" 
-      />
+      <Transition
+        name="slide-menu"
+        mode="out-in"
+      >
+        <SideMenu 
+          v-if="isMenuOpen" 
+          :current-session-id="currentSessionId"
+          @select-session="loadSession"
+          @create-new-chat="startNewChat"
+          @close="isMenuOpen = false" 
+        />
+      </Transition>
 
       <SettingsDialog 
         v-if="isSettingsOpen" 
@@ -188,7 +193,7 @@ const sendMessage = async () => {
   }
 
   const userPayload: ChatMessage = {
-    sessionId: currentSessionId.value,
+    sessionId: currentSessionId.value!,
     sender: 'user',
     text: userText,
     timestamp: Date.now()
@@ -201,7 +206,7 @@ const sendMessage = async () => {
   setTimeout(async () => {
     if (currentSessionId.value !== null) {
       await db.messages.add({
-        sessionId: currentSessionId.value,
+        sessionId: currentSessionId.value!,
         sender: 'ai',
         text: `I am processing your request locally using ${modelName.value}. How else can I help?`,
         timestamp: Date.now()
@@ -215,3 +220,21 @@ onMounted(() => {
   startNewChat();
 });
 </script>
+
+<style scoped>
+.slide-menu-enter-active {
+  transition: all 0.6s cubic-bezier(0.42, 0, 1, 1);
+}
+
+.slide-menu-leave-active {
+  transition: all 0.6s cubic-bezier(0, 0, 0.58, 1);
+}
+
+.slide-menu-enter-from {
+  opacity: 0;
+}
+
+.slide-menu-leave-to {
+  opacity: 0;
+}
+</style>
