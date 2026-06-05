@@ -2,10 +2,7 @@
   <div class="flex min-h-screen items-center justify-center bg-[#F3EDE2] p-4 text-[#111111] md:min-h-screen md:p-4 sm:min-h-dvh sm:p-0">
     <div class="relative flex h-[800px] w-full max-w-[390px] flex-col overflow-hidden rounded-[32px] border-[1.5px] border-[#111111] bg-[#FAF6F0] shadow-[0_8px_0_0_#111111] md:h-[800px] sm:h-dvh sm:max-w-full sm:rounded-none sm:border-0 sm:shadow-none">
       
-      <Transition
-        name="slide-menu"
-        mode="out-in"
-      >
+      <Transition name="slide-menu" mode="out-in">
         <SideMenu 
           v-if="isMenuOpen" 
           :current-session-id="currentSessionId"
@@ -17,8 +14,10 @@
 
       <SettingsDialog 
         v-if="isSettingsOpen" 
-        :model-name="modelName"
+        v-model:model-name="modelName"
+        v-model:service-provider="serviceProvider"
         v-model:system-prompt="systemPrompt"
+        :is-locked="localMessages.length > 0"
         @close="isSettingsOpen = false"
       />
 
@@ -120,18 +119,26 @@ import SettingsDialog from '../components/SettingsDialog.vue';
 const isOnline = useOnline();
 const inputMessage = ref('');
 const chatContainer = ref<HTMLElement | null>(null);
-
 const isMenuOpen = ref(false);
 const isSettingsOpen = ref(false);
 
 const topicTitle = ref('New Chat');
+
+// Parameter management baselines
 const modelName = ref('Gemma 4 12B');
+const serviceProvider = ref('Ollama');
 const systemPrompt = ref('You are a helpful local AI assistant. Be concise and accurate.');
 
 const currentSessionId = ref<number | null>(null);
 const localMessages = ref<ChatMessage[]>([]);
 
-// Dynamic subscription tracking database context manually based on active sessionId
+// Sync real-time updates to the active session parameters if modified mid-stream
+watch(systemPrompt, async (newPrompt) => {
+  if (currentSessionId.value !== null) {
+    await db.sessions.update(currentSessionId.value, { systemPrompt: newPrompt });
+  }
+});
+
 const subscribeToMessages = (sessionId: number | null) => {
   if (sessionId === null) {
     localMessages.value = [];
@@ -145,7 +152,6 @@ const subscribeToMessages = (sessionId: number | null) => {
     .sortBy('timestamp')
     .then((messages) => {
       localMessages.value = messages;
-      // Resolve Title naming
       if (messages.length > 0) {
         const firstUserMsg = messages.find(m => m.sender === 'user');
         topicTitle.value = firstUserMsg ? firstUserMsg.text : 'Current Conversation';
@@ -158,6 +164,10 @@ const subscribeToMessages = (sessionId: number | null) => {
 
 const startNewChat = () => {
   currentSessionId.value = null;
+  // Fall back parameters to system standard configuration defaults
+  modelName.value = 'Gemma 4 12B';
+  serviceProvider.value = 'Ollama';
+  systemPrompt.value = 'You are a helpful local AI assistant. Be concise and accurate.';
   subscribeToMessages(null);
 };
 
@@ -166,6 +176,9 @@ const loadSession = (id: number) => {
   db.sessions.get(id).then((session) => {
     if (session) {
       topicTitle.value = session.title;
+      modelName.value = session.modelName;
+      serviceProvider.value = session.serviceProvider;
+      systemPrompt.value = session.systemPrompt;
       subscribeToMessages(id);
     }
   });
@@ -182,11 +195,14 @@ const sendMessage = async () => {
   if (!inputMessage.value.trim()) return;
   const userText = inputMessage.value.trim();
 
-  // Lazy initialize an actual saved session entry if this is a blank placeholder instance
   if (currentSessionId.value === null) {
+    // Capture and embed live parameters into the session record row on initialization
     const newSessionId = await db.sessions.add({
       title: userText,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      modelName: modelName.value,
+      serviceProvider: serviceProvider.value,
+      systemPrompt: systemPrompt.value
     });
     currentSessionId.value = newSessionId;
     topicTitle.value = userText;
@@ -208,7 +224,7 @@ const sendMessage = async () => {
       await db.messages.add({
         sessionId: currentSessionId.value!,
         sender: 'ai',
-        text: `I am processing your request locally using ${modelName.value}. How else can I help?`,
+        text: `I am processing your request using ${modelName.value} via ${serviceProvider.value}.`,
         timestamp: Date.now()
       });
       subscribeToMessages(currentSessionId.value);
@@ -226,12 +242,6 @@ onMounted(() => {
 .slide-menu-leave-active {
   transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-
-.slide-menu-enter-from {
-  opacity: 0;
-}
-
-.slide-menu-leave-to {
-  opacity: 0;
-}
+.slide-menu-enter-from { opacity: 0; }
+.slide-menu-leave-to { opacity: 0; }
 </style>
