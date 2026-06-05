@@ -2,10 +2,15 @@
   <div class="flex min-h-screen items-center justify-center bg-[#F3EDE2] p-4 text-[#111111] md:min-h-screen md:p-4 sm:min-h-dvh sm:p-0">
     <div class="relative flex h-[800px] w-full max-w-[390px] flex-col overflow-hidden rounded-[32px] border-[1.5px] border-[#111111] bg-[#FAF6F0] shadow-[0_8px_0_0_#111111] md:h-[800px] sm:h-dvh sm:max-w-full sm:rounded-none sm:border-0 sm:shadow-none">
       
-      <SideMenu 
-        v-if="isMenuOpen" 
-        @close="isMenuOpen = false" 
-      />
+      <Transition
+        name="slide-menu"
+        mode="out-in"
+      >
+        <SideMenu 
+          v-if="isMenuOpen" 
+          @close="isMenuOpen = false" 
+        />
+      </Transition>
 
       <SettingsDialog 
         v-if="isSettingsOpen" 
@@ -169,3 +174,18 @@ onMounted(() => {
   scrollToBottom();
 });
 </script>
+
+<style scoped>
+.slide-menu-enter-active,
+.slide-menu-leave-active {
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slide-menu-enter-from {
+  opacity: 0;
+}
+
+.slide-menu-leave-to {
+  opacity: 0;
+}
+</style>
