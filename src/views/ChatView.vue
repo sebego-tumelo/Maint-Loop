@@ -2,15 +2,13 @@
   <div class="flex min-h-screen items-center justify-center bg-[#F3EDE2] p-4 text-[#111111] md:min-h-screen md:p-4 sm:min-h-dvh sm:p-0">
     <div class="relative flex h-[800px] w-full max-w-[390px] flex-col overflow-hidden rounded-[32px] border-[1.5px] border-[#111111] bg-[#FAF6F0] shadow-[0_8px_0_0_#111111] md:h-[800px] sm:h-dvh sm:max-w-full sm:rounded-none sm:border-0 sm:shadow-none">
       
-      <Transition
-        name="slide-menu"
-        mode="out-in"
-      >
-        <SideMenu 
-          v-if="isMenuOpen" 
-          @close="isMenuOpen = false" 
-        />
-      </Transition>
+      <SideMenu 
+        v-if="isMenuOpen" 
+        :current-session-id="currentSessionId"
+        @select-session="loadSession"
+        @create-new-chat="startNewChat"
+        @close="isMenuOpen = false" 
+      />
 
       <SettingsDialog 
         v-if="isSettingsOpen" 
@@ -39,8 +37,8 @@
           </svg>
         </button>
 
-        <div class="text-center">
-          <h2 class="text-[1.05rem] font-bold leading-none">{{ topicTitle }}</h2>
+        <div class="text-center max-w-[50%]">
+          <h2 class="text-[1.05rem] font-bold leading-none truncate">{{ topicTitle }}</h2>
           <p class="text-[0.75rem] text-gray-600 mt-0.5">{{ modelName }}</p>
         </div>
 
@@ -57,7 +55,7 @@
       </header>
 
       <main ref="chatContainer" class="flex-1 flex flex-col overflow-y-auto bg-[#FAF6F0] p-4 space-y-4">
-        <div v-if="localMessages.length === 0" class="rounded-[20px] border-[1.5px] border-[#111111] bg-[#E6DFD3] p-5 animate-fade-in">
+        <div v-if="localMessages.length === 0" class="rounded-[20px] border-[1.5px] border-[#111111] bg-[#E6DFD3] p-5">
           <h1 class="mb-2 text-2xl font-semibold leading-tight">
             How can I assist you today? ⚡
           </h1>
@@ -107,40 +105,66 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted, nextTick, watch } from 'vue';
 import { useOnline } from '@vueuse/core';
-import { liveQuery } from 'dexie';
 import { db, type ChatMessage } from '../db';
 
-// Component Imports
 import SideMenu from '../components/SideMenu.vue';
 import SettingsDialog from '../components/SettingsDialog.vue';
 
-// Reactive Streams
 const isOnline = useOnline();
 const inputMessage = ref('');
 const chatContainer = ref<HTMLElement | null>(null);
 
-// Visibility States
 const isMenuOpen = ref(false);
 const isSettingsOpen = ref(false);
 
-// Core Data Records
-const topicTitle = ref('General Assistant');
+const topicTitle = ref('New Chat');
 const modelName = ref('Gemma 4 12B');
 const systemPrompt = ref('You are a helpful local AI assistant. Be concise and accurate.');
+
+const currentSessionId = ref<number | null>(null);
 const localMessages = ref<ChatMessage[]>([]);
 
-// Subscribe to Live DB Records
-liveQuery(() => db.messages.orderBy('timestamp').toArray()).subscribe(
-  (messages) => {
-    localMessages.value = messages;
-    if (messages.length > 0 && topicTitle.value === 'General Assistant') {
-      topicTitle.value = 'Current Conversation';
-    }
-    scrollToBottom();
+// Dynamic subscription tracking database context manually based on active sessionId
+const subscribeToMessages = (sessionId: number | null) => {
+  if (sessionId === null) {
+    localMessages.value = [];
+    topicTitle.value = 'New Chat';
+    return;
   }
-);
+  
+  db.messages
+    .where('sessionId')
+    .equals(sessionId)
+    .sortBy('timestamp')
+    .then((messages) => {
+      localMessages.value = messages;
+      // Resolve Title naming
+      if (messages.length > 0) {
+        const firstUserMsg = messages.find(m => m.sender === 'user');
+        topicTitle.value = firstUserMsg ? firstUserMsg.text : 'Current Conversation';
+      } else {
+        topicTitle.value = 'New Chat';
+      }
+      scrollToBottom();
+    });
+};
+
+const startNewChat = () => {
+  currentSessionId.value = null;
+  subscribeToMessages(null);
+};
+
+const loadSession = (id: number) => {
+  currentSessionId.value = id;
+  db.sessions.get(id).then((session) => {
+    if (session) {
+      topicTitle.value = session.title;
+      subscribeToMessages(id);
+    }
+  });
+};
 
 const scrollToBottom = async () => {
   await nextTick();
@@ -151,41 +175,43 @@ const scrollToBottom = async () => {
 
 const sendMessage = async () => {
   if (!inputMessage.value.trim()) return;
+  const userText = inputMessage.value.trim();
 
-  const userPayload = {
-    sender: 'user' as const,
-    text: inputMessage.value.trim(),
+  // Lazy initialize an actual saved session entry if this is a blank placeholder instance
+  if (currentSessionId.value === null) {
+    const newSessionId = await db.sessions.add({
+      title: userText,
+      createdAt: Date.now()
+    });
+    currentSessionId.value = newSessionId;
+    topicTitle.value = userText;
+  }
+
+  const userPayload: ChatMessage = {
+    sessionId: currentSessionId.value,
+    sender: 'user',
+    text: userText,
     timestamp: Date.now()
   };
 
   await db.messages.add(userPayload);
   inputMessage.value = '';
+  subscribeToMessages(currentSessionId.value);
 
   setTimeout(async () => {
-    await db.messages.add({
-      sender: 'ai',
-      text: `I am processing your request locally using ${modelName.value}. How else can I help?`,
-      timestamp: Date.now()
-    });
+    if (currentSessionId.value !== null) {
+      await db.messages.add({
+        sessionId: currentSessionId.value,
+        sender: 'ai',
+        text: `I am processing your request locally using ${modelName.value}. How else can I help?`,
+        timestamp: Date.now()
+      });
+      subscribeToMessages(currentSessionId.value);
+    }
   }, 700);
 };
 
 onMounted(() => {
-  scrollToBottom();
+  startNewChat();
 });
 </script>
-
-<style scoped>
-.slide-menu-enter-active,
-.slide-menu-leave-active {
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.slide-menu-enter-from {
-  opacity: 0;
-}
-
-.slide-menu-leave-to {
-  opacity: 0;
-}
-</style>
