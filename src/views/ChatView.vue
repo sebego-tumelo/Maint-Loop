@@ -2,16 +2,19 @@
   <div class="flex min-h-screen items-center justify-center bg-[#F3EDE2] p-4 text-[#111111] md:min-h-screen md:p-4 sm:min-h-dvh sm:p-0">
     <div class="relative flex h-[800px] w-full max-w-[390px] flex-col overflow-hidden rounded-[32px] border-[1.5px] border-[#111111] bg-[#FAF6F0] shadow-[0_8px_0_0_#111111] md:h-[800px] sm:h-dvh sm:max-w-full sm:rounded-none sm:border-0 sm:shadow-none">
       
+      <!-- Side Navigation Layer -->
       <Transition name="slide-menu" mode="out-in">
         <SideMenu 
           v-if="isMenuOpen" 
           :current-session-id="currentSessionId"
           @select-session="loadSession"
           @create-new-chat="startNewChat"
+          @open-user-config="isUserConfigOpen = true"
           @close="isMenuOpen = false" 
         />
       </Transition>
 
+      <!-- Chat Specific Parameter Settings Dialog -->
       <SettingsDialog 
         v-if="isSettingsOpen" 
         v-model:model-name="modelName"
@@ -19,6 +22,12 @@
         v-model:system-prompt="systemPrompt"
         :is-locked="localMessages.length > 0"
         @close="isSettingsOpen = false"
+      />
+
+      <!-- Globally Scoped User Profile Configuration Dialog (Elevated to top layout stack) -->
+      <UserConfigDialog
+        v-if="isUserConfigOpen"
+        @close="isUserConfigOpen = false"
       />
 
       <div 
@@ -60,9 +69,7 @@
 
       <main ref="chatContainer" class="flex-1 flex flex-col overflow-y-auto bg-[#FAF6F0] p-4 space-y-4">
         <div v-if="localMessages.length === 0" class="rounded-[20px] border-[1.5px] border-[#111111] bg-[#E6DFD3] p-5">
-          <h1 class="mb-2 text-2xl font-semibold leading-tight">
-            How can I assist you today? ⚡
-          </h1>
+          <h1 class="mb-2 text-2xl font-semibold leading-tight">How can I assist you today? ⚡</h1>
           <p class="text-[0.85rem] leading-relaxed text-gray-800">
             I am your local AI assistant, ready to help with coding, writing, or analysis — even when you're offline.
           </p>
@@ -73,9 +80,7 @@
           :key="msg.id"
           :class="[
             'max-w-[85%] rounded-[20px] border-[1.5px] border-[#111111] p-3.5 text-[0.9rem] leading-relaxed break-words',
-            msg.sender === 'ai' 
-              ? 'self-start rounded-tl-none bg-white text-[#111111]' 
-              : 'self-end rounded-tr-none bg-[#111111] text-white shadow-[2px_2px_0_0_#000]'
+            msg.sender === 'ai' ? 'self-start rounded-tl-none bg-white text-[#111111]' : 'self-end rounded-tr-none bg-[#111111] text-white shadow-[2px_2px_0_0_#000]'
           ]"
         >
           {{ msg.text }}
@@ -92,11 +97,9 @@
             class="w-full rounded-full border-[1.5px] border-[#111111] bg-[#E6DFD3] py-3.5 px-4 text-[0.9rem] font-medium text-[#111111] placeholder-gray-600 outline-none"
           />
         </div>
-        
         <button 
           @click="sendMessage"
           class="flex h-12 w-12 items-center justify-center rounded-full border-[1.5px] border-[#111111] bg-[#111111] transition-colors hover:bg-gray-900"
-          title="Send"
         >
           <svg class="h-4.5 w-4.5 fill-none stroke-white" stroke-width="2.5" viewBox="0 0 24 24">
             <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -115,16 +118,17 @@ import { db, type ChatMessage } from '../db';
 
 import SideMenu from '../components/SideMenu.vue';
 import SettingsDialog from '../components/SettingsDialog.vue';
+import UserConfigDialog from '../components/UserConfigDialog.vue'; // Imported target
 
 const isOnline = useOnline();
 const inputMessage = ref('');
 const chatContainer = ref<HTMLElement | null>(null);
+
 const isMenuOpen = ref(false);
 const isSettingsOpen = ref(false);
+const isUserConfigOpen = ref(false); // Global control register state toggle
 
 const topicTitle = ref('New Chat');
-
-// Parameter management baselines
 const modelName = ref('Gemma 4 12B');
 const serviceProvider = ref('Ollama');
 const systemPrompt = ref('You are a helpful local AI assistant. Be concise and accurate.');
@@ -132,7 +136,6 @@ const systemPrompt = ref('You are a helpful local AI assistant. Be concise and a
 const currentSessionId = ref<number | null>(null);
 const localMessages = ref<ChatMessage[]>([]);
 
-// Sync real-time updates to the active session parameters if modified mid-stream
 watch(systemPrompt, async (newPrompt) => {
   if (currentSessionId.value !== null) {
     await db.sessions.update(currentSessionId.value, { systemPrompt: newPrompt });
@@ -164,7 +167,6 @@ const subscribeToMessages = (sessionId: number | null) => {
 
 const startNewChat = () => {
   currentSessionId.value = null;
-  // Fall back parameters to system standard configuration defaults
   modelName.value = 'Gemma 4 12B';
   serviceProvider.value = 'Ollama';
   systemPrompt.value = 'You are a helpful local AI assistant. Be concise and accurate.';
@@ -196,7 +198,6 @@ const sendMessage = async () => {
   const userText = inputMessage.value.trim();
 
   if (currentSessionId.value === null) {
-    // Capture and embed live parameters into the session record row on initialization
     const newSessionId = await db.sessions.add({
       title: userText,
       createdAt: Date.now(),
@@ -238,10 +239,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.slide-menu-enter-active,
-.slide-menu-leave-active {
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-.slide-menu-enter-from { opacity: 0; }
-.slide-menu-leave-to { opacity: 0; }
+.slide-menu-enter-active, .slide-menu-leave-active { transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+.slide-menu-enter-from, .slide-menu-leave-to { opacity: 0; }
 </style>
