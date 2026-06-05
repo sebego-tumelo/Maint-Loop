@@ -77,15 +77,15 @@ const selectSession = (id: number) => {
 
 <style scoped>
 .menu-container {
-  animation: slideIn 0.6s cubic-bezier(0.42, 0, 1, 1) forwards;
+  animation: slideIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 .menu-panel {
-  animation: slideLeft 0.6s cubic-bezier(0.42, 0, 1, 1) forwards;
+  animation: slideLeft 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 .overlay {
-  animation: fadeIn 0.6s cubic-bezier(0.42, 0, 1, 1) forwards;
+  animation: fadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 @keyframes slideLeft {

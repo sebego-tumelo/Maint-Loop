@@ -222,12 +222,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.slide-menu-enter-active {
-  transition: all 0.6s cubic-bezier(0.42, 0, 1, 1);
-}
-
+.slide-menu-enter-active,
 .slide-menu-leave-active {
-  transition: all 0.6s cubic-bezier(0, 0, 0.58, 1);
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .slide-menu-enter-from {
