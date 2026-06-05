@@ -1,6 +1,6 @@
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-[#F3EDE2] p-4 text-[#111111]">
-    <div class="relative flex h-[800px] w-full max-w-[390px] flex-col overflow-hidden rounded-[32px] border-[1.5px] border-[#111111] bg-[#FAF6F0] shadow-[0_8px_0_0_#111111]">
+  <div class="flex min-h-screen items-center justify-center bg-[#F3EDE2] p-4 text-[#111111] md:min-h-screen md:p-4 sm:min-h-dvh sm:p-0">
+    <div class="relative flex h-[800px] w-full max-w-[390px] flex-col overflow-hidden rounded-[32px] border-[1.5px] border-[#111111] bg-[#FAF6F0] shadow-[0_8px_0_0_#111111] md:h-[800px] sm:h-dvh sm:max-w-full sm:rounded-none sm:border-0 sm:shadow-none">
       
       <div 
         v-if="!isOnline" 
@@ -9,7 +9,7 @@
         Working Offline
       </div>
 
-      <header class="flex items-center justify-between border-b-[1.5px] border-[#111111] bg-[#FAF6F0] px-4 py-5">
+      <header class="flex items-center justify-between border-b-[1.5px] border-[#111111] bg-[#FAF6F0] px-4 py-5 flex-shrink-0">
         <div class="flex items-center gap-3">
           <div class="relative h-11 w-11">
             <div class="flex h-full w-full items-center justify-center rounded-full border-[1.5px] border-[#111111] bg-[#E75A24] text-lg font-bold text-white">
@@ -52,7 +52,7 @@
         </div>
       </main>
 
-      <div class="flex gap-2 overflow-x-auto bg-[#FAF6F0] px-4 pb-3 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div class="flex gap-2 overflow-x-auto bg-[#FAF6F0] px-4 pb-3 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
         <button 
           v-for="chip in suggestions" 
           :key="chip"
@@ -63,7 +63,7 @@
         </button>
       </div>
 
-      <footer class="flex items-center gap-2.5 bg-[#FAF6F0] px-4 pb-6 pt-4 border-t-[1.5px] border-[#111111]">
+      <footer class="flex items-center gap-2.5 bg-[#FAF6F0] px-4 pb-6 pt-4 border-t-[1.5px] border-[#111111] flex-shrink-0">
         <div class="relative flex flex-1 items-center">
           <input 
             v-model="inputMessage"
