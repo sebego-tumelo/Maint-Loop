@@ -59,7 +59,21 @@
               placeholder="Search Ollama models... (e.g. Gemma)"
               class="w-full p-2 pl-8 border-[1.5px] border-[#111111] bg-white text-[#111111] font-medium rounded-lg text-xs outline-none"
             />
-            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">🔍</span>
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-[#111111] pointer-events-none">
+    <svg 
+      width="14" 
+      height="14" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      stroke-width="3" 
+      stroke-linecap="round" 
+      stroke-linejoin="round"
+    >
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+  </span>
           </div>
 
           <!-- Sorted Model Items Feed Box -->
