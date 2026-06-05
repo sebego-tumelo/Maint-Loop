@@ -18,7 +18,7 @@
             <div class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-[1.5px] border-[#111111] bg-[#FAFFA0]"></div>
           </div>
           <div>
-            <h2 class="text-[1.05rem] font-semibold psychology-leading-none">Musmentor AI</h2>
+            <h2 class="text-[1.05rem] font-semibold leading-none">Musmentor AI</h2>
             <p class="text-[0.75rem] text-gray-600">Interactive Music Guide</p>
           </div>
         </div>
@@ -27,7 +27,7 @@
         </div>
       </header>
 
-      <main ref="chatContainer" class="flex-1 overflow-y-auto bg-[#FAF6F0] p-4 space-y-4">
+      <main ref="chatContainer" class="flex-1 flex flex-col overflow-y-auto bg-[#FAF6F0] p-4 space-y-4">
         
         <div v-if="localMessages.length === 0" class="rounded-[20px] border-[1.5px] border-[#111111] bg-[#E6DFD3] p-5">
           <h1 class="mb-2 text-2xl font-semibold leading-tight">
