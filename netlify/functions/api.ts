@@ -2,7 +2,7 @@ import express, { Request, Response, Router } from 'express';
 import serverless from 'serverless-http';
 import cors from 'cors';
 import { HfInference } from '@huggingface/inference';
-import { Ollama } from '@ollama/sdk';
+import { Ollama } from 'ollama';
 
 const app = express();
 const router = Router();
@@ -40,6 +40,7 @@ router.post('/chat-proxy', async (req: Request, res: Response): Promise<void> =>
 
     // --- OLLAMA CLOUD INFRASTRUCTURE PIPELINE ---
     if (provider === 'Ollama') {
+        console.log('Received request for Ollama with model:', model);
       const targetUrl = cloudOllamaUrl || 'https://your-cloud-ollama-node.com';
       
       const ollama = new Ollama({
@@ -67,4 +68,14 @@ router.post('/chat-proxy', async (req: Request, res: Response): Promise<void> =>
 // Map all endpoints under the Netlify redirect signature route
 app.use('/.netlify/functions/api', router);
 
+// PRODUCTION: Export for Netlify Serverless environment
 export const handler = serverless(app);
+
+// DEVELOPMENT: Start a local HTTP server if run directly via Node/tsx
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = 5000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Local Express backend proxy active on http://localhost:${PORT}`);
+    console.log(`🔗 Routing endpoint: http://localhost:${PORT}/.netlify/functions/api/chat-proxy`);
+  });
+}

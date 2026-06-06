@@ -8,6 +8,7 @@ const BACKEND_BASE = import.meta.env.DEV
 export const aiProviderService = {
   async generateChatResponse(provider: string, model: string, messages: any[]): Promise<string> {
     try {
+        console.log('Generating chat response with provider:', provider, 'model:', model);
       const endpointRecord = await db.secureConfig.get('ollama_endpoint');
       const targetKeyConfig = provider === 'Ollama' ? 'ollama_api_key' : 'hf_api_key';
       const keyRecord = await db.secureConfig.get(targetKeyConfig);

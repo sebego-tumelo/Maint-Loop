@@ -2,7 +2,6 @@
   <div class="flex min-h-screen items-center justify-center bg-[#F3EDE2] p-4 text-[#111111] md:min-h-screen md:p-4 sm:min-h-dvh sm:p-0">
     <div class="relative flex h-[800px] w-full max-w-[390px] flex-col overflow-hidden rounded-[32px] border-[1.5px] border-[#111111] bg-[#FAF6F0] shadow-[0_8px_0_0_#111111] md:h-[800px] sm:h-dvh sm:max-w-full sm:rounded-none sm:border-0 sm:shadow-none">
       
-      <!-- Side Navigation Layer -->
       <Transition name="slide-menu" mode="out-in">
         <SideMenu 
           v-if="isMenuOpen" 
@@ -14,7 +13,6 @@
         />
       </Transition>
 
-      <!-- Chat Specific Parameter Settings Dialog -->
       <SettingsDialog 
         v-if="isSettingsOpen" 
         v-model:model-name="modelName"
@@ -24,14 +22,19 @@
         @close="isSettingsOpen = false"
       />
 
-      <!-- Globally Scoped User Profile Configuration Dialog (Elevated to top layout stack) -->
       <UserConfigDialog
         v-if="isUserConfigOpen"
-        @close="isUserConfigOpen = false"
+        @close="handleConfigDialogClose"
       />
 
       <div 
-        v-if="!isOnline" 
+        v-if="hasMissingApiKey" 
+        class="bg-[#E75A24] text-white text-center text-xs py-1.5 font-bold border-b-[1.5px] border-[#111111] tracking-wide z-10 animate-pulse"
+      >
+        ⚠️ NO API KEY FOUND — Open Profile to Configure
+      </div>
+      <div 
+        v-else-if="!isOnline" 
         class="bg-[#E75A24] text-white text-center text-xs py-1 font-semibold border-b-[1.5px] border-[#111111] tracking-wide z-10"
       >
         Working Offline
@@ -71,7 +74,7 @@
         <div v-if="localMessages.length === 0" class="rounded-[20px] border-[1.5px] border-[#111111] bg-[#E6DFD3] p-5">
           <h1 class="mb-2 text-2xl font-semibold leading-tight">How can I assist you today? ⚡</h1>
           <p class="text-[0.85rem] leading-relaxed text-gray-800">
-            I am your local AI assistant, ready to help with coding, writing, or analysis — even when you're offline.
+            I am your cloud-powered AI assistant, ready to process requests through verified serverless gateways.
           </p>
         </div>
 
@@ -83,7 +86,11 @@
             msg.sender === 'ai' ? 'self-start rounded-tl-none bg-white text-[#111111]' : 'self-end rounded-tr-none bg-[#111111] text-white shadow-[2px_2px_0_0_#000]'
           ]"
         >
-          {{ msg.text }}
+          <p class="whitespace-pre-wrap">{{ msg.text }}</p>
+        </div>
+
+        <div v-if="isAiThinking" class="self-start rounded-[20px] rounded-tl-none border-[1.5px] border-[#111111] bg-white p-3.5 text-xs font-semibold animate-pulse">
+          ⚡ Thinking...
         </div>
       </main>
 
@@ -94,12 +101,14 @@
             @keydown.enter="sendMessage"
             type="text" 
             placeholder="Ask me anything..."
-            class="w-full rounded-full border-[1.5px] border-[#111111] bg-[#E6DFD3] py-3.5 px-4 text-[0.9rem] font-medium text-[#111111] placeholder-gray-600 outline-none"
+            :disabled="hasMissingApiKey || isAiThinking"
+            class="w-full rounded-full border-[1.5px] border-[#111111] bg-[#E6DFD3] py-3.5 px-4 text-[0.9rem] font-medium text-[#111111] placeholder-gray-600 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
         <button 
           @click="sendMessage"
-          class="flex h-12 w-12 items-center justify-center rounded-full border-[1.5px] border-[#111111] bg-[#111111] transition-colors hover:bg-gray-900"
+          :disabled="hasMissingApiKey || isAiThinking || !inputMessage.trim()"
+          class="flex h-12 w-12 items-center justify-center rounded-full border-[1.5px] border-[#111111] bg-[#111111] transition-colors hover:bg-gray-900 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <svg class="h-4.5 w-4.5 fill-none stroke-white" stroke-width="2.5" viewBox="0 0 24 24">
             <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -107,6 +116,7 @@
           </svg>
         </button>
       </footer>
+   
     </div>
   </div>
 </template>
@@ -115,10 +125,11 @@
 import { ref, onMounted, nextTick, watch } from 'vue';
 import { useOnline } from '@vueuse/core';
 import { db, type ChatMessage } from '../db';
+import { aiProviderService } from '../services/aiProviderService';
 
 import SideMenu from '../components/SideMenu.vue';
 import SettingsDialog from '../components/SettingsDialog.vue';
-import UserConfigDialog from '../components/UserConfigDialog.vue'; // Imported target
+import UserConfigDialog from '../components/UserConfigDialog.vue';
 
 const isOnline = useOnline();
 const inputMessage = ref('');
@@ -126,7 +137,7 @@ const chatContainer = ref<HTMLElement | null>(null);
 
 const isMenuOpen = ref(false);
 const isSettingsOpen = ref(false);
-const isUserConfigOpen = ref(false); // Global control register state toggle
+const isUserConfigOpen = ref(false);
 
 const topicTitle = ref('New Chat');
 const modelName = ref('Gemma 4 12B');
@@ -135,6 +146,32 @@ const systemPrompt = ref('You are a helpful local AI assistant. Be concise and a
 
 const currentSessionId = ref<number | null>(null);
 const localMessages = ref<ChatMessage[]>([]);
+
+// Operational validation and state elements
+const hasMissingApiKey = ref(false);
+const isAiThinking = ref(false);
+
+/**
+ * Validates database contents to guarantee active providers hold valid keys
+ */
+const verifyActiveApiKeyPresence = async () => {
+  const targetKeyConfig = serviceProvider.value === 'Ollama' ? 'ollama_api_key' : 'hf_api_key';
+  const keyRecord = await db.secureConfig.get(targetKeyConfig);
+  
+  // If no key record exists, or it has been wiped out empty
+  hasMissingApiKey.value = !keyRecord || keyRecord.value.trim() === '';
+};
+
+const handleConfigDialogClose = async () => {
+  isUserConfigOpen.value = false;
+  // Re-verify immediately upon closing settings config container panel
+  await verifyActiveApiKeyPresence();
+};
+
+// Intercept structural adjustments if service provider changes context
+watch(serviceProvider, async () => {
+  await verifyActiveApiKeyPresence();
+});
 
 watch(systemPrompt, async (newPrompt) => {
   if (currentSessionId.value !== null) {
@@ -171,6 +208,7 @@ const startNewChat = () => {
   serviceProvider.value = 'Ollama';
   systemPrompt.value = 'You are a helpful local AI assistant. Be concise and accurate.';
   subscribeToMessages(null);
+  verifyActiveApiKeyPresence();
 };
 
 const loadSession = (id: number) => {
@@ -182,6 +220,7 @@ const loadSession = (id: number) => {
       serviceProvider.value = session.serviceProvider;
       systemPrompt.value = session.systemPrompt;
       subscribeToMessages(id);
+      verifyActiveApiKeyPresence();
     }
   });
 };
@@ -194,9 +233,10 @@ const scrollToBottom = async () => {
 };
 
 const sendMessage = async () => {
-  if (!inputMessage.value.trim()) return;
+  if (!inputMessage.value.trim() || hasMissingApiKey.value || isAiThinking.value) return;
+  
   const userText = inputMessage.value.trim();
-
+  
   if (currentSessionId.value === null) {
     const newSessionId = await db.sessions.add({
       title: userText,
@@ -215,22 +255,58 @@ const sendMessage = async () => {
     text: userText,
     timestamp: Date.now()
   };
-
+  
   await db.messages.add(userPayload);
   inputMessage.value = '';
   subscribeToMessages(currentSessionId.value);
+  
+  // Set UI operational processing flags
+  isAiThinking.value = true;
+  scrollToBottom();
 
-  setTimeout(async () => {
+  try {
+    // 1. Structure message history arrays mapping properties to standard models
+    const messageHistoryPayload: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = localMessages.value.map(m => ({
+      role: m.sender === 'user' ? 'user' as const : 'assistant' as const,
+      content: m.text
+    }));
+
+    // 2. Prepend active custom baseline instructions to context payload arrays
+    messageHistoryPayload.unshift({
+      role: 'system',
+      content: systemPrompt.value
+    });
+
+    // 3. Request code processing block through standalone serverless proxy middleware configurations
+    const aiTextReply = await aiProviderService.generateChatResponse(
+      serviceProvider.value,
+      modelName.value,
+      messageHistoryPayload
+    );
+
+    // 4. Update core records once responses return successfully
     if (currentSessionId.value !== null) {
       await db.messages.add({
         sessionId: currentSessionId.value!,
         sender: 'ai',
-        text: `I am processing your request using ${modelName.value} via ${serviceProvider.value}.`,
+        text: aiTextReply,
         timestamp: Date.now()
       });
-      subscribeToMessages(currentSessionId.value);
     }
-  }, 700);
+  } catch (error: any) {
+    console.error('Inference error encountered:', error);
+    if (currentSessionId.value !== null) {
+      await db.messages.add({
+        sessionId: currentSessionId.value!,
+        sender: 'ai',
+        text: `❌ Gateway Error: ${error.message || 'Failed to capture serverless proxy payload. Make sure your Express server is running on Port 5000.'}`,
+        timestamp: Date.now()
+      });
+    }
+  } finally {
+    isAiThinking.value = false;
+    subscribeToMessages(currentSessionId.value);
+  }
 };
 
 onMounted(() => {
@@ -239,6 +315,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.slide-menu-enter-active, .slide-menu-leave-active { transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+.slide-menu-enter-active, .slide-menu-leave-active { 
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
 .slide-menu-enter-from, .slide-menu-leave-to { opacity: 0; }
 </style>
