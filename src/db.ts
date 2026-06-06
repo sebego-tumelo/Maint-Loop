@@ -17,24 +17,31 @@ export interface ChatMessage {
   timestamp: number;
 }
 
-// Stores globally discovered or selected models for the custom search component
 export interface GlobalModel {
-  id?: string; // e.g., 'gemma3:27b'
+  id?: string;
   name: string;
-  isPinned: number; // 1 for pinned/previously selected, 0 for available
+  isPinned: number;
+}
+
+// Key-value store schema for local configuration profiles and access tokens
+export interface SecureConfig {
+  key: string;  // e.g., 'hf_api_key', 'ollama_endpoint', 'ollama_api_key'
+  value: string;
 }
 
 class LocalChatDatabase extends Dexie {
   sessions!: Table<ChatSession>;
   messages!: Table<ChatMessage>;
   globalModels!: Table<GlobalModel>;
+  secureConfig!: Table<SecureConfig>;
 
   constructor() {
     super('MusmentorLocalDB');
-    this.version(4).stores({
+    this.version(5).stores({
       sessions: '++id, createdAt',
       messages: '++id, sessionId, sender, timestamp',
-      globalModels: 'id, isPinned'
+      globalModels: 'id, isPinned',
+      secureConfig: 'key' // Fast lookup via configuration property names
     });
   }
 }
