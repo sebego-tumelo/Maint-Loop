@@ -168,16 +168,15 @@ const handleKeyFocus = () => {
 const handleKeyBlur = async () => {
   isInputFocused.value = false;
   const typedValue = displayApiKey.value.trim();
-  console.log('api key is', typedValue);
-  console.log('selected provider is', selectedProvider.value);
+
   // If input string is empty and they left, retain original keys without modification
   if (typedValue === '') {
     displayApiKey.value = applyMaskFormat(selectedProvider.value === 'Ollama' ? rawOllamaKey : rawHfKey);
     return;
   }
 
-  // If they typed a value that contains masking characters, ignore write cycle
-  if (typedValue.includes('-')) {
+  // FIXED: Check for the bullet symbol '●' instead of the hyphen '-'
+  if (typedValue.includes('●')) {
     displayApiKey.value = applyMaskFormat(selectedProvider.value === 'Ollama' ? rawOllamaKey : rawHfKey);
     return;
   }
@@ -187,7 +186,6 @@ const handleKeyBlur = async () => {
     rawOllamaKey = typedValue;
     await saveConfigValue('ollama_api_key', rawOllamaKey);
   } else {
-    console.log('foo')
     rawHfKey = typedValue;
     await saveConfigValue('hf_api_key', rawHfKey);
   }
