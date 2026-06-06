@@ -2,7 +2,7 @@ import { db } from '../db';
 
 // Safely point to your Express container target when inside Codespaces development mode
 const BACKEND_BASE = import.meta.env.DEV 
-  ? 'http://localhost:5000/.netlify/functions/api' 
+  ? 'https://congenial-goldfish-979gx49gwp44f75qp-5000.app.github.dev/.netlify/functions/api' 
   : '/.netlify/functions/api';
 
 export const aiProviderService = {

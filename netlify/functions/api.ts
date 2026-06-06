@@ -7,9 +7,22 @@ import { Ollama } from 'ollama';
 const app = express();
 const router = Router();
 
-// Configure CORS to accept development queries from Vite seamlessly
-app.use(cors());
+// 1. Define your exact frontend origin url
+const ALLOWED_ORIGIN = 'https://congenial-goldfish-979gx49gwp44f75qp-5173.app.github.dev';
+
+// 2. Configure global CORS settings
+app.use(cors({
+  origin: ALLOWED_ORIGIN,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
+
 app.use(express.json());
+
+// 3. FIX: Handle preflight OPTIONS requests using standard Express 5 wildcard parameters
+// The syntax '/:path*' replaces the old system wildcards completely without breaking path-to-regexp
+app.options('/*path', cors());
 
 /**
  * Single Unified Chat Completion Routing Pipeline
@@ -18,6 +31,7 @@ router.post('/chat-proxy', async (req: Request, res: Response): Promise<void> =>
   try {
     const { provider, model, messages, apiKey, cloudOllamaUrl } = req.body;
 
+    console.log('Received chat-proxy request with provider:', provider, 'model:', model);
     // --- HUGGING FACE INTELLIGENCE PIPELINE ---
     if (provider === 'Hugging Face') {
       if (!apiKey) {
@@ -79,3 +93,5 @@ if (process.env.NODE_ENV !== 'production') {
     console.log(`🔗 Routing endpoint: http://localhost:${PORT}/.netlify/functions/api/chat-proxy`);
   });
 }
+
+
