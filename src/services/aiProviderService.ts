@@ -27,9 +27,9 @@ export const aiProviderService = {
           cloudOllamaUrl 
         })
       });
-
       if (!response.ok) {
         const errText = await response.text();
+        console.log(errText)
         throw new Error(errText || 'Connection failed.');
       }
 

@@ -2,7 +2,7 @@ import express, { Request, Response, Router } from 'express';
 import serverless from 'serverless-http';
 import cors from 'cors';
 import { HfInference } from '@huggingface/inference';
-import { Ollama } from 'ollama';
+import ollama, { Ollama } from 'ollama';
 
 const app = express();
 const router = Router();
@@ -53,16 +53,27 @@ router.post('/chat-proxy', async (req: Request, res: Response): Promise<void> =>
     }
 
     // --- OLLAMA CLOUD INFRASTRUCTURE PIPELINE ---
-    if (provider === 'Ollama') {
-        console.log('Received request for Ollama with model:', model);
+    if (provider === 'Ollama') {      
       const targetUrl = cloudOllamaUrl || 'https://your-cloud-ollama-node.com';
       
-      const ollama = new Ollama({
+      // Clean up the key string to prevent space characters from breaking headers
+      const cleanKey = apiKey ? apiKey.trim() : '';
+      
+      // Set up a robust header configuration matching remote proxy expectations
+      const headers: Record<string, string> = {};
+      if (cleanKey) {
+        headers['Authorization'] = `Bearer ${cleanKey}`;
+        // Fallback option used by some custom cloud inference routers:
+        headers['X-API-Key'] = cleanKey; 
+      }
+    
+      // console.log('foo')
+      const customOllama = new Ollama({
         host: targetUrl,
-        headers: apiKey ? { 'Authorization': `Bearer ${apiKey}` } : undefined
+        headers: Object.keys(headers).length > 0 ? headers : undefined
       });
 
-      const response = await ollama.chat({
+      const response = await customOllama.chat({
         model: model.toLowerCase().replace(/\s+/g, ''),
         messages: messages,
         stream: false
