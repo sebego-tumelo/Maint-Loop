@@ -45,6 +45,7 @@ export const handler: Handler = async (event) => {
 
     // Dynamic routing for your Cloud-hosted Ollama endpoints
     if (provider === 'Ollama') {
+        console.log('Received request for Ollama with model:', model);
       const targetUrl = cloudOllamaUrl || 'https://your-cloud-ollama-node.com';
       
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };

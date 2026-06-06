@@ -64,3 +64,6 @@ ehthumbs.db
 
 # Vitest
 .vitest
+
+# Local Netlify folder
+.netlify

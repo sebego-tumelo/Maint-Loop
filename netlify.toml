@@ -1,8 +1,9 @@
 [build]
   command = "npm run build"
-  publish = ".output/public" # For Nuxt 3 (use "dist" if using standard Vite/Vue 3)
+  publish = ".output/public" # Use "dist" if using raw Vite/Vue 3 instead of Nuxt
 
 [dev]
-  command = "npm run dev" # Tells Netlify how to start your local dev server
-  port = 3000            # The port your dev server normally runs on
-  targetPort = 8888      # The unified port Netlify CLI will expose to you
+  command = "npm run dev"
+  framework = "#custom"      # Forces Netlify not to guess and use your strict port overrides
+  port = 5173                # The exact port Vite is launching on
+  targetPort = 9000          # The port Netlify will expose to you to route requests
