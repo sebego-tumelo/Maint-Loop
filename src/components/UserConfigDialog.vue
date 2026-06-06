@@ -38,8 +38,8 @@
         <div v-if="selectedProvider === 'Ollama'" class="flex-shrink-0">
           <label class="text-xs font-bold uppercase tracking-wider block mb-1.5 text-gray-700">Cloud Host Endpoint</label>
           <input 
-            v-model="ollamaEndpoint"
-            @blur="saveConfigValue('ollama_endpoint', ollamaEndpoint)"
+            v-model="displayEndpointUrl"
+            @blur="handleEndpointBlur"
             type="text"
             placeholder="https://your-cloud-domain.com"
             class="w-full p-2.5 border-[1.5px] border-[#111111] bg-white text-[#111111] font-medium rounded-xl text-sm outline-none focus:bg-[#FAFFA0]/10 focus:shadow-[2px_2px_0_0_#111111] transition-all"
@@ -58,34 +58,69 @@
           />
         </div>
 
-        <div class="flex-1 flex flex-col overflow-hidden border-[1.5px] border-[#111111] bg-[#E6DFD3]/40 rounded-xl p-3">
-          <label class="text-xs font-bold uppercase tracking-wider block mb-2 text-gray-700">Cloud Models Marketplace</label>
-          
-          <div class="relative mb-3 flex-shrink-0">
+        <div class="relative flex-shrink-0">
+          <label class="text-xs font-bold uppercase tracking-wider block mb-1.5 text-gray-700">Cloud Models Marketplace</label>
+          <div class="relative">
             <input 
               v-model="searchQuery"
-              type="text"
-              placeholder="Search cloud models..."
-              class="w-full p-2.5 pl-9 border-[1.5px] border-[#111111] bg-white text-[#111111] font-medium rounded-xl text-xs outline-none focus:bg-[#FAFFA0]/10 focus:shadow-[2px_2px_0_0_#111111] transition-all placeholder-gray-500"
+              @focus="isModelDropdownOpen = true"
+              type="text" 
+              placeholder="Search or type a model tag (e.g. gemma4:31b)..."
+              class="w-full rounded-xl border-[1.5px] border-[#111111] bg-white p-2.5 px-3.5 text-sm font-semibold outline-none placeholder-gray-400"
             />
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-[#111111] pointer-events-none">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-            </span>
+            <button 
+              v-if="isModelDropdownOpen"
+              @click="isModelDropdownOpen = false"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold uppercase tracking-tight text-gray-400 hover:text-[#111111]"
+            >
+              Done
+            </button>
           </div>
 
-          <div class="flex-1 overflow-y-auto space-y-1.5 pr-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div 
+            v-if="isModelDropdownOpen" 
+            class="absolute left-0 right-0 mt-2 z-[80] bg-white border-[1.5px] border-[#111111] rounded-xl shadow-[4px_4px_0_0_#111111] max-h-[220px] overflow-y-auto"
+          >
+            <div 
+              v-if="showCustomModelCreationOption"
+              @click="registerCustomModelTag"
+              class="flex items-center justify-between p-3 border-b-[1.5px] border-dashed border-gray-300 bg-[#FAFFA0] hover:bg-[#f6fa7c] cursor-pointer font-bold text-xs uppercase tracking-wide text-[#111111]"
+            >
+              <span>✨ Add Custom Tag: "{{ searchQuery }}"</span>
+              <span class="text-[10px] bg-[#111111] text-white px-2 py-0.5 rounded-md">Save Option</span>
+            </div>
+
             <div 
               v-for="model in filteredModels" 
               :key="model.id"
-              @click="toggleSelectModel(model)"
-              class="flex items-center justify-between p-2 rounded-lg border-[1.5px] border-[#111111] cursor-pointer text-xs font-bold transition-all"
-              :class="model.isPinned ? 'bg-[#FAFFA0] text-[#111111] shadow-[1px_1px_0_0_#111111]' : 'bg-white text-gray-800 hover:bg-[#FAFFA0]/20'"
+              class="flex items-center justify-between p-3 border-b-[1.5px] border-[#111111] last:border-b-0 hover:bg-[#F3EDE2] transition-colors group text-sm font-medium"
             >
-              <span class="truncate">{{ model.name }}</span>
-              <span v-if="model.isPinned" class="text-[0.6rem] bg-[#111111] text-white px-1.5 py-0.5 rounded border border-[#111111]">SELECTED</span>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 font-mono">📦</span>
+                <span class="text-[#111111] font-semibold">{{ model.name }}</span>
+              </div>
+              
+              <div class="flex items-center gap-2">
+                <button 
+                  @click.stop="togglePinStatus(model)"
+                  class="text-xs hover:scale-110 transition-transform"
+                  :title="model.isPinned ? 'Unpin Model' : 'Pin Model'"
+                >
+                  {{ model.isPinned ? '⭐' : '☆' }}
+                </button>
+                <button 
+                  v-if="model.id !== 'gemma4-31b'"
+                  @click.stop="removeCustomModel(model.id!)"
+                  class="text-xs opacity-0 group-hover:opacity-100 text-red-500 hover:font-bold transition-opacity px-1"
+                  title="Delete Entry"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div v-if="filteredModels.length === 0 && !showCustomModelCreationOption" class="p-4 text-center text-xs text-gray-500 font-medium">
+              No matching model tags configured.
             </div>
           </div>
         </div>
@@ -95,103 +130,75 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { db, type GlobalModel } from '../db';
 
 const emit = defineEmits(['close']);
 
-const selectedProvider = ref('Ollama');
-const ollamaEndpoint = ref('');
-const searchQuery = ref('');
 const isProviderDropdownOpen = ref(false);
+const selectedProvider = ref('Ollama');
+
+const searchQuery = ref('');
+const isModelDropdownOpen = ref(false);
 const availableModels = ref<GlobalModel[]>([]);
 
-// Internal non-reactive memory buffers holding secret raw characters
-let rawOllamaKey = '';
-let rawHfKey = '';
-
-// The reactive string linked directly to the input template view
 const displayApiKey = ref('');
-const isInputFocused = ref(false);
+const displayEndpointUrl = ref('');
 
-const activeKeyConfigName = computed(() => {
-  return selectedProvider.value === 'Ollama' ? 'ollama_api_key' : 'hf_api_key';
+// --- UTILITY MASK PIPELINE ---
+const applyMaskFormat = (val: string) => {
+  if (!val) return '';
+  if (val.length <= 8) return '•'.repeat(val.length);
+  return val.slice(0, 4) + '•'.repeat(val.length - 8) + val.slice(-4);
+};
+
+// --- CORE LIFE-CYCLE SYNCHRONIZATION ---
+const syncFormWithDatabase = async () => {
+  const targetKeyConfig = selectedProvider.value === 'Ollama' ? 'ollama_api_key' : 'hf_api_key';
+  const keyRecord = await db.secureConfig.get(targetKeyConfig);
+  displayApiKey.value = keyRecord && keyRecord.value ? applyMaskFormat(keyRecord.value) : '';
+
+  if (selectedProvider.value === 'Ollama') {
+    const endpointRecord = await db.secureConfig.get('ollama_endpoint');
+    displayEndpointUrl.value = endpointRecord ? endpointRecord.value : '';
+  } else {
+    displayEndpointUrl.value = 'https://api-inference.huggingface.co';
+  }
+};
+
+onMounted(async () => {
+  await seedDefaultModelsIfEmpty();
+  await syncFormWithDatabase();
 });
 
-// Masking formula generator: leaves first 3 chars intact, converts remainder to solid dots
-const applyMaskFormat = (secret: string) => {
-  if (!secret) return '';
-  if (secret.length <= 3) return secret;
-  // Using the solid bullet character instead of a hyphen
-  return secret.slice(0, 3) + '●'.repeat(Math.max(12, secret.length - 3));
-};
-
-const loadConfigData = async () => {
-  // 1. Fetch Provider Profile
-  const providerRecord = await db.secureConfig.get('active_provider');
-  if (providerRecord) selectedProvider.value = providerRecord.value;
-
-  // 2. Fetch Endpoints
-  const endpointRecord = await db.secureConfig.get('ollama_endpoint');
-  if (endpointRecord) ollamaEndpoint.value = endpointRecord.value;
-
-  // 3. Populate memory buffers directly from persistent database
-  const ollamaKeyRecord = await db.secureConfig.get('ollama_api_key');
-  rawOllamaKey = ollamaKeyRecord ? ollamaKeyRecord.value : '';
-
-  const hfKeyRecord = await db.secureConfig.get('hf_api_key');
-  rawHfKey = hfKeyRecord ? hfKeyRecord.value : '';
-
-  // Apply visual string masking mask initially
-  displayApiKey.value = applyMaskFormat(selectedProvider.value === 'Ollama' ? rawOllamaKey : rawHfKey);
-};
-
+// Explicit provider drop-down action requested by the template template
 const handleProviderSwitch = async (provider: string) => {
   selectedProvider.value = provider;
   isProviderDropdownOpen.value = false;
-  await saveConfigValue('active_provider', provider);
-  
-  // Re-render masked character templates depending on selected provider target
-  displayApiKey.value = applyMaskFormat(provider === 'Ollama' ? rawOllamaKey : rawHfKey);
+  await syncFormWithDatabase();
 };
 
-const handleKeyFocus = () => {
-  isInputFocused.value = true;
-  
-  // If a key exists, wipe textbox clean on click to let user overwrite cleanly
-  // const currentRaw = selectedProvider.value === 'Ollama' ? rawOllamaKey : rawHfKey;
-  // if (currentRaw) {
-  //   displayApiKey.value = '';
-  // }
-};
+// --- SECURE PROPERTY PERSISTENCE CONTROLLERS ---
+const handleKeyBlur = async (e: FocusEvent) => {
+  const typedValue = (e.target as HTMLInputElement).value.trim();
+  if (!typedValue) return;
+  if (typedValue.includes('•')) return;
 
-const handleKeyBlur = async () => {
-  isInputFocused.value = false;
-  const typedValue = displayApiKey.value.trim();
-
-  // If input string is empty and they left, retain original keys without modification
-  if (typedValue === '') {
-    displayApiKey.value = applyMaskFormat(selectedProvider.value === 'Ollama' ? rawOllamaKey : rawHfKey);
-    return;
-  }
-
-  // FIXED: Check for the bullet symbol '●' instead of the hyphen '-'
-  if (typedValue.includes('●')) {
-    displayApiKey.value = applyMaskFormat(selectedProvider.value === 'Ollama' ? rawOllamaKey : rawHfKey);
-    return;
-  }
-
-  // Commit clean raw values to permanent db records and sync memory caches
-  if (selectedProvider.value === 'Ollama') {
-    rawOllamaKey = typedValue;
-    await saveConfigValue('ollama_api_key', rawOllamaKey);
-  } else {
-    rawHfKey = typedValue;
-    await saveConfigValue('hf_api_key', rawHfKey);
-  }
-
-  // Immediately overwrite display box string with safe masked configuration
+  const targetKeyConfig = selectedProvider.value === 'Ollama' ? 'ollama_api_key' : 'hf_api_key';
+  await saveConfigValue(targetKeyConfig, typedValue);
   displayApiKey.value = applyMaskFormat(typedValue);
+};
+
+const handleKeyFocus = async () => {
+  const targetKeyConfig = selectedProvider.value === 'Ollama' ? 'ollama_api_key' : 'hf_api_key';
+  const keyRecord = await db.secureConfig.get(targetKeyConfig);
+  displayApiKey.value = keyRecord ? keyRecord.value : '';
+};
+
+const handleEndpointBlur = async (e: FocusEvent) => {
+  if (selectedProvider.value !== 'Ollama') return;
+  const urlValue = (e.target as HTMLInputElement).value.trim();
+  await saveConfigValue('ollama_endpoint', urlValue);
 };
 
 const saveConfigValue = async (key: string, value: string) => {
@@ -202,14 +209,14 @@ const saveAndClose = () => {
   emit('close');
 };
 
+// --- DYNAMIC MODEL INVENTORY PROCESSING ---
 const seedDefaultModelsIfEmpty = async () => {
   const count = await db.globalModels.count();
   if (count === 0) {
     await db.globalModels.bulkAdd([
-      { id: 'gemma-4-12b', name: 'Gemma 4 12B', isPinned: 1 },
-      { id: 'gemma-3-270m', name: 'Gemma 3 270M (Colab)', isPinned: 0 },
-      { id: 'deepseek-r1-8b', name: 'DeepSeek R1 8B', isPinned: 0 },
-      { id: 'qwen-2.5-7b', name: 'Qwen 2.5 7B', isPinned: 0 }
+      { id: 'gemma4-31b', name: 'gemma4:31b', isPinned: 1 },
+      { id: 'deepseek-r1-8b', name: 'deepseek-r1:8b', isPinned: 0 },
+      { id: 'qwen-2.5-7b', name: 'qwen2.5:7b', isPinned: 0 }
     ]);
   }
   availableModels.value = await db.globalModels.toArray();
@@ -218,18 +225,50 @@ const seedDefaultModelsIfEmpty = async () => {
 const filteredModels = computed(() => {
   const query = searchQuery.value.toLowerCase().trim();
   let base = availableModels.value;
-  if (query) base = base.filter(m => m.name.toLowerCase().includes(query));
-  return [...base].sort((a, b) => b.isPinned - a.isPinned);
+
+  if (query) {
+    base = base.filter(m => m.name.toLowerCase().includes(query));
+  }
+
+  return [...base].sort((a, b) => (b.isPinned || 0) - (a.isPinned || 0));
 });
 
-const toggleSelectModel = async (model: GlobalModel) => {
-  const updatedState = model.isPinned ? 0 : 1;
-  await db.globalModels.update(model.id!, { isPinned: updatedState });
+const showCustomModelCreationOption = computed(() => {
+  const query = searchQuery.value.trim();
+  if (!query) return false;
+  return !availableModels.value.some(m => m.name.toLowerCase() === query.toLowerCase());
+});
+
+const registerCustomModelTag = async () => {
+  const tag = searchQuery.value.trim();
+  if (!tag) return;
+
+  const normalizedId = tag.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  
+  const newModelEntry: GlobalModel = {
+    id: normalizedId,
+    name: tag,
+    isPinned: 1
+  };
+
+  try {
+    await db.globalModels.add(newModelEntry);
+    availableModels.value = await db.globalModels.toArray();
+    searchQuery.value = ''; 
+    console.log(`Successfully registered model tag: ${tag}`);
+  } catch (err) {
+    console.error('Failed to commit model entry:', err);
+  }
+};
+
+const togglePinStatus = async (modelItem: GlobalModel) => {
+  const nextState = modelItem.isPinned ? 0 : 1;
+  await db.globalModels.update(modelItem.id, { isPinned: nextState });
   availableModels.value = await db.globalModels.toArray();
 };
 
-onMounted(() => {
-  loadConfigData();
-  seedDefaultModelsIfEmpty();
-});
+const removeCustomModel = async (modelId: string) => {
+  await db.globalModels.delete(modelId);
+  availableModels.value = await db.globalModels.toArray();
+};
 </script>

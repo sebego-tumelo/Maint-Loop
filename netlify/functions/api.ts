@@ -53,28 +53,19 @@ router.post('/chat-proxy', async (req: Request, res: Response): Promise<void> =>
     }
 
     // --- OLLAMA CLOUD INFRASTRUCTURE PIPELINE ---
-    if (provider === 'Ollama') {      
+    if (provider === 'Ollama') {
+      console.log('Forwarding inference execution target to model tag:', model);
       const targetUrl = cloudOllamaUrl || 'https://your-cloud-ollama-node.com';
-      
-      // Clean up the key string to prevent space characters from breaking headers
       const cleanKey = apiKey ? apiKey.trim() : '';
-      
-      // Set up a robust header configuration matching remote proxy expectations
+
       const headers: Record<string, string> = {};
       if (cleanKey) {
         headers['Authorization'] = `Bearer ${cleanKey}`;
-        // Fallback option used by some custom cloud inference routers:
-        headers['X-API-Key'] = cleanKey; 
+        headers['X-API-Key'] = cleanKey;
       }
-    
-      // console.log('foo')
-      const customOllama = new Ollama({
-        host: targetUrl,
-        headers: Object.keys(headers).length > 0 ? headers : undefined
-      });
 
-      const response = await customOllama.chat({
-        model: model.toLowerCase().replace(/\s+/g, ''),
+      const response = await ollama.chat({
+        model: model, // Passes the exact string intact (e.g., 'gemma4:31b')
         messages: messages,
         stream: false
       });
