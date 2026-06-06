@@ -157,10 +157,10 @@ const handleProviderSwitch = async (provider: string) => {
 const handleKeyFocus = () => {
   isInputFocused.value = true;
   // If a key exists, wipe textbox clean on click to let user overwrite cleanly
-  const currentRaw = selectedProvider.value === 'Ollama' ? rawOllamaKey : rawHfKey;
-  if (currentRaw) {
-    displayApiKey.value = '';
-  }
+  // const currentRaw = selectedProvider.value === 'Ollama' ? rawOllamaKey : rawHfKey;
+  // if (currentRaw) {
+  //   displayApiKey.value = '';
+  // }
 };
 
 const handleKeyBlur = async () => {
