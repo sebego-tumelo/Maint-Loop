@@ -118,11 +118,12 @@ const activeKeyConfigName = computed(() => {
   return selectedProvider.value === 'Ollama' ? 'ollama_api_key' : 'hf_api_key';
 });
 
-// Masking formula generator: leaves first 3 chars intact, converts remainder to hyphens
+// Masking formula generator: leaves first 3 chars intact, converts remainder to solid dots
 const applyMaskFormat = (secret: string) => {
   if (!secret) return '';
   if (secret.length <= 3) return secret;
-  return secret.slice(0, 3) + '-'.repeat(Math.max(12, secret.length - 3));
+  // Using the solid bullet character instead of a hyphen
+  return secret.slice(0, 3) + '●'.repeat(Math.max(12, secret.length - 3));
 };
 
 const loadConfigData = async () => {
@@ -156,6 +157,7 @@ const handleProviderSwitch = async (provider: string) => {
 
 const handleKeyFocus = () => {
   isInputFocused.value = true;
+  
   // If a key exists, wipe textbox clean on click to let user overwrite cleanly
   // const currentRaw = selectedProvider.value === 'Ollama' ? rawOllamaKey : rawHfKey;
   // if (currentRaw) {
@@ -166,7 +168,8 @@ const handleKeyFocus = () => {
 const handleKeyBlur = async () => {
   isInputFocused.value = false;
   const typedValue = displayApiKey.value.trim();
-
+  console.log('api key is', typedValue);
+  console.log('selected provider is', selectedProvider.value);
   // If input string is empty and they left, retain original keys without modification
   if (typedValue === '') {
     displayApiKey.value = applyMaskFormat(selectedProvider.value === 'Ollama' ? rawOllamaKey : rawHfKey);
@@ -184,6 +187,7 @@ const handleKeyBlur = async () => {
     rawOllamaKey = typedValue;
     await saveConfigValue('ollama_api_key', rawOllamaKey);
   } else {
+    console.log('foo')
     rawHfKey = typedValue;
     await saveConfigValue('hf_api_key', rawHfKey);
   }
