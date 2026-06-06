@@ -50,8 +50,8 @@
         >
           <!-- Avatar Frame -->
           <div class="w-10 h-10 rounded-full bg-[#E75A24] border-[1.5px] border-[#111111] flex items-center justify-center flex-shrink-0 shadow-[1px_1px_0_0_#111111]">
-            <div class="w-7 h-7 rounded-full bg-[#111111] flex items-center justify-center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <div class="w-7 h-7 rounded-full flex items-center justify-center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
