@@ -2,7 +2,7 @@ import { Handler } from '@netlify/functions';
 import { HfInference } from '@huggingface/inference';
 
 export const handler: Handler = async (event) => {
-  // Enforce handling pre-flight CORS prechecks cleanly
+  // Cleanly handle browser CORS preflight checks
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -19,13 +19,15 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const { provider, model, messages } = JSON.parse(event.body || '{}');
+    // The frontend now passes the dynamic user-defined key inside the payload body
+    const { provider, model, messages, apiKey, cloudOllamaUrl } = JSON.parse(event.body || '{}');
 
-    // Securely pull tokens from Netlify Environment variables instead of front-end state
-    const hfToken = process.env.HF_API_KEY; 
-    
     if (provider === 'Hugging Face') {
-      const hf = new HfInference(hfToken);
+      if (!apiKey) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'No Hugging Face token provided by the application.' }) };
+      }
+
+      const hf = new HfInference(apiKey);
       const promptText = messages.map((m: any) => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n') + '\n\nASSISTANT:';
 
       const response = await hf.textGeneration({
@@ -38,6 +40,35 @@ export const handler: Handler = async (event) => {
         statusCode: 200,
         headers: { 'Access-Control-Allow-Origin': '*' },
         body: JSON.stringify({ text: response.generated_text?.trim() })
+      };
+    }
+
+    // Dynamic routing for your Cloud-hosted Ollama endpoints
+    if (provider === 'Ollama') {
+      const targetUrl = cloudOllamaUrl || 'https://your-cloud-ollama-node.com';
+      
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+
+      const response = await fetch(`${targetUrl}/api/chat`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: model.toLowerCase().replace(/\s+/g, ''),
+          messages,
+          stream: false
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Ollama Cloud instance responded with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        statusCode: 200,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ text: data.message?.content || '' })
       };
     }
 
