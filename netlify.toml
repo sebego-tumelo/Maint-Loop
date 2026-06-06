@@ -1,0 +1,8 @@
+[build]
+  command = "npm run build"
+  publish = ".output/public" # For Nuxt 3 (use "dist" if using standard Vite/Vue 3)
+
+[dev]
+  command = "npm run dev" # Tells Netlify how to start your local dev server
+  port = 3000            # The port your dev server normally runs on
+  targetPort = 8888      # The unified port Netlify CLI will expose to you
