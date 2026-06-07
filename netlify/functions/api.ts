@@ -31,7 +31,7 @@ app.use(cors((req, callback) => {
 app.use(express.json());
 
 // Dynamic options preflight wildcard catcher to resolve CORS checks safely across paths
-app.options('/:path*', cors((req, callback) => {
+app.options('/*path', cors((req, callback) => {
   const incomingOrigin = req.header('Origin');
   callback(null, { 
     origin: getAllowedOrigin(incomingOrigin), 
