@@ -1,9 +1,17 @@
 import { db } from '../db';
 
-// Safely point to your Express container target when inside Codespaces development mode
-const BACKEND_BASE = import.meta.env.DEV 
-  ? 'https://congenial-goldfish-979gx49gwp44f75qp-5000.app.github.dev/.netlify/functions/api' 
-  : '/.netlify/functions/api';
+// Dynamically calculate the development backend port using the active browser location.
+// This prevents hardcoded workspace URLs from breaking when your container restarts!
+const getBackendBase = (): string => {
+  if (import.meta.env.DEV) {
+    const currentHost = window.location.hostname; // e.g., congenial-goldfish-979gx49gwp44f75qp-5173.app.github.dev
+    const devBackendHost = currentHost.replace('-5173.', '-5000.');
+    return `https://${devBackendHost}/.netlify/functions/api`;
+  }
+  return '/.netlify/functions/api';
+};
+
+const BACKEND_BASE = getBackendBase();
 
 export const aiProviderService = {
   async generateChatResponse(provider: string, model: string, messages: any[]): Promise<string> {
