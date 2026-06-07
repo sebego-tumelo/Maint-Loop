@@ -40,6 +40,62 @@ app.options('/*path', cors((req, callback) => {
 }));
 
 /**
+ * Verification Endpoint: Verifies if a custom model tag exists with the provider
+ */
+router.post('/validate-model', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { provider, tag, apiKey, cloudOllamaUrl } = req.body;
+
+    if (!tag) {
+      res.status(400).json({ valid: false, error: 'Model tag parameter is required.' });
+      return;
+    }
+
+    // --- OLLAMA CLOUD INFRASTRUCTURE VALIDATION ---
+    if (provider === 'Ollama') {
+      const targetUrl = cloudOllamaUrl || 'https://ollama.com';
+      const cleanKey = apiKey ? apiKey.trim() : '';
+
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (cleanKey) headers['Authorization'] = `Bearer ${cleanKey}`;
+
+      // Hit the official Ollama verification endpoint
+      const checkRes = await fetch(`${targetUrl}/api/show`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ name: tag })
+      });
+
+      if (!checkRes.ok) {
+        res.status(404).json({ valid: false, error: `Model tag "${tag}" not found on Ollama.` });
+        return;
+      }
+
+      res.status(200).json({ valid: true });
+      return;
+    }
+
+    // --- HUGGING FACE INFERENCE VALIDATION ---
+    if (provider === 'Hugging Face') {
+      const checkRes = await fetch(`https://huggingface.co/api/models/${tag}`);
+      
+      if (!checkRes.ok) {
+        res.status(404).json({ valid: false, error: `Model "${tag}" not found on Hugging Face Hub.` });
+        return;
+      }
+
+      res.status(200).json({ valid: true });
+      return;
+    }
+
+    res.status(400).json({ valid: false, error: 'Unsupported provider engine context.' });
+  } catch (error: any) {
+    console.error('Validation Engine Error:', error);
+    res.status(500).json({ valid: false, error: error.message });
+  }
+});
+
+/**
  * Single Unified Chat Completion Routing Pipeline
  */
 router.post('/chat-proxy', async (req: Request, res: Response): Promise<void> => {
