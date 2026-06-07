@@ -7,22 +7,37 @@ import ollama, { Ollama } from 'ollama';
 const app = express();
 const router = Router();
 
-// 1. Define your exact frontend origin url
-const ALLOWED_ORIGIN = 'https://congenial-goldfish-979gx49gwp44f75qp-5173.app.github.dev';
+// --- DYNAMIC CORS CONFIGURATION ---
+// Determines the allowed origin based on the current environment.
+// In development/Codespaces, it dynamically accepts the incoming origin.
+// In production, it locks access down securely to your live deployment.
+const getAllowedOrigin = (requestOrigin: string | undefined): string => {
+  if (process.env.NODE_ENV !== 'production') {
+    return requestOrigin || '*';
+  }
+  return 'https://mylocalchat.netlify.app';
+};
 
-// 2. Configure global CORS settings
-app.use(cors({
-  origin: ALLOWED_ORIGIN,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+app.use(cors((req, callback) => {
+  const incomingOrigin = req.header('Origin');
+  callback(null, {
+    origin: getAllowedOrigin(incomingOrigin),
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-API-Key']
+  });
 }));
 
 app.use(express.json());
 
-// 3. FIX: Handle preflight OPTIONS requests using standard Express 5 wildcard parameters
-// The syntax '/:path*' replaces the old system wildcards completely without breaking path-to-regexp
-app.options('/*path', cors());
+// Dynamic options preflight wildcard catcher to resolve CORS checks safely across paths
+app.options('/:path*', cors((req, callback) => {
+  const incomingOrigin = req.header('Origin');
+  callback(null, { 
+    origin: getAllowedOrigin(incomingOrigin), 
+    credentials: true 
+  });
+}));
 
 /**
  * Single Unified Chat Completion Routing Pipeline
@@ -32,6 +47,7 @@ router.post('/chat-proxy', async (req: Request, res: Response): Promise<void> =>
     const { provider, model, messages, apiKey, cloudOllamaUrl } = req.body;
 
     console.log('Received chat-proxy request with provider:', provider, 'model:', model);
+    
     // --- HUGGING FACE INTELLIGENCE PIPELINE ---
     if (provider === 'Hugging Face') {
       if (!apiKey) {
@@ -55,6 +71,8 @@ router.post('/chat-proxy', async (req: Request, res: Response): Promise<void> =>
     // --- OLLAMA CLOUD INFRASTRUCTURE PIPELINE ---
     if (provider === 'Ollama') {
       console.log('Forwarding inference execution target to model tag:', model);
+      
+      // Fall back to a safe placeholder if no endpoint link was provided in the database settings
       const targetUrl = cloudOllamaUrl || 'https://your-cloud-ollama-node.com';
       const cleanKey = apiKey ? apiKey.trim() : '';
 
@@ -64,8 +82,13 @@ router.post('/chat-proxy', async (req: Request, res: Response): Promise<void> =>
         headers['X-API-Key'] = cleanKey;
       }
 
-      const response = await ollama.chat({
-        model: model, // Passes the exact string intact (e.g., 'gemma4:31b')
+      // Configure a custom instance if a distinct remote cloud node endpoint has been provided
+      const ollamaClient = cloudOllamaUrl 
+        ? new Ollama({ host: targetUrl, headers: Object.keys(headers).length ? headers : undefined })
+        : ollama;
+
+      const response = await ollamaClient.chat({
+        model: model, // Passes the exact string intact from your custom tags database (e.g., 'gemma4:31b')
         messages: messages,
         stream: false
       });
@@ -95,5 +118,3 @@ if (process.env.NODE_ENV !== 'production') {
     console.log(`🔗 Routing endpoint: http://localhost:${PORT}/.netlify/functions/api/chat-proxy`);
   });
 }
-
-
