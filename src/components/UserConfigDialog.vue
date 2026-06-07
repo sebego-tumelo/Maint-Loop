@@ -146,6 +146,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { db, type GlobalModel } from '../db';
+import { aiProviderService } from '../services/aiProviderService'; 
 
 const emit = defineEmits(['close']);
 
@@ -237,54 +238,41 @@ const selectAndCloseDropdown = (modelName: string) => {
   isModelDropdownOpen.value = false;
 };
 
-// --- PERSISTENCE WRITERS ---
+/**
+ * Registers an input string as a permanent option after validating it through the client service
+ */
 const registerCustomModelTag = async () => {
   const tag = searchQuery.value.trim();
   if (!tag) return;
 
   try {
-    // Gather matching database variables to send to our Express backend proxy
-    const endpointRecord = await db.secureConfig.get('ollama_endpoint');
-    const targetKeyConfig = selectedProvider.value === 'Ollama' ? 'ollama_api_key' : 'hf_api_key';
-    const keyRecord = await db.secureConfig.get(targetKeyConfig);
+    // 1. Delegate external connectivity to the client service abstraction layer
+    const result = await aiProviderService.validateModelTag(selectedProvider.value, tag);
 
-    // Let the backend handle the external validation network logic
-    const response = await fetch('/.netlify/functions/api/validate-model', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        provider: selectedProvider.value,
-        tag: tag,
-        apiKey: keyRecord?.value || '',
-        cloudOllamaUrl: endpointRecord?.value || ''
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.valid) {
-      alert(`❌ Verification failed: ${data.error || 'Model not found.'}`);
+    if (!result.valid) {
+      alert(`❌ Verification failed: ${result.error || 'Model tag does not exist.'}`);
       return;
     }
 
-    // --- SUCCESS: Commit validated model to local IndexedDB ---
+    // 2. Success: Generate entry token and store safely in IndexedDB local tables
     const prefix = selectedProvider.value === 'Ollama' ? 'ollama-' : 'hf-';
     const normalizedId = prefix + tag.toLowerCase().replace(/[^a-z0-9]/g, '-');
     
     const newModelEntry: GlobalModel = {
       id: normalizedId,
       name: tag,
-      isPinned: 1
+      isPinned: 1 // Automatically pin custom entries for ease of access [cite: 157]
     };
 
-    await db.globalModels.add(newModelEntry);
+    await db.globalModels.add(newModelEntry); 
     availableModels.value = await db.globalModels.toArray();
-    searchQuery.value = ''; 
-    isModelDropdownOpen.value = false;
-    
+    searchQuery.value = ''; // Reset input text [cite: 158]
+    isModelDropdownOpen.value = false; // Collapse view safely
+    console.log(`Successfully registered verified model tag: ${tag}`);
+
   } catch (err) {
-    console.error('Frontend validation network handler failed:', err);
-    alert('⚠️ System error occurred while routing the verification request.');
+    console.error('Failed to commit model entry:', err); 
+    alert('⚠️ An unexpected tracking error occurred during local record storage.');
   }
 };
 
