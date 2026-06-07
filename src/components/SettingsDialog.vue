@@ -102,7 +102,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { db, type GlobalModel } from '../db'; // Ensure relative path matches your directory setup
 
 const props = defineProps<{
   modelName: string;
@@ -116,6 +117,9 @@ const emit = defineEmits(['close', 'update:modelName', 'update:serviceProvider',
 // Track which menu container is dropped open
 const activeDropdown = ref<'service' | 'model' | null>(null);
 
+// Core state storage tracking active records retrieved from IndexedDB
+const persistentModels = ref<GlobalModel[]>([]);
+
 const toggleDropdown = (type: 'service' | 'model') => {
   if (activeDropdown.value === type) {
     activeDropdown.value = null;
@@ -128,11 +132,42 @@ const closeAllDropdowns = () => {
   activeDropdown.value = null;
 };
 
-const availableModels = computed(() => {
-  if (props.serviceProvider === 'Hugging Face') {
-    return ['Llama 3 8B Instruct', 'Mistral 7B v0.3', 'Phi-3 Medium'];
+// Refresh local memory tracking with custom or fallback seed options 
+const refreshModelInventory = async () => {
+  try {
+    const records = await db.globalModels.toArray();
+    persistentModels.value = records;
+  } catch (err) {
+    console.error('Failed to resolve database sequence models:', err);
   }
-  return ['Gemma 4 12B', 'DeepSeek R1 8B', 'Qwen 2.5 7B'];
+};
+
+onMounted(() => {
+  refreshModelInventory();
+});
+
+/**
+ * Filter inventory records down to items that are actively pinned AND match 
+ * the structure expected by the corresponding service provider selection.
+ */
+const availableModels = computed(() => {
+  // 1. Filter out only the pinned items from local storage
+  const pinnedItems = persistentModels.value.filter(m => m.isPinned === 1);
+  
+  // 2. Separate custom model tags based on naming pattern or system IDs
+  if (props.serviceProvider === 'Hugging Face') {
+    const hfItems = pinnedItems.filter(m => m.id?.startsWith('hf-') || m.id === 'meta-llama-3-8b-instruct');
+    if (hfItems.length > 0) return hfItems.map(m => m.name);
+    
+    // Fallbacks if no custom variants are pinned for the provider yet
+    return ['meta-llama/Meta-Llama-3-8B-Instruct', 'mistralai/Mistral-7B-Instruct-v0.3'];
+  } else {
+    // Ollama filtering logic
+    const ollamaItems = pinnedItems.filter(m => m.id?.startsWith('ollama-') || m.id === 'gemma4-31b' || m.id === 'deepseek-r1-8b' || m.id === 'qwen-2.5-7b');
+    if (ollamaItems.length > 0) return ollamaItems.map(m => m.name);
+    
+    return ['gemma4:31b', 'deepseek-r1:8b', 'qwen2.5:7b'];
+  }
 });
 
 const handleServiceChange = (value: string) => {
