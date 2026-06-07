@@ -242,22 +242,49 @@ const registerCustomModelTag = async () => {
   const tag = searchQuery.value.trim();
   if (!tag) return;
 
-  const prefix = selectedProvider.value === 'Ollama' ? 'ollama-' : 'hf-';
-  const normalizedId = prefix + tag.toLowerCase().replace(/[^a-z0-9]/g, '-');
-  
-  const newModelEntry: GlobalModel = {
-    id: normalizedId,
-    name: tag,
-    isPinned: 1
-  };
-
   try {
+    // Gather matching database variables to send to our Express backend proxy
+    const endpointRecord = await db.secureConfig.get('ollama_endpoint');
+    const targetKeyConfig = selectedProvider.value === 'Ollama' ? 'ollama_api_key' : 'hf_api_key';
+    const keyRecord = await db.secureConfig.get(targetKeyConfig);
+
+    // Let the backend handle the external validation network logic
+    const response = await fetch('/.netlify/functions/api/validate-model', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        provider: selectedProvider.value,
+        tag: tag,
+        apiKey: keyRecord?.value || '',
+        cloudOllamaUrl: endpointRecord?.value || ''
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.valid) {
+      alert(`❌ Verification failed: ${data.error || 'Model not found.'}`);
+      return;
+    }
+
+    // --- SUCCESS: Commit validated model to local IndexedDB ---
+    const prefix = selectedProvider.value === 'Ollama' ? 'ollama-' : 'hf-';
+    const normalizedId = prefix + tag.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    
+    const newModelEntry: GlobalModel = {
+      id: normalizedId,
+      name: tag,
+      isPinned: 1
+    };
+
     await db.globalModels.add(newModelEntry);
     availableModels.value = await db.globalModels.toArray();
     searchQuery.value = ''; 
     isModelDropdownOpen.value = false;
+    
   } catch (err) {
-    console.error('Failed to commit entry:', err);
+    console.error('Frontend validation network handler failed:', err);
+    alert('⚠️ System error occurred while routing the verification request.');
   }
 };
 
