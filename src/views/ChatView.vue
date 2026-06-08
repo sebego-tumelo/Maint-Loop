@@ -237,6 +237,7 @@ const sendMessage = async () => {
   
   const userText = inputMessage.value.trim();
   
+  // 1. If this is a brand new chat, initialize the session
   if (currentSessionId.value === null) {
     const newSessionId = await db.sessions.add({
       title: userText,
@@ -249,6 +250,7 @@ const sendMessage = async () => {
     topicTitle.value = userText;
   }
 
+  // 2. Build the new message object
   const userPayload: ChatMessage = {
     sessionId: currentSessionId.value!,
     sender: 'user',
@@ -256,6 +258,24 @@ const sendMessage = async () => {
     timestamp: Date.now()
   };
   
+  // 3. OPTIMISTIC PAYLOAD CONSTRUCTION
+  // Convert your current visible messages list to the API role format,
+  // and manually append the new user message. This bypasses the DB timing lag!
+  const optimizedHistory: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+    ...localMessages.value.map(m => ({
+      role: m.sender === 'user' ? ('user' as const) : ('assistant' as const),
+      content: m.text
+    })),
+    { role: 'user' as const, content: userText } // Enforces inclusion of current prompt
+  ];
+
+  // Prepend the baseline system instructions to the start of our memory payload
+  optimizedHistory.unshift({
+    role: 'system',
+    content: systemPrompt.value
+  });
+
+  // 4. Fire off IndexedDB write in the background and reset input string
   await db.messages.add(userPayload);
   inputMessage.value = '';
   subscribeToMessages(currentSessionId.value);
@@ -265,26 +285,14 @@ const sendMessage = async () => {
   scrollToBottom();
 
   try {
-    // 1. Structure message history arrays mapping properties to standard models
-    const messageHistoryPayload: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = localMessages.value.map(m => ({
-      role: m.sender === 'user' ? 'user' as const : 'assistant' as const,
-      content: m.text
-    }));
-
-    // 2. Prepend active custom baseline instructions to context payload arrays
-    messageHistoryPayload.unshift({
-      role: 'system',
-      content: systemPrompt.value
-    });
-
-    // 3. Request code processing block through standalone serverless proxy middleware configurations
+    // 5. Send our manually built history array down to your client service
     const aiTextReply = await aiProviderService.generateChatResponse(
       serviceProvider.value,
       modelName.value,
-      messageHistoryPayload
+      optimizedHistory // 🌟 Always contains the true current prompt
     );
 
-    // 4. Update core records once responses return successfully
+    // 6. Save the AI response back to your local IndexedDB
     if (currentSessionId.value !== null) {
       await db.messages.add({
         sessionId: currentSessionId.value!,
@@ -306,6 +314,7 @@ const sendMessage = async () => {
   } finally {
     isAiThinking.value = false;
     subscribeToMessages(currentSessionId.value);
+    scrollToBottom();
   }
 };
 
