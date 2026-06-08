@@ -86,7 +86,7 @@
             msg.sender === 'ai' ? 'self-start rounded-tl-none bg-white text-[#111111]' : 'self-end rounded-tr-none bg-[#111111] text-white shadow-[2px_2px_0_0_#000]'
           ]"
         >
-          <p class="whitespace-pre-wrap">{{ msg.text }}</p>
+          <p class="whitespace-pre-wrap" v-html="formatMarkdown(msg.text)"></p>
         </div>
 
         <div v-if="isAiThinking" class="self-start rounded-[20px] rounded-tl-none border-[1.5px] border-[#111111] bg-white p-3.5 text-xs font-semibold animate-pulse">
@@ -131,6 +131,8 @@ import SideMenu from '../components/SideMenu.vue';
 import SettingsDialog from '../components/SettingsDialog.vue';
 import UserConfigDialog from '../components/UserConfigDialog.vue';
 
+import { marked } from 'marked';
+
 const isOnline = useOnline();
 const inputMessage = ref('');
 const chatContainer = ref<HTMLElement | null>(null);
@@ -150,6 +152,26 @@ const localMessages = ref<ChatMessage[]>([]);
 // Operational validation and state elements
 const hasMissingApiKey = ref(false);
 const isAiThinking = ref(false);
+
+// Configure marked options to parse clean layout breaks cleanly
+marked.setOptions({
+  gfm: true,        // Enable GitHub Flavored Markdown (tables, lists, etc.)
+  breaks: true      // Convert line-breaks (\n) automatically to <br> tags
+});
+
+/**
+ * Transforms raw markdown strings into structured HTML blocks safely
+ */
+const formatMarkdown = (rawText: string): string => {
+  if (!rawText) return '';
+  try {
+    // Computes and returns structural markup strings
+    return marked.parse(rawText) as string;
+  } catch (error) {
+    console.error('Markdown rendering engine failed:', error);
+    return rawText; // Fallback to raw text if parsing fails
+  }
+};
 
 /**
  * Validates database contents to guarantee active providers hold valid keys

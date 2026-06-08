@@ -18,11 +18,13 @@
   },
   "dependencies": {
     "@huggingface/inference": "^4.13.18",
+    "@types/marked": "^5.0.2",
     "@vueuse/core": "^14.3.0",
     "@vueuse/rxjs": "^14.3.0",
     "cors": "^2.8.6",
     "dexie": "^4.4.3",
     "express": "^5.2.1",
+    "marked": "^18.0.5",
     "ollama": "^0.6.3",
     "pinia": "^3.0.4",
     "rxjs": "^7.8.2",
