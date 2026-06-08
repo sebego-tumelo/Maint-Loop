@@ -350,4 +350,24 @@ onMounted(() => {
   transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 .slide-menu-enter-from, .slide-menu-leave-to { opacity: 0; }
+
+/* Ensure parsed HTML elements inside the chat bubble look correct */
+:deep(p:last-child) {
+  margin-bottom: 0;
+}
+:deep(strong) {
+  font-weight: 700;
+  color: #111111;
+}
+:deep(ul) {
+  list-style-type: disc;
+  margin-left: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+:deep(ol) {
+  list-style-type: decimal;
+  margin-left: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
 </style>

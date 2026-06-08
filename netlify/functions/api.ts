@@ -102,31 +102,42 @@ router.post('/chat-proxy', async (req: Request, res: Response): Promise<void> =>
   try {
     const { provider, model, messages, apiKey, cloudOllamaUrl } = req.body;
 
+    // Set essential HTTP streaming headers for Server-Sent Events (SSE)
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders(); // Establish instant network link line connection
+
     console.log('Received chat-proxy request with provider:', provider, 'model:', model);
     
     // --- HUGGING FACE INTELLIGENCE PIPELINE ---
     if (provider === 'Hugging Face') {
       if (!apiKey) {
         res.status(400).json({ error: 'Missing Hugging Face authentication token.' });
+        res.write(`data: ${JSON.stringify({ error: 'Missing HF Token' })}\n\n`);
+        res.end();
         return;
       }
 
       const hf = new HfInference(apiKey);
       const promptText = messages.map((m: any) => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n') + '\n\nASSISTANT:';
 
-      const response = await hf.textGeneration({
+      for await (const chunk of hf.textGenerationStream({
         model: model || 'meta-llama/Meta-Llama-3-8B-Instruct',
         inputs: promptText,
         parameters: { max_new_tokens: 512, return_full_text: false }
-      });
+      })) {
+        const textChunk = chunk.token?.text || '';
+        res.write(`data: ${JSON.stringify({ text: textChunk })}\n\n`);
+      }
 
-      res.status(200).json({ text: response.generated_text?.trim() || '' });
+      res.write('data: [DONE]\n\n');
+      res.end();
       return;
     }
 
     // --- OLLAMA CLOUD INFRASTRUCTURE PIPELINE ---
     if (provider === 'Ollama') {
-      console.log('Forwarding inference execution target to model tag:', model);
       
       // Fall back to a safe placeholder if no endpoint link was provided in the database settings
       const targetUrl = cloudOllamaUrl || 'https://your-cloud-ollama-node.com';
@@ -146,17 +157,27 @@ router.post('/chat-proxy', async (req: Request, res: Response): Promise<void> =>
       const response = await ollamaClient.chat({
         model: model, // Passes the exact string intact from your custom tags database (e.g., 'gemma4:31b')
         messages: messages,
-        stream: false
+        stream: true // Enable streaming for real-time response flow
       });
 
-      res.status(200).json({ text: response.message?.content || '' });
+      // Loop over incoming stream tokens and write directly to the open client link
+      for await (const chunk of responseStream) {
+        const textChunk = chunk.message?.content || '';
+        if (textChunk) {
+          res.write(`data: ${JSON.stringify({ text: textChunk })}\n\n`);
+        }
+      }
+      
+      res.write('data: [DONE]\n\n');
+      res.end();
       return;
     }
 
     res.status(400).json({ error: 'Unsupported AI service provider engine context.' });
   } catch (error: any) {
-    console.error('Express Engine Error:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Express Streaming Engine Error:', error);
+    res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+    res.end();
   }
 });
 
