@@ -319,6 +319,11 @@ const sendMessage = async () => {
       modelName.value,
       optimizedHistory,
       (token: string) => {
+
+        if (isAiThinking.value) {
+          isAiThinking.value = false;
+        }
+        
         // This callback triggers instantly for EVERY word/character generated
         accumulatedText += token;
 
