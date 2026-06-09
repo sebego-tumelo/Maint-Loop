@@ -86,7 +86,7 @@
             msg.sender === 'ai' ? 'self-start rounded-tl-none bg-white text-[#111111]' : 'self-end rounded-tr-none bg-[#111111] text-white shadow-[2px_2px_0_0_#000]'
           ]"
         >
-          <p class="whitespace-pre-wrap" v-html="formatMarkdown(msg.text)"></p>
+          <p class="" v-html="formatMarkdown(msg.text)"></p>
         </div>
 
         <div v-if="isAiThinking" class="self-start rounded-[20px] rounded-tl-none border-[1.5px] border-[#111111] bg-white p-3.5 text-xs font-semibold animate-pulse">
@@ -259,7 +259,7 @@ const sendMessage = async () => {
   
   const userText = inputMessage.value.trim();
   
-  // 1. If this is a brand new chat, initialize the session
+  // 1. Initialize session if this is a brand new chat
   if (currentSessionId.value === null) {
     const newSessionId = await db.sessions.add({
       title: userText,
@@ -272,70 +272,87 @@ const sendMessage = async () => {
     topicTitle.value = userText;
   }
 
-  // 2. Build the new message object
+  // 2. Structure the new user message object
   const userPayload: ChatMessage = {
     sessionId: currentSessionId.value!,
     sender: 'user',
     text: userText,
     timestamp: Date.now()
   };
-  
+
   // 3. OPTIMISTIC PAYLOAD CONSTRUCTION
-  // Convert your current visible messages list to the API role format,
-  // and manually append the new user message. This bypasses the DB timing lag!
+  // Map your existing array to the API format and append the userText manually
   const optimizedHistory: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+    { role: 'system' as const, content: systemPrompt.value },
     ...localMessages.value.map(m => ({
       role: m.sender === 'user' ? ('user' as const) : ('assistant' as const),
       content: m.text
     })),
-    { role: 'user' as const, content: userText } // Enforces inclusion of current prompt
+    { role: 'user' as const, content: userText }
   ];
 
-  // Prepend the baseline system instructions to the start of our memory payload
-  optimizedHistory.unshift({
-    role: 'system',
-    content: systemPrompt.value
-  });
-
-  // 4. Fire off IndexedDB write in the background and reset input string
+  // 4. Save user message to IndexedDB and sync input values
   await db.messages.add(userPayload);
   inputMessage.value = '';
-  subscribeToMessages(currentSessionId.value);
   
+  // Instantly force-push user payload to localMessages so it renders immediately
+  localMessages.value.push(userPayload);
+
   // Set UI operational processing flags
   isAiThinking.value = true;
   scrollToBottom();
 
+  // 5. Create an explicit placeholder in localMessages for the incoming AI stream
+  const aiPlaceholderIndex = localMessages.value.push({
+    sessionId: currentSessionId.value!,
+    sender: 'ai',
+    text: '', // Starts completely blank
+    timestamp: Date.now()
+  }) - 1; // Capture array index location to update it directly below
+
   try {
-    // 5. Send our manually built history array down to your client service
-    const aiTextReply = await aiProviderService.generateChatResponse(
+    let accumulatedText = '';
+
+    // 6. Request streaming loop directly through client services
+    await aiProviderService.generateChatResponse(
       serviceProvider.value,
       modelName.value,
-      optimizedHistory // 🌟 Always contains the true current prompt
+      optimizedHistory,
+      (token: string) => {
+        // This callback triggers instantly for EVERY word/character generated
+        accumulatedText += token;
+
+        // 🌟 DIRECT UI UPDATE: Update the placeholder text inside localMessages
+        localMessages.value[aiPlaceholderIndex]!.text = accumulatedText;
+        
+        scrollToBottom();
+      }
     );
 
-    // 6. Save the AI response back to your local IndexedDB
-    if (currentSessionId.value !== null) {
-      await db.messages.add({
-        sessionId: currentSessionId.value!,
-        sender: 'ai',
-        text: aiTextReply,
-        timestamp: Date.now()
-      });
-    }
+    // 7. STREAM COMPLETE: Write the finalized full text to your offline database
+    await db.messages.add({
+      sessionId: currentSessionId.value!,
+      sender: 'ai',
+      text: accumulatedText,
+      timestamp: Date.now()
+    });
+
   } catch (error: any) {
-    console.error('Inference error encountered:', error);
-    if (currentSessionId.value !== null) {
-      await db.messages.add({
-        sessionId: currentSessionId.value!,
-        sender: 'ai',
-        text: `❌ Gateway Error: ${error.message || 'Failed to capture serverless proxy payload. Make sure your Express server is running on Port 5000.'}`,
-        timestamp: Date.now()
-      });
-    }
+    console.error('Inference streaming error encountered:', error);
+    const errorText = `❌ Gateway Error: ${error.message || 'Stream interrupted.'}`;
+    
+    // Update local UI state to reflect the network failure
+    localMessages.value[aiPlaceholderIndex]!.text = errorText;
+
+    await db.messages.add({
+      sessionId: currentSessionId.value!,
+      sender: 'ai',
+      text: errorText,
+      timestamp: Date.now()
+    });
   } finally {
     isAiThinking.value = false;
-    subscribeToMessages(currentSessionId.value);
+    subscribeToMessages(currentSessionId.value); // Re-sync local state smoothly with DB rows
     scrollToBottom();
   }
 };

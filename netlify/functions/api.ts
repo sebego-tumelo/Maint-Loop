@@ -19,7 +19,7 @@ const getAllowedOrigin = (requestOrigin: string | undefined): string => {
 };
 
 app.use(cors((req, callback) => {
-  const incomingOrigin = req.header('Origin');
+  const incomingOrigin = req.headers.origin as string | undefined;
   callback(null, {
     origin: getAllowedOrigin(incomingOrigin),
     credentials: true,
@@ -32,7 +32,7 @@ app.use(express.json());
 
 // Dynamic options preflight wildcard catcher to resolve CORS checks safely across paths
 app.options('/*path', cors((req, callback) => {
-  const incomingOrigin = req.header('Origin');
+  const incomingOrigin = req.headers.origin as string | undefined;
   callback(null, { 
     origin: getAllowedOrigin(incomingOrigin), 
     credentials: true 
@@ -154,7 +154,7 @@ router.post('/chat-proxy', async (req: Request, res: Response): Promise<void> =>
         ? new Ollama({ host: targetUrl, headers: Object.keys(headers).length ? headers : undefined })
         : ollama;
 
-      const response = await ollamaClient.chat({
+      const responseStream = await ollamaClient.chat({
         model: model, // Passes the exact string intact from your custom tags database (e.g., 'gemma4:31b')
         messages: messages,
         stream: true // Enable streaming for real-time response flow
@@ -195,3 +195,5 @@ if (process.env.NODE_ENV !== 'production') {
     console.log(`🔗 Routing endpoint: http://localhost:${PORT}/.netlify/functions/api/chat-proxy`);
   });
 }
+
+//npx tsx netlify/functions/api.ts
