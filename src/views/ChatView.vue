@@ -78,16 +78,18 @@
           </p>
         </div>
 
-        <div 
-          v-for="msg in localMessages" 
-          :key="msg.id"
-          :class="[
-            'max-w-[85%] rounded-[20px] border-[1.5px] border-[#111111] p-3.5 text-[0.9rem] leading-relaxed break-words',
-            msg.sender === 'ai' ? 'self-start rounded-tl-none bg-white text-[#111111]' : 'self-end rounded-tr-none bg-[#111111] text-white shadow-[2px_2px_0_0_#000]'
-          ]"
-        >
-          <p class="" v-html="formatMarkdown(msg.text)"></p>
-        </div>
+        <div v-for="message in localMessages" :key="message.id" :class="['max-w-[85%] rounded-[20px] border-[1.5px] border-[#111111] p-3.5 text-[0.9rem] leading-relaxed break-words', message.sender === 'ai' ? 'self-start rounded-tl-none bg-white text-[#111111]' : 'self-end rounded-tr-none bg-[#111111] text-white shadow-[2px_2px_0_0_#000]']">
+  <div :class="[]">
+    
+    <div v-if="message.text === 'Thinking...'" class="flex items-center gap-1 text-gray-500 italic">
+      <span>Thinking</span>
+      <span class="animate-pulse">...</span>
+    </div>
+    
+    <div v-else v-html="formatMarkdown(message.text)"></div>
+
+  </div>
+</div>
 
         <div v-if="isAiThinking" class="self-start rounded-[20px] rounded-tl-none border-[1.5px] border-[#111111] bg-white p-3.5 text-xs font-semibold animate-pulse">
           ⚡ Thinking...
@@ -259,7 +261,7 @@ const sendMessage = async () => {
   
   const userText = inputMessage.value.trim();
   
-  // 1. Initialize session if this is a brand new chat
+  // 1. Initialize session if this is a brand new chat session
   if (currentSessionId.value === null) {
     const newSessionId = await db.sessions.add({
       title: userText,
@@ -269,7 +271,7 @@ const sendMessage = async () => {
       systemPrompt: systemPrompt.value
     });
     currentSessionId.value = newSessionId;
-    topicTitle.value = userText;
+    topicTitle.value = userText; 
   }
 
   // 2. Structure the new user message object
@@ -281,7 +283,7 @@ const sendMessage = async () => {
   };
 
   // 3. OPTIMISTIC PAYLOAD CONSTRUCTION
-  // Map your existing array to the API format and append the userText manually
+  // Map your existing reactive localMessages array safely to the backend's expected API format
   const optimizedHistory: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
     { role: 'system' as const, content: systemPrompt.value },
     ...localMessages.value.map(m => ({
@@ -291,74 +293,78 @@ const sendMessage = async () => {
     { role: 'user' as const, content: userText }
   ];
 
-  // 4. Save user message to IndexedDB and sync input values
-  await db.messages.add(userPayload);
-  inputMessage.value = '';
+  // 4. Save user message to IndexedDB and sync local input values
+  await db.messages.add(userPayload); 
+  inputMessage.value = ''; 
   
   // Instantly force-push user payload to localMessages so it renders immediately
-  localMessages.value.push(userPayload);
+  localMessages.value.push(userPayload); 
 
-  // Set UI operational processing flags
-  isAiThinking.value = true;
-  scrollToBottom();
-
-  // 5. Create an explicit placeholder in localMessages for the incoming AI stream
-  const aiPlaceholderIndex = localMessages.value.push({
+  // 5. SINGLE BUBBLE METHOD: Create the placeholder message object for the AI
+  // We initialize the text with 'Thinking...' directly instead of leaving it blank.
+  const streamingAiMessage = {
     sessionId: currentSessionId.value!,
-    sender: 'ai',
-    text: '', // Starts completely blank
+    sender: 'ai' as const,
+    text: 'Thinking...', 
     timestamp: Date.now()
-  }) - 1; // Capture array index location to update it directly below
+  };
+
+  // Push this single AI container directly onto your localMessages layout array
+  localMessages.value.push(streamingAiMessage);
+  scrollToBottom(); 
 
   try {
     let accumulatedText = '';
+    let isFirstToken = true;
 
     // 6. Request streaming loop directly through client services
     await aiProviderService.generateChatResponse(
-      serviceProvider.value,
+      serviceProvider.value, 
       modelName.value,
       optimizedHistory,
       (token: string) => {
-
-        if (isAiThinking.value) {
-          isAiThinking.value = false;
+        // The very split-second the first token arrives, clear 'Thinking...' placeholder
+        if (isFirstToken) {
+          streamingAiMessage.text = '';
+          isFirstToken = false;
         }
-        
-        // This callback triggers instantly for EVERY word/character generated
-        accumulatedText += token;
 
-        // 🌟 DIRECT UI UPDATE: Update the placeholder text inside localMessages
-        localMessages.value[aiPlaceholderIndex]!.text = accumulatedText;
+        accumulatedText += token; 
+
+        // 🌟 DIRECT UI UPDATE: Stream the text directly into our single object reference.
+        // This removes TypeScript's plugin(2532) bracket index warnings completely!
+        streamingAiMessage.text = accumulatedText;
         
-        scrollToBottom();
+        scrollToBottom(); 
       }
     );
 
-    // 7. STREAM COMPLETE: Write the finalized full text to your offline database
+    // 7. STREAM COMPLETE: Write the finalized full text to your offline database 
     await db.messages.add({
-      sessionId: currentSessionId.value!,
-      sender: 'ai',
-      text: accumulatedText,
-      timestamp: Date.now()
+      sessionId: currentSessionId.value!, 
+      sender: 'ai', 
+      text: accumulatedText, 
+      timestamp: Date.now() 
     });
 
   } catch (error: any) {
     console.error('Inference streaming error encountered:', error);
-    const errorText = `❌ Gateway Error: ${error.message || 'Stream interrupted.'}`;
+    const errorText = `❌ Gateway Error: ${error.message || 'Stream interrupted.'}`; 
     
-    // Update local UI state to reflect the network failure
-    localMessages.value[aiPlaceholderIndex]!.text = errorText;
+    // Fall back gracefully by writing error notification to our single bubble
+    streamingAiMessage.text = errorText;
 
     await db.messages.add({
-      sessionId: currentSessionId.value!,
+      sessionId: currentSessionId.value!, 
       sender: 'ai',
       text: errorText,
       timestamp: Date.now()
     });
   } finally {
+    // Drop execution flags, cleanly re-sync IndexedDB state records, and push layout down
     isAiThinking.value = false;
-    subscribeToMessages(currentSessionId.value); // Re-sync local state smoothly with DB rows
-    scrollToBottom();
+    subscribeToMessages(currentSessionId.value); 
+    scrollToBottom(); 
   }
 };
 
