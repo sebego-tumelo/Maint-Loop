@@ -256,7 +256,8 @@ const subscribeToMessages = (sessionId: number | null) => {
 
 const startNewChat = () => {
   currentSessionId.value = null;
-  modelName.value = serviceProvider.value === 'Ollama' ? 'gemma4:31b' : 'meta-llama/Meta-Llama-3-8B-Instruct';
+  serviceProvider.value = 'Ollama';
+  modelName.value = 'gemma4:31b';
   serviceProvider.value = 'Ollama';
   systemPrompt.value = 'You are a helpful local AI assistant. Be concise and accurate.';
   subscribeToMessages(null);
