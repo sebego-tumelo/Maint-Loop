@@ -39,6 +39,18 @@
       >
         Working Offline
       </div>
+      <div 
+        v-else-if="needRefresh" 
+        class="bg-[#E75A24] text-white text-center text-xs py-1 font-semibold border-b-[1.5px] border-[#111111] tracking-wide z-10"
+      >
+        🚀 A new update is available for localChat
+        <button 
+          @click="refreshApp" 
+          class="bg-white text-amber-600 px-3 py-1 rounded-md text-xs font-bold hover:bg-gray-100 transition shadow-sm"
+        >
+          Update Now
+        </button>
+      </div>
 
       <header class="flex items-center justify-between border-b-[1.5px] border-[#111111] bg-[#FAF6F0] px-4 py-5 flex-shrink-0">
         <button 
