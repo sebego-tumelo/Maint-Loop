@@ -164,9 +164,10 @@ const availableModels = computed(() => {
   } else {
     // Ollama filtering logic
     const ollamaItems = pinnedItems.filter(m => m.id?.startsWith('ollama-') || m.id === 'gemma4-31b' || m.id === 'deepseek-r1-8b' || m.id === 'qwen-2.5-7b');
+    console.log('Filtered Ollama Models:', ollamaItems);
     if (ollamaItems.length > 0) return ollamaItems.map(m => m.name);
     
-    return ['gemma4:31b', 'deepseek-r1:8b', 'qwen2.5:7b'];
+    return [];
   }
 });
 
@@ -175,7 +176,7 @@ const handleServiceChange = (value: string) => {
   if (value === 'Hugging Face') {
     emit('update:modelName', 'Llama 3 8B Instruct');
   } else {
-    emit('update:modelName', 'Gemma 4 12B');
+    emit('update:modelName', 'gemma4-31b');
   }
   closeAllDropdowns();
 };

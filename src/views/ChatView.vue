@@ -144,7 +144,7 @@ const isSettingsOpen = ref(false);
 const isUserConfigOpen = ref(false);
 
 const topicTitle = ref('New Chat');
-const modelName = ref('Gemma 4 12B');
+const modelName = ref('gemma4:31b');
 const serviceProvider = ref('Ollama');
 const systemPrompt = ref('You are a helpful local AI assistant. Be concise and accurate.');
 
@@ -228,7 +228,7 @@ const subscribeToMessages = (sessionId: number | null) => {
 
 const startNewChat = () => {
   currentSessionId.value = null;
-  modelName.value = 'Gemma 4 12B';
+  modelName.value = modelName.value;
   serviceProvider.value = 'Ollama';
   systemPrompt.value = 'You are a helpful local AI assistant. Be concise and accurate.';
   subscribeToMessages(null);
