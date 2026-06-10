@@ -59,7 +59,7 @@
           <!-- Custom Trigger Button -->
           <button 
             type="button"
-            :disabled="isLocked"
+            :disabled="isLocked || availableModels.length === 0"
             @click.stop="toggleDropdown('model')"
             class="w-full flex items-center justify-between p-2.5 px-3.5 border-[1.5px] border-[#111111] bg-white text-[#111111] font-semibold rounded-xl text-sm outline-none transition-all text-left disabled:bg-[#E6DFD3] disabled:text-gray-500 disabled:cursor-not-allowed"
             :class="{ 'shadow-[2px_2px_0_0_#111111] bg-[#FAFFA0]/10': activeDropdown === 'model' }"
