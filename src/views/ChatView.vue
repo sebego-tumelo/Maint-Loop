@@ -84,7 +84,7 @@
 
       <main ref="chatContainer" class="flex-1 flex flex-col overflow-y-auto bg-[#FAF6F0] p-4 space-y-4">
         <div v-if="localMessages.length === 0" class="rounded-[20px] border-[1.5px] border-[#111111] bg-[#E6DFD3] p-5">
-          <h1 class="mb-2 text-2xl font-semibold leading-tight">How can I assist you today? ⚡</h1>
+          <h1 class="mb-2 text-2xl font-semibold leading-tight">How can I assist you today?</h1>
           <p class="text-[0.85rem] leading-relaxed text-gray-800">
             I am your cloud-powered AI assistant, ready to process requests through verified serverless gateways.
           </p>
