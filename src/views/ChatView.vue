@@ -18,6 +18,7 @@
         v-model:model-name="modelName"
         v-model:service-provider="serviceProvider"
         v-model:system-prompt="systemPrompt"
+        v-model:no-api-key="hasMissingApiKey"
         :is-locked="localMessages.length > 0"
         @close="isSettingsOpen = false"
       />
@@ -255,7 +256,7 @@ const subscribeToMessages = (sessionId: number | null) => {
 
 const startNewChat = () => {
   currentSessionId.value = null;
-  modelName.value = modelName.value;
+  modelName.value = serviceProvider.value === 'Ollama' ? 'gemma4:31b' : 'meta-llama/Meta-Llama-3-8B-Instruct';
   serviceProvider.value = 'Ollama';
   systemPrompt.value = 'You are a helpful local AI assistant. Be concise and accurate.';
   subscribeToMessages(null);
