@@ -135,6 +135,21 @@ import UserConfigDialog from '../components/UserConfigDialog.vue';
 
 import { marked } from 'marked';
 
+// 🌟 Import the direct Vite PWA state tracking hook
+import { useRegisterSW } from 'virtual:pwa-register/vue';
+
+// needRefresh turns TRUE the split-second Netlify finishes deploying newer code
+// updateServiceWorker() is a built-in function that safely handles the SKIP_WAITING lifecycle
+const { needRefresh, updateServiceWorker } = useRegisterSW();
+
+/**
+ * Triggers when the user confirms they want the latest changes.
+ * This reloads the mobile browser and boots into the new app code cleanly.
+ */
+const refreshApp = () => {
+  updateServiceWorker(true);
+};
+
 const isOnline = useOnline();
 const inputMessage = ref('');
 const chatContainer = ref<HTMLElement | null>(null);
