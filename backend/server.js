@@ -99,12 +99,14 @@ async function runAgentOrchestrator(userInstruction) {
     const response = await fetch('https://ollama.com/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OLLAMA_API_KEY}` },
-      body: JSON.stringify({ model: 'gemma4:3b', messages: messages, tools: toolDefinitions, stream: false })
+      body: JSON.stringify({ model: 'gemma4:31b', messages: messages, tools: toolDefinitions, stream: false })
     });
 
     const data = await response.json();
     const assistantMessage = data.message;
     messages.push(assistantMessage);
+
+    // console.log(`[Agent Loop ${loopsRun}]: ${data.error}`);
 
     // Check if the AI model wants to use a tool arms mechanism
     if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
