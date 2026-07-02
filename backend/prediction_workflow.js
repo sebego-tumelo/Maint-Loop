@@ -123,9 +123,23 @@ export const predictionToolsList = [
     description: 'Computes the 10 high-level synthesized metrics from the live daily_lotto.txt database file, including historical delta trend averages, frequencies, positions, and curve splits.',
     parameters: { type: 'object', properties: {} }, 
     execute: async () => {
-      const statsObj = calculateTenLottoFeatures();
-      // CRITICAL FIX: Explicitly serialize the object to a text string for the agent context
-      return JSON.stringify(statsObj);
+      try {
+        console.log("🛠️ [Backend Tool Script]: Running mathematical feature extraction...");
+        const statsObj = calculateTenLottoFeatures();
+        
+        // If the feature calculator returned an error object, log it
+        if (statsObj.error) {
+          console.error(`❌ [Backend Tool Script Error]: ${statsObj.error}`);
+          return { result: `Error calculating features: ${statsObj.error}` };
+        }
+
+        console.log("✅ [Backend Tool Script]: Calculations complete. Sending data back to Gemma.");
+        // Return a clean text block inside an object wrapper
+        return { result: JSON.stringify(statsObj) };
+      } catch (err) {
+        console.error("❌ [Backend Tool Script Fatal Error]:", err);
+        return { result: `Fatal tool execution error: ${err.message}` };
+      }
     }
   }
 ];
