@@ -1,151 +1,92 @@
+// server.js
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import { Agent } from '@mariozechner/pi-agent-core';
+import { streamSimple } from '@mariozechner/pi-ai';
+
+// Import our newly separated lottery workflow engine
+import { predictionToolsList, lotterySystemInstruction } from './prediction_workflow.js';
 
 dotenv.config();
 const app = express();
 app.use(express.json());
 
-// Dynamic schema that can accept any shape of object data saved by the agent
-const DataLogSchema = new mongoose.Schema({
-  collectionName: String,
-  payload: mongoose.Schema.Types.Mixed,
-  timestamp: { type: Date, default: Date.now }
-});
-const DataLog = mongoose.model('DataLog', DataLogSchema);
-
 // ==========================================
-// 1. THE ARMS (Abstract Tools Definitions)
+// GEMMA 4 CLOUD MODEL REFERENCE BLOCK
 // ==========================================
-const toolDefinitions = [
-  {
-    type: 'function',
-    function: {
-      name: 'fetch_external_api',
-      description: 'Fetch raw data from any public HTTP API endpoint URL.',
-      parameters: {
-        type: 'object',
-        properties: { url: { type: 'string', description: 'The complete endpoint URL string' } },
-        required: ['url']
-      }
-    }
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'write_to_database',
-      description: 'Store or update data records inside the database repository.',
-      parameters: {
-        type: 'object',
-        properties: {
-          targetCollection: { type: 'string', description: 'Name classification of the data' },
-          dataObject: { type: 'object', description: 'The JSON payload dictionary to store' }
-        },
-        required: ['targetCollection', 'dataObject']
-      }
-    }
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'read_latest_database_entry',
-      description: 'Query the most recent record matching a collection identifier to check for sync status.',
-      parameters: {
-        type: 'object',
-        properties: { targetCollection: { type: 'string' } },
-        required: ['targetCollection']
-      }
-    }
-  }
-];
-
-// The actual code execution map matching the tool definitions
-const executeTool = {
-  fetch_external_api: async (args) => {
-    console.log(`Executing Tool [fetch_external_api] for: ${args.url}`);
-    const res = await fetch(args.url);
-    return await res.text();
-  },
-  write_to_database: async (args) => {
-    console.log(`Executing Tool [write_to_database] under classification: ${args.targetCollection}`);
-    const newRecord = new DataLog({ collectionName: args.targetCollection, payload: args.dataObject });
-    await newRecord.save();
-    return JSON.stringify({ success: true, message: "Record successfully committed to Atlas." });
-  },
-  read_latest_database_entry: async (args) => {
-    console.log(`Executing Tool [read_latest_database_entry] for: ${args.targetCollection}`);
-    const latest = await DataLog.findOne({ collectionName: args.targetCollection }).sort({ timestamp: -1 });
-    return latest ? JSON.stringify(latest.payload) : JSON.stringify({ message: "No records found." });
-  }
+const gemmaCloudModel = {
+  id: process.env.OLLAMA_MODEL || 'gemma4:31b', // Updated to gemma4:31b
+  name: 'Gemma 4 Cloud Engine',
+  api: 'openai-completions',
+  provider: 'ollama-cloud',
+  baseUrl: 'https://ollama.com/v1',
+  reasoning: true, // Native reasoning capabilities enabled
+  input: ['text'],
+  cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+  contextWindow: 256000, // Explicitly taking advantage of the large 256k window
+  maxTokens: 8192,
 };
 
 // ==========================================
-// 2. THE DECISION EXECUTION LOOP (The Engine)
+// AGENT ORCHESTRATOR RUNTIME RUNNER
 // ==========================================
 async function runAgentOrchestrator(userInstruction) {
-  let messages = [
-    { role: 'system', content: 'You are an autonomous operations engineer. Execute tasks using available tools sequentially. If a task requires a tool you do not have, state clearly which tool is missing.' },
-    { role: 'user', content: userInstruction }
-  ];
+  console.log(`[Engine Activation]: Initializing Pi Agent loop for prompt: "${userInstruction}"`);
 
-  let loopActive = true;
-  let loopsRun = 0;
-  const MAX_LOOPS = 5; // Guardrail safety ceiling
-
-  while (loopActive && loopsRun < MAX_LOOPS) {
-    loopsRun++;
-    
-    // Call Ollama Cloud with both the conversational thread and the available tools list
-    const response = await fetch('https://ollama.com/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OLLAMA_API_KEY}` },
-      body: JSON.stringify({ model: 'gemma4:31b', messages: messages, tools: toolDefinitions, stream: false })
+  try {
+    const agent = new Agent({
+      initialState: {
+        model: gemmaCloudModel,
+        systemPrompt: lotterySystemInstruction, // Bound from our prediction_workflow module
+        tools: predictionToolsList,             // Bound from our prediction_workflow module
+        messages: [],
+      }
     });
 
-    const data = await response.json();
-    const assistantMessage = data.message;
-    messages.push(assistantMessage);
-
-    // console.log(`[Agent Loop ${loopsRun}]: ${data.error}`);
-
-    // Check if the AI model wants to use a tool arms mechanism
-    if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
-      for (const call of assistantMessage.tool_calls) {
-        const toolName = call.function.name;
-        const toolArgs = call.function.arguments;
-
-        if (executeTool[toolName]) {
-          try {
-            const toolResult = await executeTool[toolName](toolArgs);
-            // Feed the results back into the context conversation stream
-            messages.push({ role: 'tool', tool_name: toolName, content: toolResult });
-          } catch (err) {
-            messages.push({ role: 'tool', tool_name: toolName, content: `Tool Execution Error: ${err.message}` });
-          }
-        } else {
-          messages.push({ role: 'tool', tool_name: toolName, content: 'Error: Tool definition exists but runtime executor logic is missing.' });
+    agent.streamFn = (model, context, options) => {
+      return streamSimple(model, context, {
+        ...options,
+        apiKey: process.env.OLLAMA_API_KEY,
+        headers: {
+          'Authorization': `Bearer ${process.env.OLLAMA_API_KEY}`
         }
+      });
+    };
+
+    // Streaming operational telemetry to backend logs
+    agent.subscribe(async (event) => {
+      if (event.type === 'message_update') return;
+
+      console.log(`📡 [Pi Raw Event Stream]: Received type -> "${event.type}"`);
+      
+      if (event.type === 'tool_execution_start') {
+        console.log(`🔧 [Pi Tool Action]: Executing -> ${event.toolName}`);
       }
-    } else {
-      // No more tools called; the AI model has finished running your instructions
-      console.log(`[Final Agent Report]:\n${assistantMessage.content}`);
-      loopActive = false;
-    }
+      if (event.type === 'message_end') {
+        console.log(`📝 [Pi Turn Content/Reasoning Output]:`, event.message?.content);
+      }
+    });
+
+    console.log(`[Engine Activation]: Routing analytical pipeline to cloud provider...`);
+    await agent.prompt(userInstruction);
+    console.log(`[Engine Success]: Pi Agent prediction cycle finalized.`);
+
+  } catch (error) {
+    console.error('❌ CRITICAL: Pi Agent Core Error Stack:', error.stack);
   }
 }
 
 // ==========================================
-// 3. UNIVERSAL ENDPOINT
+// UNIVERSAL API ENDPOINT
 // ==========================================
 app.post('/run-instruction', (req, res) => {
   const instruction = req.body.instruction;
-  
-  res.status(200).json({ status: "accepted", message: "Instruction accepted. Agent processing started." });
-  
-  // Hand control over to the agent runtime engine completely
+  res.status(200).json({ status: 'accepted', message: 'Pi Agent processing started.' });
   runAgentOrchestrator(instruction);
 });
 
+// Database Connectivity Initialization Hook
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => app.listen(3000, () => console.log('Server running on port 3000')))
   .catch(err => console.error(err));
