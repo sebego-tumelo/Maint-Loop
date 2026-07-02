@@ -150,8 +150,8 @@ export const predictionToolsList = [
 
         console.log("✅ [Backend Tool Script]: Calculations complete. Sending data back to Gemma.");
         // Return a clean text block inside an object wrapper
-        console.log("📊 [Backend Tool Script Output]:", JSON.stringify(statsObj, null, 2));
-        return { result: JSON.stringify(statsObj) };
+        // CRITICAL FIX: Return the raw string directly to the agent runtime framework
+        return JSON.stringify(statsObj);
       } catch (err) {
         console.error("❌ [Backend Tool Script Fatal Error]:", err);
         return { result: `Fatal tool execution error: ${err.message}` };
