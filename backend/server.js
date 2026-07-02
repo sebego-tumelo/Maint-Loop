@@ -64,7 +64,14 @@ async function runAgentOrchestrator(userInstruction) {
         console.log(`🔧 [Pi Tool Action]: Executing -> ${event.toolName}`);
       }
       if (event.type === 'message_end') {
-        console.log(`📝 [Pi Turn Content/Reasoning Output]:`, event.message?.content);
+        // Safe unpack for message arrays or text payloads
+        const contentData = event.message?.content;
+        if (Array.isArray(contentData)) {
+          const textSegments = contentData.filter(c => c.type === 'text').map(c => c.text).join('\n');
+          console.log(`📝 [Pi Turn Content/Reasoning Output]:\n`, textSegments);
+        } else {
+          console.log(`📝 [Pi Turn Content/Reasoning Output]:`, contentData);
+        }
       }
     });
 
