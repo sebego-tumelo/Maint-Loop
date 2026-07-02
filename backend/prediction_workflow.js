@@ -123,8 +123,9 @@ export const predictionToolsList = [
     description: 'Computes the 10 high-level synthesized metrics from the live daily_lotto.txt database file, including historical delta trend averages, frequencies, positions, and curve splits.',
     parameters: { type: 'object', properties: {} }, 
     execute: async () => {
-      // Execute the native JS feature-extractor logic
-      return calculateTenLottoFeatures();
+      const statsObj = calculateTenLottoFeatures();
+      // CRITICAL FIX: Explicitly serialize the object to a text string for the agent context
+      return JSON.stringify(statsObj);
     }
   }
 ];
