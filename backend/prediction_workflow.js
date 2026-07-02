@@ -26,18 +26,34 @@ function calculateTenLottoFeatures() {
   try {
     const filePath = path.join(process.cwd(), 'daily_lotto.txt');
     
-    // Fallback boilerplate if the data file doesn't exist yet
     if (!fs.existsSync(filePath)) {
       return { error: "daily_lotto.txt file not found. Ingest historical records first." };
     }
 
     const fileContent = fs.readFileSync(filePath, 'utf-8');
-    const lines = fileContent.trim().split('\n').map(line => line.split(',').map(Number));
+    
+    const lines = fileContent.trim().split('\n')
+      .map(line => line.trim())
+      // Ignore header text rows if any exist
+      .filter(line => line.length > 0 && !line.startsWith('Date') && !line.startsWith('Past'))
+      .map(line => {
+        // Split by tabs or multiple spaces
+        const parts = line.split(/[\t\s]+/);
+        
+        // If the line starts with a date (YYYY-MM-DD), drop the first item
+        if (parts[0] && parts[0].includes('-')) {
+          parts.shift();
+        }
+        
+        // Convert remaining elements to numbers and filter out empty strings/NaNs
+        return parts.map(Number).filter(num => !isNaN(num) && num > 0);
+      })
+      // Ensure we only process lines that actually parsed out numbers
+      .filter(draw => draw.length > 0);
     
     const totalDraws = lines.length;
-    if (totalDraws === 0) return { error: "No historical records found." };
+    if (totalDraws === 0) return { error: "No historical records could be parsed properly." };
 
-    // Metric initializers
     const frequencies = {};
     const positionTotals = [{}, {}, {}, {}, {}];
     let totalGapsSum = 0;
@@ -46,8 +62,8 @@ function calculateTenLottoFeatures() {
     let sumTotalInCurve = 0;
     const lastDigits = {};
 
-    // Process all historical lines
     lines.forEach((draw) => {
+      // Sort numbers numerically to establish accurate positional data and gaps
       const sortedDraw = [...draw].sort((a, b) => a - b);
       let ticketSum = 0;
 
@@ -55,39 +71,38 @@ function calculateTenLottoFeatures() {
         const num = sortedDraw[i];
         ticketSum += num;
 
-        // 1 & 2. Frequencies & Positional Data
         frequencies[num] = (frequencies[num] || 0) + 1;
-        positionTotals[i][num] = (positionTotals[i][num] || 0) + 1;
+        
+        // Safely protect position index mapping for dynamically shaped inputs
+        if (positionTotals[i]) {
+          positionTotals[i][num] = (positionTotals[i][num] || 0) + 1;
+        }
 
-        // 7. Last Digit Frequency
         const lastDigit = num % 10;
         lastDigits[lastDigit] = (lastDigits[lastDigit] || 0) + 1;
 
-        // 3 & 4. Deltas and Consecutive Pairs
         if (i > 0) {
           const gap = sortedDraw[i] - sortedDraw[i - 1];
           totalGapsSum += gap;
-          positionalGaps[i - 1].push(gap);
+          if (positionalGaps[i - 1]) {
+            positionalGaps[i - 1].push(gap);
+          }
           if (gap === 1) consecutivePairsCount++;
         }
       }
 
-      // 6. Sum Total Distribution
       if (ticketSum >= 100 && ticketSum <= 175) sumTotalInCurve++;
     });
 
-    // Synthesize arrays (Top Hot / Bottom Cold)
     const sortedFreqs = Object.entries(frequencies).sort((a, b) => b[1] - a[1]).map(e => Number(e[0]));
     const hotNumbers = sortedFreqs.slice(0, 10);
     const coldNumbers = sortedFreqs.slice(-10);
 
-    // Calculate Averages for the Delta Spacing Tool Feature
     const avgDeltaGap = (totalGapsSum / (totalDraws * 4)).toFixed(2);
     const posDeltaAvgs = positionalGaps.map(gaps => 
-      (gaps.reduce((a, b) => a + b, 0) / gaps.length).toFixed(2)
+      gaps.length > 0 ? (gaps.reduce((a, b) => a + b, 0) / gaps.length).toFixed(2) : "0.00"
     );
 
-    // Return the completed 10-feature statistical payload
     return {
       total_records_analyzed: totalDraws,
       feature_1_frequency_tiers: { hot: hotNumbers, cold: coldNumbers },
@@ -135,6 +150,7 @@ export const predictionToolsList = [
 
         console.log("✅ [Backend Tool Script]: Calculations complete. Sending data back to Gemma.");
         // Return a clean text block inside an object wrapper
+        console.log("📊 [Backend Tool Script Output]:", JSON.stringify(statsObj, null, 2));
         return { result: JSON.stringify(statsObj) };
       } catch (err) {
         console.error("❌ [Backend Tool Script Fatal Error]:", err);
