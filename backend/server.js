@@ -16,7 +16,7 @@ app.use(express.json());
 // GEMMA 4 CLOUD MODEL REFERENCE BLOCK
 // ==========================================
 const gemmaCloudModel = {
-  id: process.env.OLLAMA_MODEL || 'gemma4:31b', // Updated to gemma4:31b
+  id: process.env.OLLAMA_MODEL || 'gemma4:31b',
   name: 'Gemma 4 Cloud Engine',
   api: 'openai-completions',
   provider: 'ollama-cloud',
@@ -24,7 +24,7 @@ const gemmaCloudModel = {
   reasoning: true, // Native reasoning capabilities enabled
   input: ['text'],
   cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-  contextWindow: 256000, // Explicitly taking advantage of the large 256k window
+  contextWindow: 256000,
   maxTokens: 8192,
 };
 
@@ -38,8 +38,8 @@ async function runAgentOrchestrator(userInstruction) {
     const agent = new Agent({
       initialState: {
         model: gemmaCloudModel,
-        systemPrompt: lotterySystemInstruction, // Bound from our prediction_workflow module
-        tools: predictionToolsList,             // Bound from our prediction_workflow module
+        systemPrompt: lotterySystemInstruction,
+        tools: predictionToolsList,
         messages: [],
       }
     });
@@ -53,28 +53,38 @@ async function runAgentOrchestrator(userInstruction) {
         }
       });
     };
-    
-    // Streaming operational telemetry to backend logs
+
+    // Keep active operational terminal streaming active
     agent.subscribe(async (event) => {
-      
       if (event.type === 'message_update') return;
-      
-      console.log(`🤖 [Pi Raw Event Stream]: type="${event.type}"`, JSON.stringify(event, null, 2));
-      // console.log(`📡 [Pi Raw Event Stream]: Received type -> "${event.type}"`);
+
+      console.log(`📡 [Pi Raw Event Stream]: Received type -> "${event.type}"`);
       
       if (event.type === 'tool_execution_start') {
         console.log(`🔧 [Pi Tool Action]: Executing -> ${event.toolName}`);
       }
-      if (event.type === 'message_end') {
-        // Safe unpack for message arrays or text payloads
-        const contentData = event.message?.content;
-        console.log('🔍 [finish/stop reason]:', event.message?.stopReason ?? 'NOT FOUND');
 
-        if (Array.isArray(contentData)) {
-          const textSegments = contentData.filter(c => c.type === 'text').map(c => c.text).join('\n');
-          console.log(`📝 [Pi Turn Content/Reasoning Output]:\n`, textSegments);
-        } else {
-          console.log(`📝 [Pi Turn Content/Reasoning Output]:`, contentData);
+      if (event.type === 'message_end' && event.message) {
+        const contentData = event.message.content;
+
+        // Print context if it's the model's turn to speak
+        if (event.message.role === 'assistant' && Array.isArray(contentData)) {
+          console.log(`\n================================================================`);
+          console.log(`🧠 [GEMMA 4 STRATEGIC ANALYSIS & REASONING PIPELINE]:`);
+          console.log(`================================================================`);
+
+          let finalResponseText = '';
+
+          contentData.forEach(block => {
+            // Log reasoning paths or text tokens output by the model
+            if (block.type === 'text') {
+              finalResponseText += block.text + '\n';
+            }
+          });
+
+          // Print the formatted response text (contains strategies and JSON)
+          console.log(finalResponseText.trim());
+          console.log(`================================================================\n`);
         }
       }
     });
