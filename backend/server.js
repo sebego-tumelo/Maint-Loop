@@ -34,6 +34,9 @@ const gemmaCloudModel = {
 async function runAgentOrchestrator(userInstruction) {
   console.log(`[Engine Activation]: Initializing Pi Agent loop for prompt: "${userInstruction}"`);
 
+  // Track the full textual stream produced across all agent turns
+  let finalResponseText = '';
+
   try {
     const agent = new Agent({
       initialState: {
@@ -73,7 +76,7 @@ async function runAgentOrchestrator(userInstruction) {
           console.log(`🧠 [GEMMA 4 STRATEGIC ANALYSIS & REASONING PIPELINE]:`);
           console.log(`================================================================`);
 
-          let finalResponseText = '';
+          
 
           contentData.forEach(block => {
             // Log reasoning paths or text tokens output by the model
@@ -85,6 +88,7 @@ async function runAgentOrchestrator(userInstruction) {
           // Print the formatted response text (contains strategies and JSON)
           console.log(finalResponseText.trim());
           console.log(`================================================================\n`);
+          
         }
       }
     });
@@ -92,6 +96,9 @@ async function runAgentOrchestrator(userInstruction) {
     console.log(`[Engine Activation]: Routing analytical pipeline to cloud provider...`);
     await agent.prompt(userInstruction);
     console.log(`[Engine Success]: Pi Agent prediction cycle finalized.`);
+
+    // Return the total textual reasoning and JSON payload back to the route handler
+    return accumulatedOutput.trim();
 
   } catch (error) {
     console.error('❌ CRITICAL: Pi Agent Core Error Stack:', error.stack);
