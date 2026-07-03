@@ -98,7 +98,7 @@ async function runAgentOrchestrator(userInstruction) {
     console.log(`[Engine Success]: Pi Agent prediction cycle finalized.`);
 
     // Return the total textual reasoning and JSON payload back to the route handler
-    return accumulatedOutput.trim();
+    return finalResponseText.trim();
 
   } catch (error) {
     console.error('❌ CRITICAL: Pi Agent Core Error Stack:', error.stack);
@@ -108,10 +108,28 @@ async function runAgentOrchestrator(userInstruction) {
 // ==========================================
 // UNIVERSAL API ENDPOINT
 // ==========================================
-app.post('/run-instruction', (req, res) => {
-  const instruction = req.body.instruction;
-  res.status(200).json({ status: 'accepted', message: 'Pi Agent processing started.' });
-  runAgentOrchestrator(instruction);
+app.post('/run-instruction', async (req, res) => {
+  try {
+    const instruction = req.body.instruction;
+    
+    if (!instruction) {
+      return res.status(400).json({ error: "Missing 'instruction' property in request body." });
+    }
+
+    // Await the complete generation cycle of consecutive reasoning phases + final ticket block
+    const resultPayload = await runAgentOrchestrator(instruction);
+
+    // Return the response as a clean plain text block containing markdown reasoning and the JSON ticket
+    res.setHeader('Content-Type', 'text/plain');
+    return res.status(200).send(resultPayload);
+
+  } catch (error) {
+    return res.status(500).json({ 
+      status: 'error', 
+      message: 'Failed to complete agent execution pipeline.',
+      details: error.message 
+    });
+  }
 });
 
 // Database Connectivity Initialization Hook
