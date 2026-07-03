@@ -53,12 +53,14 @@ async function runAgentOrchestrator(userInstruction) {
         }
       });
     };
-
+    
     // Streaming operational telemetry to backend logs
     agent.subscribe(async (event) => {
+      
       if (event.type === 'message_update') return;
-
-      console.log(`📡 [Pi Raw Event Stream]: Received type -> "${event.type}"`);
+      
+      console.log(`🤖 [Pi Raw Event Stream]: type="${event.type}"`, JSON.stringify(event, null, 2));
+      // console.log(`📡 [Pi Raw Event Stream]: Received type -> "${event.type}"`);
       
       if (event.type === 'tool_execution_start') {
         console.log(`🔧 [Pi Tool Action]: Executing -> ${event.toolName}`);
@@ -66,6 +68,8 @@ async function runAgentOrchestrator(userInstruction) {
       if (event.type === 'message_end') {
         // Safe unpack for message arrays or text payloads
         const contentData = event.message?.content;
+        console.log('🔍 [finish/stop reason]:', event.message?.stopReason ?? 'NOT FOUND');
+
         if (Array.isArray(contentData)) {
           const textSegments = contentData.filter(c => c.type === 'text').map(c => c.text).join('\n');
           console.log(`📝 [Pi Turn Content/Reasoning Output]:\n`, textSegments);

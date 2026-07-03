@@ -132,31 +132,47 @@ function calculateTenLottoFeatures() {
 /**
  * Pi Agent Core compatible tool definitions array
  */
+// Inside backend/prediction_workflow.js
+
 export const predictionToolsList = [
   {
     name: 'calculate_lotto_stats',
     description: 'Computes the 10 high-level synthesized metrics from the live daily_lotto.txt database file, including historical delta trend averages, frequencies, positions, and curve splits.',
     parameters: { type: 'object', properties: {} }, 
     execute: async () => {
-      return new Promise((resolve, reject) => {
-      try {
-        console.log("🛠️ [Backend Tool Script]: Running mathematical feature extraction...");
-        const statsObj = calculateTenLottoFeatures();
-        
-        // If the feature calculator returned an error object, log it
-        if (statsObj.error) {
-          console.error(`❌ [Backend Tool Script Error]: ${statsObj.error}`);
-          return { result: `Error calculating features: ${statsObj.error}` };
-        }
+  return new Promise((resolve, reject) => {
+    console.log("🛠️ [Backend Tool Script]: Handshake established. Preparing wrapper...");
 
-        console.log("✅ [Backend Tool Script]: Calculations complete. Sending data back to Gemma.");
-        // Return a clean text block inside an object wrapper
-        return JSON.stringify(statsObj);
-      } catch (err) {
-        console.error("❌ [Backend Tool Script Fatal Error]:", err);
-        return { result: `Fatal tool execution error: ${err.message}` };
+    try {
+      console.log("🛠️ [Backend Tool Script]: Beginning mathematical feature extraction...");
+      const statsObj = calculateTenLottoFeatures();
+
+      if (!statsObj || statsObj.error) {
+        const errorMsg = statsObj?.error || "Returned telemetry object is undefined or empty.";
+        console.error(`❌ [Backend Tool Script Error]: ${errorMsg}`);
+        resolve({
+          content: [{ type: 'text', text: JSON.stringify({ error: `Feature calculation failed: ${errorMsg}` }) }],
+          isError: true
+        });
+        return;
       }
-    })
+
+      console.log("✅ [Backend Tool Script]: Calculations complete. Serializing data back to Gemma...");
+      const serializedData = JSON.stringify(statsObj);
+
+      // Wrap in the content-block shape instead of returning a bare string
+      resolve({
+        content: [{ type: 'text', text: serializedData }]
+      });
+
+    } catch (innerCalculationError) {
+      console.error("❌ [Backend Tool Script Fatal Computation Crash]:", innerCalculationError.stack);
+      resolve({
+        content: [{ type: 'text', text: JSON.stringify({ error: `Fatal internal exception caught during parsing loop: ${innerCalculationError.message}` }) }],
+        isError: true
+      });
     }
+  });
+}
   }
 ];
