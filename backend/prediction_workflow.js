@@ -12,16 +12,12 @@ You must generate a final set of lottery numbers by executing the following stra
 
 1. POOL SELECTION STRATEGY: Analyze the provided "hot_numbers" and "cold_numbers". Pick a baseline combination enforcing a strict 3-Hot / 1-Warm / 1-Cold distribution balance.
 2. BIAS FILTER STRATEGY: Cross-reference your selection with the "odd_even_ratio". Alter numbers if necessary to ensure it matches the historical sweet spot (e.g., a 3:2 or 2:3 ratio).
-3. GAP ANALYSIS STRATEGY: Convert your selected numbers into a sequence of delta gaps (the space between sorted numbers). Compare them against the "positional_delta_averages". If a gap deviates drastically, adjust the numbers up/down into mathematical alignment.
+3. GAP ANALYSIS STRATEGY: Convert your selected numbers into a sequence of delta gaps (the space between adjacent sorted numbers). Most winning numbers have small adjacent gaps (usually between 1 and 10), and the sum of these gaps always exactly equals the highest number drawn minus the lowest number drawn. Compare your selections against the provided "positional_delta_averages" and adjust the numbers up/down into mathematical alignment.
 4. SUM GUARDRAIL STRATEGY: Calculate the total sum of your final 5 numbers. Ensure it sits within the historical "sum_total_bell_curve" range. If it does not, tweak your highest or lowest numbers until it does.
 
 CRITICAL: Show your step-by-step reasoning chain for each strategy phase before outputting the final JSON object containing the suggested ticket numbers.
 `;
 
-/**
- * Concrete calculation script that reads raw records and outputs 
- * the 10 High-Level Synthesized Metrics.
- */
 function calculateTenLottoFeatures() {
   try {
     const filePath = path.join(process.cwd(), 'daily_lotto.txt');
@@ -34,21 +30,14 @@ function calculateTenLottoFeatures() {
     
     const lines = fileContent.trim().split('\n')
       .map(line => line.trim())
-      // Ignore header text rows if any exist
       .filter(line => line.length > 0 && !line.startsWith('Date') && !line.startsWith('Past'))
       .map(line => {
-        // Split by tabs or multiple spaces
         const parts = line.split(/[\t\s]+/);
-        
-        // If the line starts with a date (YYYY-MM-DD), drop the first item
         if (parts[0] && parts[0].includes('-')) {
           parts.shift();
         }
-        
-        // Convert remaining elements to numbers and filter out empty strings/NaNs
         return parts.map(Number).filter(num => !isNaN(num) && num > 0);
       })
-      // Ensure we only process lines that actually parsed out numbers
       .filter(draw => draw.length > 0);
     
     const totalDraws = lines.length;
@@ -63,7 +52,6 @@ function calculateTenLottoFeatures() {
     const lastDigits = {};
 
     lines.forEach((draw) => {
-      // Sort numbers numerically to establish accurate positional data and gaps
       const sortedDraw = [...draw].sort((a, b) => a - b);
       let ticketSum = 0;
 
@@ -72,8 +60,6 @@ function calculateTenLottoFeatures() {
         ticketSum += num;
 
         frequencies[num] = (frequencies[num] || 0) + 1;
-        
-        // Safely protect position index mapping for dynamically shaped inputs
         if (positionTotals[i]) {
           positionTotals[i][num] = (positionTotals[i][num] || 0) + 1;
         }
@@ -129,50 +115,44 @@ function calculateTenLottoFeatures() {
   }
 }
 
-/**
- * Pi Agent Core compatible tool definitions array
- */
-// Inside backend/prediction_workflow.js
-
 export const predictionToolsList = [
   {
     name: 'calculate_lotto_stats',
-    description: 'Computes the 10 high-level synthesized metrics from the live daily_lotto.txt database file, including historical delta trend averages, frequencies, positions, and curve splits.',
+    description: 'Computes the 10 high-level synthesized metrics from the live daily_lotto.txt database file, including historical positional delta trend averages where the sum of adjacent gaps always exactly equals the highest number minus the lowest number.',
     parameters: { type: 'object', properties: {} }, 
     execute: async () => {
-  return new Promise((resolve, reject) => {
-    console.log("🛠️ [Backend Tool Script]: Handshake established. Preparing wrapper...");
+      return new Promise((resolve, reject) => {
+        console.log("🛠️ [Backend Tool Script]: Handshake established. Preparing wrapper...");
 
-    try {
-      console.log("🛠️ [Backend Tool Script]: Beginning mathematical feature extraction...");
-      const statsObj = calculateTenLottoFeatures();
+        try {
+          console.log("🛠️ [Backend Tool Script]: Beginning mathematical feature extraction...");
+          const statsObj = calculateTenLottoFeatures();
 
-      if (!statsObj || statsObj.error) {
-        const errorMsg = statsObj?.error || "Returned telemetry object is undefined or empty.";
-        console.error(`❌ [Backend Tool Script Error]: ${errorMsg}`);
-        resolve({
-          content: [{ type: 'text', text: JSON.stringify({ error: `Feature calculation failed: ${errorMsg}` }) }],
-          isError: true
-        });
-        return;
-      }
+          if (!statsObj || statsObj.error) {
+            const errorMsg = statsObj?.error || "Returned telemetry object is undefined or empty.";
+            console.error(`❌ [Backend Tool Script Error]: ${errorMsg}`);
+            resolve({
+              content: [{ type: 'text', text: JSON.stringify({ error: `Feature calculation failed: ${errorMsg}` }) }],
+              isError: true
+            });
+            return;
+          }
 
-      console.log("✅ [Backend Tool Script]: Calculations complete. Serializing data back to Gemma...");
-      const serializedData = JSON.stringify(statsObj);
+          console.log("✅ [Backend Tool Script]: Calculations complete. Serializing data back to Gemma...");
+          const serializedData = JSON.stringify(statsObj);
 
-      // Wrap in the content-block shape instead of returning a bare string
-      resolve({
-        content: [{ type: 'text', text: serializedData }]
-      });
+          resolve({
+            content: [{ type: 'text', text: serializedData }]
+          });
 
-    } catch (innerCalculationError) {
-      console.error("❌ [Backend Tool Script Fatal Computation Crash]:", innerCalculationError.stack);
-      resolve({
-        content: [{ type: 'text', text: JSON.stringify({ error: `Fatal internal exception caught during parsing loop: ${innerCalculationError.message}` }) }],
-        isError: true
+        } catch (innerCalculationError) {
+          console.error("❌ [Backend Tool Script Fatal Computation Crash]:", innerCalculationError.stack);
+          resolve({
+            content: [{ type: 'text', text: JSON.stringify({ error: `Fatal internal exception caught during parsing loop: ${innerCalculationError.message}` }) }],
+            isError: true
+          });
+        }
       });
     }
-  });
-}
   }
 ];
