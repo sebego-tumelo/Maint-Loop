@@ -138,6 +138,7 @@ export const predictionToolsList = [
     description: 'Computes the 10 high-level synthesized metrics from the live daily_lotto.txt database file, including historical delta trend averages, frequencies, positions, and curve splits.',
     parameters: { type: 'object', properties: {} }, 
     execute: async () => {
+      return new Promise((resolve, reject) => {
       try {
         console.log("🛠️ [Backend Tool Script]: Running mathematical feature extraction...");
         const statsObj = calculateTenLottoFeatures();
@@ -155,6 +156,7 @@ export const predictionToolsList = [
         console.error("❌ [Backend Tool Script Fatal Error]:", err);
         return { result: `Fatal tool execution error: ${err.message}` };
       }
+    })
     }
   }
 ];
