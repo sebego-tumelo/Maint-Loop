@@ -1,11 +1,12 @@
 import { HfInference } from '@huggingface/inference';
-import type { ChatMessagePayload } from './ollamaService';
 
 export const huggingFaceService = {
   /**
    * Resolves conversational styling labels to official Hugging Face Hub Repositories.
+   * @param {string} modelLabel - The display label for the model
+   * @returns {string} The Hugging Face model repository ID
    */
-  resolveModelRepo(modelLabel: string): string {
+  resolveModelRepo(modelLabel) {
     switch (modelLabel) {
       case 'Llama 3 8B Instruct':
         return 'meta-llama/Meta-Llama-3-8B-Instruct';
@@ -20,12 +21,16 @@ export const huggingFaceService = {
 
   /**
    * Submits requests to Hugging Face serverless execution containers using the official client library.
+   * @param {string} modelLabel - The display label for the model
+   * @param {Array} messages - Array of message objects with role and content
+   * @param {string} apiKey - Hugging Face API key
+   * @returns {Promise<string>} The generated text response
    */
   async chat(
-    modelLabel: string,
-    messages: ChatMessagePayload[],
-    apiKey: string
-  ): Promise<string> {
+    modelLabel,
+    messages,
+    apiKey
+  ) {
     if (!apiKey) {
       throw new Error('Hugging Face authentication key is missing or undefined.');
     }
@@ -48,7 +53,7 @@ export const huggingFaceService = {
       });
 
       return response.generated_text?.trim() || 'Empty response content received.';
-    } catch (error: any) {
+    } catch (error) {
       console.error('Hugging Face client runtime error:', error);
       throw new Error(`Hugging Face API failed: ${error.message}`);
     }

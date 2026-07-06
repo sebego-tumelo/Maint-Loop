@@ -90,7 +90,7 @@
           <label class="text-xs font-bold uppercase tracking-wider block mb-1.5 text-gray-700">System Prompt</label>
           <textarea 
             :value="systemPrompt"
-            @input="$emit('update:systemPrompt', ($event.target as HTMLTextAreaElement).value)"
+            @input="$emit('update:systemPrompt', $event.target.value)"
             @focus="closeAllDropdowns"
             class="w-full p-3 border-[1.5px] border-[#111111] bg-white text-[#111111] font-medium rounded-xl text-sm h-24 outline-none focus:bg-[#FAFFA0]/10 focus:shadow-[2px_2px_0_0_#111111] transition-all resize-none"
             placeholder="Describe assistant behaviors..."
@@ -101,27 +101,27 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { db, type GlobalModel } from '../db'; // Ensure relative path matches your directory setup
+import { db } from '../db'; // Ensure relative path matches your directory setup
 
-const props = defineProps<{
-  modelName: string;
-  serviceProvider: string;
-  systemPrompt: string;
-  isLocked: boolean;
-  noApiKey: boolean;
-}>();
+const props = defineProps({
+  modelName: String,
+  serviceProvider: String,
+  systemPrompt: String,
+  isLocked: Boolean,
+  noApiKey: Boolean
+});
 
 const emit = defineEmits(['close', 'update:modelName', 'update:serviceProvider', 'update:systemPrompt']);
 
 // Track which menu container is dropped open
-const activeDropdown = ref<'service' | 'model' | null>(null);
+const activeDropdown = ref(null);
 
 // Core state storage tracking active records retrieved from IndexedDB
-const persistentModels = ref<GlobalModel[]>([]);
+const persistentModels = ref([]);
 
-const toggleDropdown = (type: 'service' | 'model') => {
+const toggleDropdown = (type) => {
   if (activeDropdown.value === type) {
     activeDropdown.value = null;
   } else {
@@ -172,7 +172,7 @@ const availableModels = computed(() => {
   }
 });
 
-const handleServiceChange = (value: string) => {
+const handleServiceChange = (value) => {
   emit('update:serviceProvider', value);
   if (value === 'Hugging Face') {
     emit('update:modelName', 'Llama 3 8B Instruct');
@@ -182,7 +182,7 @@ const handleServiceChange = (value: string) => {
   closeAllDropdowns();
 };
 
-const handleModelChange = (value: string) => {
+const handleModelChange = (value) => {
   emit('update:modelName', value);
   closeAllDropdowns();
 };

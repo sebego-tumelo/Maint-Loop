@@ -136,10 +136,10 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, onMounted, nextTick, watch } from 'vue';
 import { useOnline } from '@vueuse/core';
-import { db, type ChatMessage } from '../db';
+import { db } from '../db';
 import { aiProviderService } from '../services/aiProviderService';
 
 import SideMenu from '../components/SideMenu.vue';
@@ -165,7 +165,7 @@ const refreshApp = () => {
 
 const isOnline = useOnline();
 const inputMessage = ref('');
-const chatContainer = ref<HTMLElement | null>(null);
+const chatContainer = ref(null);
 
 const isMenuOpen = ref(false);
 const isSettingsOpen = ref(false);
@@ -176,8 +176,8 @@ const modelName = ref('gemma4:31b');
 const serviceProvider = ref('Ollama');
 const systemPrompt = ref('You are a helpful local AI assistant. Be concise and accurate.');
 
-const currentSessionId = ref<number | null>(null);
-const localMessages = ref<ChatMessage[]>([]);
+const currentSessionId = ref(null);
+const localMessages = ref([]);
 
 // Operational validation and state elements
 const hasMissingApiKey = ref(false);
@@ -192,11 +192,11 @@ marked.setOptions({
 /**
  * Transforms raw markdown strings into structured HTML blocks safely
  */
-const formatMarkdown = (rawText: string): string => {
+const formatMarkdown = (rawText) => {
   if (!rawText) return '';
   try {
     // Computes and returns structural markup strings
-    return marked.parse(rawText) as string;
+    return marked.parse(rawText);
   } catch (error) {
     console.error('Markdown rendering engine failed:', error);
     return rawText; // Fallback to raw text if parsing fails
@@ -231,7 +231,7 @@ watch(systemPrompt, async (newPrompt) => {
   }
 });
 
-const subscribeToMessages = (sessionId: number | null) => {
+const subscribeToMessages = (sessionId) => {
   if (sessionId === null) {
     localMessages.value = [];
     topicTitle.value = 'New Chat';
@@ -264,7 +264,7 @@ const startNewChat = () => {
   verifyActiveApiKeyPresence();
 };
 
-const loadSession = (id: number) => {
+const loadSession = (id) => {
   currentSessionId.value = id;
   db.sessions.get(id).then((session) => {
     if (session) {
@@ -304,21 +304,21 @@ const sendMessage = async () => {
   }
 
   // 2. Structure the new user message object
-  const userPayload: ChatMessage = {
-    sessionId: currentSessionId.value!,
+  const userPayload = {
+    sessionId: currentSessionId.value,
     sender: 'user',
     text: userText,
     timestamp: Date.now()
   };
 
   // 3. OPTIMISTIC PAYLOAD CONSTRUCTION
-  const optimizedHistory: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
-    { role: 'system' as const, content: systemPrompt.value },
+  const optimizedHistory = [
+    { role: 'system', content: systemPrompt.value },
     ...localMessages.value.map(m => ({
-      role: m.sender === 'user' ? ('user' as const) : ('assistant' as const),
+      role: m.sender === 'user' ? 'user' : 'assistant',
       content: m.text
     })),
-    { role: 'user' as const, content: userText }
+    { role: 'user', content: userText }
   ];
 
   // 4. Save user message to IndexedDB and sync local input values
@@ -328,8 +328,8 @@ const sendMessage = async () => {
 
   // 5. SINGLE BUBBLE METHOD: Push the placeholder object and grab its precise index
   const aiIndex = localMessages.value.push({
-    sessionId: currentSessionId.value!,
-    sender: 'ai' as const,
+    sessionId: currentSessionId.value,
+    sender: 'ai',
     text: 'Thinking...', 
     timestamp: Date.now()
   }) - 1; // 🌟 Grabbing the explicit index lets us target Vue's reactive track securely
@@ -345,10 +345,10 @@ const sendMessage = async () => {
       serviceProvider.value,
       modelName.value,
       optimizedHistory,
-      (token: string) => {
+      (token) => {
         // Clear 'Thinking...' on the first token drop
         if (isFirstToken) {
-          localMessages.value[aiIndex]!.text = ''; 
+          localMessages.value[aiIndex].text = ''; 
           isFirstToken = false;
         }
 
@@ -356,7 +356,7 @@ const sendMessage = async () => {
 
         // 🌟 FIX: Modify the array value index directly. 
         // This instantly forces Vue to update the screen word-for-word!
-        localMessages.value[aiIndex]!.text = accumulatedText;
+        localMessages.value[aiIndex].text = accumulatedText;
         
         scrollToBottom();
       }
@@ -364,20 +364,20 @@ const sendMessage = async () => {
 
     // 7. STREAM COMPLETE: Write the finalized full text to your offline database
     await db.messages.add({
-      sessionId: currentSessionId.value!,
+      sessionId: currentSessionId.value,
       sender: 'ai',
       text: accumulatedText,
       timestamp: Date.now()
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Inference streaming error encountered:', error);
     const errorText = `❌ Gateway Error: ${error.message || 'Stream interrupted.'}`;
     
-    localMessages.value[aiIndex]!.text = errorText;
+    localMessages.value[aiIndex].text = errorText;
 
     await db.messages.add({
-      sessionId: currentSessionId.value!,
+      sessionId: currentSessionId.value,
       sender: 'ai',
       text: errorText,
       timestamp: Date.now()

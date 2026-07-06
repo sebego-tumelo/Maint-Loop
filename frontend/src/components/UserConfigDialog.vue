@@ -143,9 +143,9 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, onMounted, computed } from 'vue';
-import { db, type GlobalModel } from '../db';
+import { db } from '../db';
 import { aiProviderService } from '../services/aiProviderService'; 
 
 const emit = defineEmits(['close']);
@@ -155,12 +155,7 @@ const selectedProvider = ref('Ollama');
 
 const searchQuery = ref('');
 const isModelDropdownOpen = ref(false);
-const availableModels = ref<GlobalModel[]>([]);
-
-// Added a dedicated structural key flag to allow dynamic database entries to attach to distinct engines
-interface ExtendedGlobalModel extends GlobalModel {
-  engineProvider?: 'Ollama' | 'Hugging Face';
-}
+const availableModels = ref([]);
 
 const displayApiKey = ref('');
 const displayEndpointUrl = ref('');
@@ -202,7 +197,7 @@ onMounted(async () => {
 });
 
 // Protect core items from being accidentally cleared out of the list view tracking array
-const isProtectedDefault = (name: string): boolean => {
+const isProtectedDefault = (name) => {
   const protectedItems = [
     'gemma4:31b', 'deepseek-r1:8b', 'qwen2.5:7b',
     'meta-llama/Meta-Llama-3-8B-Instruct', 'microsoft/Phi-3-mini-4k-instruct', 'mistralai/Mixtral-8x7B-Instruct-v0.1'
@@ -233,7 +228,7 @@ const showCustomModelCreationOption = computed(() => {
   return !providerSpecificModels.value.some(m => m.name.toLowerCase() === query.toLowerCase());
 });
 
-const selectAndCloseDropdown = (modelName: string) => {
+const selectAndCloseDropdown = (modelName) => {
   searchQuery.value = modelName;
   isModelDropdownOpen.value = false;
 };
@@ -258,15 +253,15 @@ const registerCustomModelTag = async () => {
     const prefix = selectedProvider.value === 'Ollama' ? 'ollama-' : 'hf-';
     const normalizedId = prefix + tag.toLowerCase().replace(/[^a-z0-9]/g, '-');
     
-    const newModelEntry: GlobalModel = {
+    const newModelEntry = {
       id: normalizedId,
       name: tag,
-      isPinned: 1 // Automatically pin custom entries for ease of access [cite: 157]
+      isPinned: 1 // Automatically pin custom entries for ease of access
     };
 
     await db.globalModels.add(newModelEntry); 
     availableModels.value = await db.globalModels.toArray();
-    searchQuery.value = ''; // Reset input text [cite: 158]
+    searchQuery.value = ''; // Reset input text
     isModelDropdownOpen.value = false; // Collapse view safely
     console.log(`Successfully registered verified model tag: ${tag}`);
 
@@ -276,12 +271,12 @@ const registerCustomModelTag = async () => {
   }
 };
 
-const removeCustomModel = async (modelId: string) => {
+const removeCustomModel = async (modelId) => {
   await db.globalModels.delete(modelId);
   availableModels.value = await db.globalModels.toArray();
 };
 
-const handleProviderSwitch = async (provider: string) => {
+const handleProviderSwitch = async (provider) => {
   selectedProvider.value = provider;
   isProviderDropdownOpen.value = false;
   searchQuery.value = '';
@@ -289,14 +284,14 @@ const handleProviderSwitch = async (provider: string) => {
 };
 
 // --- CREDENTIAL OBFUSCATION SERVICES ---
-const applyMaskFormat = (val: string) => {
+const applyMaskFormat = (val) => {
   if (!val) return '';
   if (val.length <= 8) return '•'.repeat(val.length);
   return val.slice(0, 4) + '•'.repeat(val.length - 8) + val.slice(-4);
 };
 
-const handleKeyBlur = async (e: FocusEvent) => {
-  const typedValue = (e.target as HTMLInputElement).value.trim();
+const handleKeyBlur = async (e) => {
+  const typedValue = e.target.value.trim();
   if (!typedValue || typedValue.includes('•')) return;
   const targetKeyConfig = selectedProvider.value === 'Ollama' ? 'ollama_api_key' : 'hf_api_key';
   await db.secureConfig.put({ key: targetKeyConfig, value: typedValue });
@@ -309,9 +304,9 @@ const handleKeyFocus = async () => {
   displayApiKey.value = keyRecord ? keyRecord.value : '';
 };
 
-const handleEndpointBlur = async (e: FocusEvent) => {
+const handleEndpointBlur = async (e) => {
   if (selectedProvider.value !== 'Ollama') return;
-  const urlValue = (e.target as HTMLInputElement).value.trim();
+  const urlValue = e.target.value.trim();
   await db.secureConfig.put({ key: 'ollama_endpoint', value: urlValue });
 };
 

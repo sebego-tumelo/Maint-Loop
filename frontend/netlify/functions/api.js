@@ -1,17 +1,17 @@
-import express, { Request, Response, Router } from 'express';
+import express from 'express';
 import serverless from 'serverless-http';
 import cors from 'cors';
 import { HfInference } from '@huggingface/inference';
 import ollama, { Ollama } from 'ollama';
 
 const app = express();
-const router = Router();
+const router = express.Router();
 
 // --- DYNAMIC CORS CONFIGURATION ---
 // Determines the allowed origin based on the current environment.
 // In development/Codespaces, it dynamically accepts the incoming origin.
 // In production, it locks access down securely to your live deployment.
-const getAllowedOrigin = (requestOrigin: string | undefined): string => {
+const getAllowedOrigin = (requestOrigin) => {
   if (process.env.NODE_ENV !== 'production') {
     return requestOrigin || '*';
   }
@@ -19,7 +19,7 @@ const getAllowedOrigin = (requestOrigin: string | undefined): string => {
 };
 
 app.use(cors((req, callback) => {
-  const incomingOrigin = req.headers.origin as string | undefined;
+  const incomingOrigin = req.headers.origin;
   callback(null, {
     origin: getAllowedOrigin(incomingOrigin),
     credentials: true,
@@ -32,7 +32,7 @@ app.use(express.json());
 
 // Dynamic options preflight wildcard catcher to resolve CORS checks safely across paths
 app.options('/*path', cors((req, callback) => {
-  const incomingOrigin = req.headers.origin as string | undefined;
+  const incomingOrigin = req.headers.origin;
   callback(null, { 
     origin: getAllowedOrigin(incomingOrigin), 
     credentials: true 
@@ -42,7 +42,7 @@ app.options('/*path', cors((req, callback) => {
 /**
  * Verification Endpoint: Verifies if a custom model tag exists with the provider
  */
-router.post('/validate-model', async (req: Request, res: Response): Promise<void> => {
+router.post('/validate-model', async (req, res) => {
   try {
     const { provider, tag, apiKey, cloudOllamaUrl } = req.body;
 
@@ -56,7 +56,7 @@ router.post('/validate-model', async (req: Request, res: Response): Promise<void
       const targetUrl = cloudOllamaUrl || 'https://ollama.com';
       const cleanKey = apiKey ? apiKey.trim() : '';
 
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const headers = { 'Content-Type': 'application/json' };
       if (cleanKey) headers['Authorization'] = `Bearer ${cleanKey}`;
 
       // Hit the official Ollama verification endpoint
@@ -89,7 +89,7 @@ router.post('/validate-model', async (req: Request, res: Response): Promise<void
     }
 
     res.status(400).json({ valid: false, error: 'Unsupported provider engine context.' });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Validation Engine Error:', error);
     res.status(500).json({ valid: false, error: error.message });
   }
@@ -98,7 +98,7 @@ router.post('/validate-model', async (req: Request, res: Response): Promise<void
 /**
  * Single Unified Chat Completion Routing Pipeline
  */
-router.post('/chat-proxy', async (req: Request, res: Response): Promise<void> => {
+router.post('/chat-proxy', async (req, res) => {
   try {
     const { provider, model, messages, apiKey, cloudOllamaUrl } = req.body;
 
@@ -120,7 +120,7 @@ router.post('/chat-proxy', async (req: Request, res: Response): Promise<void> =>
       }
 
       const hf = new HfInference(apiKey);
-      const promptText = messages.map((m: any) => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n') + '\n\nASSISTANT:';
+      const promptText = messages.map((m) => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n') + '\n\nASSISTANT:';
 
       for await (const chunk of hf.textGenerationStream({
         model: model || 'meta-llama/Meta-Llama-3-8B-Instruct',
@@ -143,7 +143,7 @@ router.post('/chat-proxy', async (req: Request, res: Response): Promise<void> =>
       const targetUrl = cloudOllamaUrl || 'https://your-cloud-ollama-node.com';
       const cleanKey = apiKey ? apiKey.trim() : '';
 
-      const headers: Record<string, string> = {};
+      const headers = {};
       if (cleanKey) {
         headers['Authorization'] = `Bearer ${cleanKey}`;
         headers['X-API-Key'] = cleanKey;
@@ -174,7 +174,7 @@ router.post('/chat-proxy', async (req: Request, res: Response): Promise<void> =>
     }
 
     res.status(400).json({ error: 'Unsupported AI service provider engine context.' });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Express Streaming Engine Error:', error);
     res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
     res.end();
@@ -196,4 +196,4 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-//npx tsx netlify/functions/api.ts
+//npx tsx netlify/functions/api.js

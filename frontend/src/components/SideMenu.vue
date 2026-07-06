@@ -27,7 +27,7 @@
             <div 
               v-for="session in sessions" 
               :key="session.id" 
-              @click="selectSession(session.id!)"
+              @click="selectSession(session.id)"
               :class="[
                 'group relative flex items-center justify-between p-3 border-[1.5px] border-[#111111] rounded-xl text-sm font-medium cursor-pointer transition-all',
                 currentSessionId === session.id 
@@ -124,17 +124,17 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref } from 'vue';
 import { liveQuery } from 'dexie';
-import { db, type ChatSession } from '../db';
+import { db } from '../db';
 
-const props = defineProps<{
-  currentSessionId: number | null;
-}>();
+const props = defineProps({
+  currentSessionId: [Number, null]
+});
 
 const emit = defineEmits(['close', 'select-session', 'create-new-chat', 'open-user-config']);
-const sessions = ref<ChatSession[]>([]);
+const sessions = ref([]);
 
 // Tracking reactive properties for the delete modal state layout
 const showDeleteDialog = ref(false);
@@ -152,7 +152,7 @@ const handleNewChat = () => {
   emit('close');
 };
 
-const selectSession = (id: number) => {
+const selectSession = (id) => {
   emit('select-session', id);
   emit('close');
 };
@@ -160,7 +160,7 @@ const selectSession = (id: number) => {
 /**
  * Halts normal list container clicks and populates modal configuration states
  */
-const promptDelete = (session: ChatSession) => {
+const promptDelete = (session) => {
   targetSessionToDelete.value = session;
   showDeleteDialog.value = true;
 };

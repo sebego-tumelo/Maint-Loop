@@ -1,8 +1,8 @@
-import { db } from '../db';
+import { db } from '../db.js';
 
 // Dynamically calculate the development backend port using the active browser location.
 // This prevents hardcoded workspace URLs from breaking when your container restarts!
-const getBackendBase = (): string => {
+const getBackendBase = () => {
   if (import.meta.env.DEV) {
     const currentHost = window.location.hostname; // e.g., congenial-goldfish-979gx49gwp44f75qp-5173.app.github.dev
     const devBackendHost = currentHost.replace('-5173.', '-5000.');
@@ -17,8 +17,13 @@ export const aiProviderService = {
 
   /**
    * Reads an open server stream line-by-line and feeds tokens back to the UI in real time
+   * @param {string} provider - The AI provider name (e.g., 'Ollama', 'Hugging Face')
+   * @param {string} model - The model name
+   * @param {Array} messages - Array of message objects
+   * @param {Function} onChunkReceived - Callback function for each text chunk received
+   * @returns {Promise<void>}
    */
-  async generateChatResponse(provider: string, model: string, messages: any[], onChunkReceived: (textToken: string) => void ): Promise<void> {
+  async generateChatResponse(provider, model, messages, onChunkReceived) {
     try {
         console.log('Generating chat response with provider:', provider, 'model:', model);
       const endpointRecord = await db.secureConfig.get('ollama_endpoint');
@@ -82,16 +87,19 @@ export const aiProviderService = {
         }
       }
     }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Routing communication failure:', error);
       throw new Error(error.message || 'Failed to capture cloud response.');
     }
   },
 
-   /**
-   * Dispatches validation details from the client down to the api.ts backend
+  /**
+   * Dispatches validation details from the client down to the api.js backend
+   * @param {string} provider - The AI provider name
+   * @param {string} tag - The model tag to validate
+   * @returns {Promise<{valid: boolean, error?: string}>} Validation result
    */
-  async validateModelTag(provider: string, tag: string): Promise<{ valid: boolean; error?: string }> {
+  async validateModelTag(provider, tag) {
     try {
       const endpointRecord = await db.secureConfig.get('ollama_endpoint');
       const targetKeyConfig = provider === 'Ollama' ? 'ollama_api_key' : 'hf_api_key';
@@ -116,8 +124,8 @@ export const aiProviderService = {
         return { valid: false, error: errData.error || 'Validation request failed.' };
       }
 
-      return await response.json(); // Returns { valid: true } [cite: 187]
-    } catch (error: any) {
+      return await response.json(); // Returns { valid: true }
+    } catch (error) {
       console.error('Validation communications failure:', error);
       return { valid: false, error: error.message || 'Network interface error.' };
     }

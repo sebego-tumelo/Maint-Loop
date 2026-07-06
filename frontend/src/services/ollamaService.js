@@ -1,20 +1,26 @@
 import { Ollama } from 'ollama';
 
-export interface ChatMessagePayload {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
+/**
+ * @typedef {Object} ChatMessagePayload
+ * @property {'system' | 'user' | 'assistant'} role
+ * @property {string} content
+ */
 
 export const ollamaService = {
   /**
    * Fires chat completion routines against a remote, cloud-hosted Ollama server instance.
+   * @param {string} model - The model name
+   * @param {ChatMessagePayload[]} messages - Array of message objects
+   * @param {string} [cloudEndpoint] - Custom Ollama endpoint URL
+   * @param {string} [apiKey] - Optional API key for authentication
+   * @returns {Promise<string>} The response text from the model
    */
   async chat(
-    model: string,
-    messages: ChatMessagePayload[],
-    cloudEndpoint?: string,
-    apiKey?: string
-  ): Promise<string> {
+    model,
+    messages,
+    cloudEndpoint,
+    apiKey
+  ) {
     
     // Fall back gracefully if configuration details are completely missing
     const targetUrl = cloudEndpoint || 'https://your-default-cloud-ollama-node.com';
@@ -33,7 +39,7 @@ export const ollamaService = {
       });
 
       return response.message?.content || 'Empty response returned from cloud instance.';
-    } catch (error: any) {
+    } catch (error) {
       console.error('Ollama cloud SDK runtime error:', error);
       throw new Error(`Cloud Ollama exception: ${error.message}`);
     }
