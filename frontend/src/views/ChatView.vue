@@ -19,13 +19,7 @@
       />
 
       <div 
-        v-if="hasMissingApiKey" 
-        class="bg-[#E75A24] text-white text-center text-xs py-1.5 font-bold border-b-[1.5px] border-[#111111] tracking-wide z-10 animate-pulse"
-      >
-        ⚠️ NO API KEY FOUND — Open Profile to Configure
-      </div>
-      <div 
-        v-else-if="!isOnline" 
+        v-if="!isOnline" 
         class="bg-[#E75A24] text-white text-center text-xs py-1 font-semibold border-b-[1.5px] border-[#111111] tracking-wide z-10"
       >
         Working Offline
@@ -94,13 +88,13 @@
             @keydown.enter="sendMessage"
             type="text" 
             placeholder="Ask me anything..."
-            :disabled="hasMissingApiKey || isAiThinking"
+            :disabled="isAiThinking"
             class="w-full rounded-full border-[1.5px] border-[#111111] bg-[#E6DFD3] py-3.5 px-4 text-[0.9rem] font-medium text-[#111111] placeholder-gray-600 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
         <button 
           @click="sendMessage"
-          :disabled="hasMissingApiKey || isAiThinking || !inputMessage.trim()"
+          :disabled="isAiThinking || !inputMessage.trim()"
           class="flex h-12 w-12 items-center justify-center rounded-full border-[1.5px] border-[#111111] bg-[#111111] transition-colors hover:bg-gray-900 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <svg class="h-4.5 w-4.5 fill-none stroke-white" stroke-width="2.5" viewBox="0 0 24 24">
@@ -146,7 +140,6 @@ const systemPrompt = ref('You are a helpful local AI assistant. Be concise and a
 const currentSessionId = ref(null);
 const localMessages = ref([]);
 
-const hasMissingApiKey = ref(false);
 const isAiThinking = ref(false);
 
 marked.setOptions({
@@ -164,21 +157,9 @@ const formatMarkdown = (rawText) => {
   }
 };
 
-const verifyActiveApiKeyPresence = async () => {
-  const targetKeyConfig = serviceProvider.value === 'Ollama' ? 'ollama_api_key' : 'hf_api_key';
-  const keyRecord = await db.secureConfig.get(targetKeyConfig);
-  
-  hasMissingApiKey.value = !keyRecord || keyRecord.value.trim() === '';
-};
-
 const handleConfigDialogClose = async () => {
   isUserConfigOpen.value = false;
-  await verifyActiveApiKeyPresence();
 };
-
-watch(serviceProvider, async () => {
-  await verifyActiveApiKeyPresence();
-});
 
 watch(systemPrompt, async (newPrompt) => {
   if (currentSessionId.value !== null) {
@@ -215,7 +196,6 @@ const startNewChat = () => {
   modelName.value = 'gemma4:31b';
   systemPrompt.value = 'You are a helpful local AI assistant. Be concise and accurate.';
   subscribeToMessages(null);
-  verifyActiveApiKeyPresence();
 };
 
 const loadSession = (id) => {
@@ -227,7 +207,6 @@ const loadSession = (id) => {
       serviceProvider.value = session.serviceProvider;
       systemPrompt.value = session.systemPrompt;
       subscribeToMessages(id);
-      verifyActiveApiKeyPresence();
     }
   });
 };
@@ -240,7 +219,7 @@ const scrollToBottom = async () => {
 };
 
 const sendMessage = async () => {
-  if (!inputMessage.value.trim() || hasMissingApiKey.value || isAiThinking.value) return;
+  if (!inputMessage.value.trim() || isAiThinking.value) return;
   
   const userText = inputMessage.value.trim();
   if (currentSessionId.value === null) {
