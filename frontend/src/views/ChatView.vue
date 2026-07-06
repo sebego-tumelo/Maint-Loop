@@ -13,16 +13,6 @@
         />
       </Transition>
 
-      <SettingsDialog 
-        v-if="isSettingsOpen" 
-        v-model:model-name="modelName"
-        v-model:service-provider="serviceProvider"
-        v-model:system-prompt="systemPrompt"
-        v-model:no-api-key="hasMissingApiKey"
-        :is-locked="localMessages.length > 0"
-        @close="isSettingsOpen = false"
-      />
-
       <UserConfigDialog
         v-if="isUserConfigOpen"
         @close="handleConfigDialogClose"
@@ -66,21 +56,12 @@
           </svg>
         </button>
 
-        <div class="text-center max-w-[50%]">
+        <div class="text-center max-w-[70%]">
           <h2 class="text-[1.05rem] font-bold leading-none truncate">{{ topicTitle }}</h2>
           <p class="text-[0.75rem] text-gray-600 mt-0.5">{{ modelName }}</p>
         </div>
 
-        <button 
-          @click="isSettingsOpen = true" 
-          class="flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] border-[#111111] bg-[#FAFFA0] hover:shadow-[2px_2px_0_0_#111111] transition-all"
-          title="Model Settings"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-        </button>
+        <div class="w-10 h-10"></div>
       </header>
 
       <main ref="chatContainer" class="flex-1 flex flex-col overflow-y-auto bg-[#FAF6F0] p-4 space-y-4">
@@ -92,17 +73,14 @@
         </div>
 
         <div v-for="message in localMessages" :key="message.id" :class="['max-w-[85%] rounded-[20px] border-[1.5px] border-[#111111] p-3.5 text-[0.9rem] leading-relaxed break-words', message.sender === 'ai' ? 'self-start rounded-tl-none bg-white text-[#111111]' : 'self-end rounded-tr-none bg-[#111111] text-white shadow-[2px_2px_0_0_#000]']">
-  <div :class="[]">
-    
-    <div v-if="message.text === 'Thinking...'" class="flex items-center gap-1 text-gray-500 italic">
-      <span>Thinking</span>
-      <span class="animate-pulse">...</span>
-    </div>
-    
-    <div v-else v-html="formatMarkdown(message.text)"></div>
-
-  </div>
-</div>
+          <div>
+            <div v-if="message.text === 'Thinking...'" class="flex items-center gap-1 text-gray-500 italic">
+              <span>Thinking</span>
+              <span class="animate-pulse">...</span>
+            </div>
+            <div v-else v-html="formatMarkdown(message.text)"></div>
+          </div>
+        </div>
 
         <div v-if="isAiThinking" class="self-start rounded-[20px] rounded-tl-none border-[1.5px] border-[#111111] bg-white p-3.5 text-xs font-semibold animate-pulse">
           ⚡ Thinking...
@@ -143,22 +121,13 @@ import { db } from '../db';
 import { aiProviderService } from '../services/aiProviderService';
 
 import SideMenu from '../components/SideMenu.vue';
-import SettingsDialog from '../components/SettingsDialog.vue';
 import UserConfigDialog from '../components/UserConfigDialog.vue';
 
 import { marked } from 'marked';
-
-// 🌟 Import the direct Vite PWA state tracking hook
 import { useRegisterSW } from 'virtual:pwa-register/vue';
 
-// needRefresh turns TRUE the split-second Netlify finishes deploying newer code
-// updateServiceWorker() is a built-in function that safely handles the SKIP_WAITING lifecycle
 const { needRefresh, updateServiceWorker } = useRegisterSW();
 
-/**
- * Triggers when the user confirms they want the latest changes.
- * This reloads the mobile browser and boots into the new app code cleanly.
- */
 const refreshApp = () => {
   updateServiceWorker(true);
 };
@@ -168,9 +137,7 @@ const inputMessage = ref('');
 const chatContainer = ref(null);
 
 const isMenuOpen = ref(false);
-const isSettingsOpen = ref(false);
 const isUserConfigOpen = ref(false);
-
 const topicTitle = ref('New Chat');
 const modelName = ref('gemma4:31b');
 const serviceProvider = ref('Ollama');
@@ -179,48 +146,36 @@ const systemPrompt = ref('You are a helpful local AI assistant. Be concise and a
 const currentSessionId = ref(null);
 const localMessages = ref([]);
 
-// Operational validation and state elements
 const hasMissingApiKey = ref(false);
 const isAiThinking = ref(false);
 
-// Configure marked options to parse clean layout breaks cleanly
 marked.setOptions({
-  gfm: true,        // Enable GitHub Flavored Markdown (tables, lists, etc.)
-  breaks: true      // Convert line-breaks (\n) automatically to <br> tags
+  gfm: true,
+  breaks: true
 });
 
-/**
- * Transforms raw markdown strings into structured HTML blocks safely
- */
 const formatMarkdown = (rawText) => {
   if (!rawText) return '';
   try {
-    // Computes and returns structural markup strings
     return marked.parse(rawText);
   } catch (error) {
     console.error('Markdown rendering engine failed:', error);
-    return rawText; // Fallback to raw text if parsing fails
+    return rawText;
   }
 };
 
-/**
- * Validates database contents to guarantee active providers hold valid keys
- */
 const verifyActiveApiKeyPresence = async () => {
   const targetKeyConfig = serviceProvider.value === 'Ollama' ? 'ollama_api_key' : 'hf_api_key';
   const keyRecord = await db.secureConfig.get(targetKeyConfig);
   
-  // If no key record exists, or it has been wiped out empty
   hasMissingApiKey.value = !keyRecord || keyRecord.value.trim() === '';
 };
 
 const handleConfigDialogClose = async () => {
   isUserConfigOpen.value = false;
-  // Re-verify immediately upon closing settings config container panel
   await verifyActiveApiKeyPresence();
 };
 
-// Intercept structural adjustments if service provider changes context
 watch(serviceProvider, async () => {
   await verifyActiveApiKeyPresence();
 });
@@ -258,7 +213,6 @@ const startNewChat = () => {
   currentSessionId.value = null;
   serviceProvider.value = 'Ollama';
   modelName.value = 'gemma4:31b';
-  serviceProvider.value = 'Ollama';
   systemPrompt.value = 'You are a helpful local AI assistant. Be concise and accurate.';
   subscribeToMessages(null);
   verifyActiveApiKeyPresence();
@@ -289,8 +243,6 @@ const sendMessage = async () => {
   if (!inputMessage.value.trim() || hasMissingApiKey.value || isAiThinking.value) return;
   
   const userText = inputMessage.value.trim();
-  
-  // 1. Initialize session if this is a brand new chat session
   if (currentSessionId.value === null) {
     const newSessionId = await db.sessions.add({
       title: userText,
@@ -303,7 +255,6 @@ const sendMessage = async () => {
     topicTitle.value = userText;
   }
 
-  // 2. Structure the new user message object
   const userPayload = {
     sessionId: currentSessionId.value,
     sender: 'user',
@@ -311,7 +262,6 @@ const sendMessage = async () => {
     timestamp: Date.now()
   };
 
-  // 3. OPTIMISTIC PAYLOAD CONSTRUCTION
   const optimizedHistory = [
     { role: 'system', content: systemPrompt.value },
     ...localMessages.value.map(m => ({
@@ -321,55 +271,44 @@ const sendMessage = async () => {
     { role: 'user', content: userText }
   ];
 
-  // 4. Save user message to IndexedDB and sync local input values
   await db.messages.add(userPayload);
   inputMessage.value = '';
   localMessages.value.push(userPayload);
 
-  // 5. SINGLE BUBBLE METHOD: Push the placeholder object and grab its precise index
   const aiIndex = localMessages.value.push({
     sessionId: currentSessionId.value,
     sender: 'ai',
     text: 'Thinking...', 
     timestamp: Date.now()
-  }) - 1; // 🌟 Grabbing the explicit index lets us target Vue's reactive track securely
+  }) - 1;
 
   scrollToBottom();
-
   try {
     let accumulatedText = '';
     let isFirstToken = true;
 
-    // 6. Request streaming loop
     await aiProviderService.generateChatResponse(
       serviceProvider.value,
       modelName.value,
       optimizedHistory,
       (token) => {
-        // Clear 'Thinking...' on the first token drop
         if (isFirstToken) {
           localMessages.value[aiIndex].text = ''; 
           isFirstToken = false;
         }
 
         accumulatedText += token;
-
-        // 🌟 FIX: Modify the array value index directly. 
-        // This instantly forces Vue to update the screen word-for-word!
         localMessages.value[aiIndex].text = accumulatedText;
-        
         scrollToBottom();
       }
     );
 
-    // 7. STREAM COMPLETE: Write the finalized full text to your offline database
     await db.messages.add({
       sessionId: currentSessionId.value,
       sender: 'ai',
       text: accumulatedText,
       timestamp: Date.now()
     });
-
   } catch (error) {
     console.error('Inference streaming error encountered:', error);
     const errorText = `❌ Gateway Error: ${error.message || 'Stream interrupted.'}`;
@@ -400,23 +339,8 @@ onMounted(() => {
 }
 .slide-menu-enter-from, .slide-menu-leave-to { opacity: 0; }
 
-/* Ensure parsed HTML elements inside the chat bubble look correct */
-:deep(p:last-child) {
-  margin-bottom: 0;
-}
-:deep(strong) {
-  font-weight: 700;
-  color: #111111;
-}
-:deep(ul) {
-  list-style-type: disc;
-  margin-left: 1.25rem;
-  margin-bottom: 0.5rem;
-}
-:deep(ol) {
-  list-style-type: decimal;
-  margin-left: 1.25rem;
-  margin-bottom: 0.5rem;
-}
-
+:deep(p:last-child) { margin-bottom: 0; }
+:deep(strong) { font-weight: 700; color: #111111; }
+:deep(ul) { list-style-type: disc; margin-left: 1.25rem; margin-bottom: 0.5rem; }
+:deep(ol) { list-style-type: decimal; margin-left: 1.25rem; margin-bottom: 0.5rem; }
 </style>
