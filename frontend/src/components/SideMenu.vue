@@ -57,27 +57,6 @@
         </div>
       </div>
 
-      <div class="pt-4 border-t-[1.5px] border-[#111111] flex-shrink-0">
-        <div 
-          @click="$emit('open-user-config')"
-          class="flex items-center gap-3 p-2.5 border-[1.5px] border-[#111111] bg-[#FAF6F0] rounded-2xl cursor-pointer hover:bg-[#FAFFA0]/20 transition-all hover:shadow-[2px_2px_0_0_#111111] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
-        >
-          <div class="w-10 h-10 rounded-full bg-[#E75A24] border-[1.5px] border-[#111111] flex items-center justify-center flex-shrink-0 shadow-[1px_1px_0_0_#111111]">
-            <div class="w-7 h-7 rounded-full flex items-center justify-center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
-          </div>
-          
-          <div class="flex-1 min-w-0">
-            <p class="text-xs font-black text-[#111111] tracking-tight truncate">User Config</p>
-            <p class="text-[0.65rem] text-gray-500 font-bold uppercase tracking-wider">Profile Settings</p>
-          </div>
-        </div>
-      </div>
-
     </div>
     
     <div class="flex-1 bg-black/20 backdrop-blur-[1px] overlay" @click="$emit('close')"></div>
@@ -99,7 +78,8 @@
           </div>
 
           <p class="text-xs text-gray-700 leading-relaxed font-semibold mb-6">
-            Are you sure you want to delete <span class="italic text-black font-black">"{{ targetSessionToDelete?.title }}"</span>? This will permanently wipe all conversation messages from your local disk database.
+            Are you sure you want to delete <span class="italic text-black font-black">"{{ targetSessionToDelete?.title }}"</span>?
+            This will permanently wipe all conversation messages from your local disk database.
           </p>
 
           <div class="grid grid-cols-2 gap-3">
@@ -133,14 +113,12 @@ const props = defineProps({
   currentSessionId: [Number, null]
 });
 
-const emit = defineEmits(['close', 'select-session', 'create-new-chat', 'open-user-config']);
+const emit = defineEmits(['close', 'select-session', 'create-new-chat']);
 const sessions = ref([]);
 
-// Tracking reactive properties for the delete modal state layout
 const showDeleteDialog = ref(false);
 const targetSessionToDelete = ref(null);
 
-// Dexie LiveQuery automatically handles list updates dynamically when items vanish from the db
 liveQuery(() => db.sessions.orderBy('createdAt').reverse().toArray()).subscribe(
   (data) => {
     sessions.value = data;
@@ -157,9 +135,6 @@ const selectSession = (id) => {
   emit('close');
 };
 
-/**
- * Halts normal list container clicks and populates modal configuration states
- */
 const promptDelete = (session) => {
   targetSessionToDelete.value = session;
   showDeleteDialog.value = true;
@@ -170,22 +145,13 @@ const closeDeleteDialog = () => {
   targetSessionToDelete.value = null;
 };
 
-/**
- * Triggers atomic Dexie table item removal sequences across both databases
- */
 const confirmDelete = async () => {
   if (!targetSessionToDelete.value || targetSessionToDelete.value.id === undefined) return;
-  
   const targetId = targetSessionToDelete.value.id;
 
   try {
-    // 1. Clear all chat bubbles referencing this explicit target session inside your messages table
     await db.messages.where('sessionId').equals(targetId).delete();
-
-    // 2. Clear the main indexing session entry record out of the sessions table
     await db.sessions.delete(targetId);
-
-    // 3. Fallback check: If the active running session was just dropped, force a fresh chat context
     if (props.currentSessionId === targetId) {
       emit('create-new-chat');
     }
@@ -197,9 +163,7 @@ const confirmDelete = async () => {
 };
 </script>
 
-
 <style scoped>
-/* Transition Scale-Fade Animation Curve Profiles */
 .fade-scale-enter-active,
 .fade-scale-leave-active {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
