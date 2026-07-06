@@ -138,7 +138,7 @@ const sessions = ref([]);
 
 // Tracking reactive properties for the delete modal state layout
 const showDeleteDialog = ref(false);
-const targetSessionToDelete = ref<ChatSession | null>(null);
+const targetSessionToDelete = ref(null);
 
 // Dexie LiveQuery automatically handles list updates dynamically when items vanish from the db
 liveQuery(() => db.sessions.orderBy('createdAt').reverse().toArray()).subscribe(
@@ -196,6 +196,7 @@ const confirmDelete = async () => {
   }
 };
 </script>
+
 
 <style scoped>
 /* Transition Scale-Fade Animation Curve Profiles */
