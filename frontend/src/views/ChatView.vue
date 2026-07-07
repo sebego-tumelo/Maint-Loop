@@ -95,7 +95,7 @@
         <button 
           @click="sendMessage"
           :disabled="isAiThinking || !inputMessage.trim()"
-          class="flex h-12 w-12 items-center justify-center rounded-full border-[1.5px] border-[#111111] bg-[#111111] transition-colors hover:bg-gray-900 disabled:opacity-40 disabled:cursor-not-allowed"
+          class="flex h-12 w-12 items-center justify-center rounded-full border-[1.5px] border-[#111111] bg-primary transition-colors hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <svg class="h-4.5 w-4.5 fill-none stroke-white" stroke-width="2.5" viewBox="0 0 24 24">
             <line x1="22" y1="2" x2="11" y2="13"></line>
