@@ -254,7 +254,11 @@ const sendMessage = async () => {
   scrollToBottom();
   isAiThinking.value = true;
   try {
-    const response = await fetch('/run-instruction', {
+    const baseUrl = import.meta.env.DEV 
+      ? `https://${window.location.hostname.replace('-5173.', '-3000.')}` 
+      : '';
+      
+    const response = await fetch(`${baseUrl}/run-instruction`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
