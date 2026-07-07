@@ -1,5 +1,6 @@
 // server.js
 import express from 'express';
+import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { Agent } from '@mariozechner/pi-agent-core';
@@ -10,6 +11,11 @@ import { predictionToolsList, lotterySystemInstruction } from './prediction_work
 
 dotenv.config();
 const app = express();
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // ==========================================
