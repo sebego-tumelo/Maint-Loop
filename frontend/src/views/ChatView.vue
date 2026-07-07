@@ -168,9 +168,11 @@ watch(systemPrompt, async (newPrompt) => {
 
 const applyFormatting = (text) => {
   if (!text) return text;
-  
+  console.log("Received AI response:", text);
+
   // Try to find the JSON-like structure - made non-greedy
-  const jsonMatch = text.match(/\{[\s\S]*?\}/); 
+ const jsonMatch = text.match(/\{[\s\S]*?\n\}/);
+ 
   if (jsonMatch) {
     try {
       // Validate that it's actually parsable JSON
