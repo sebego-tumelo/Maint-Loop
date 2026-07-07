@@ -217,6 +217,18 @@ const scrollToBottom = async () => {
   }
 };
 
+const formatLotteryResponse = (json) => {
+  if (!json.suggested_numbers || !json.strategy_metrics) return null;
+  
+  let output = `suggested numbers : ${json.suggested_numbers.join(', ')}\n`;
+  output += `strategic_metric:\n`;
+  for (const [key, value] of Object.entries(json.strategy_metrics)) {
+    const displayValue = Array.isArray(value) ? value.join(', ') : value;
+    output += `  ${key} : ${displayValue}\n`;
+  }
+  return output;
+};
+
 const sendMessage = async () => {
   if (!inputMessage.value.trim() || isAiThinking.value) return;
   
@@ -272,12 +284,28 @@ const sendMessage = async () => {
 
     const aiResponse = await response.text();
     
-    localMessages.value[aiIndex].text = aiResponse;
+    // Attempt to parse and format JSON if present
+    let finalDisplay = aiResponse;
+    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        const jsonObject = JSON.parse(jsonMatch[0]);
+        const formattedJson = formatLotteryResponse(jsonObject);
+        if (formattedJson) {
+            const reasoning = aiResponse.replace(jsonMatch[0], '').trim();
+            finalDisplay = `${formattedJson}\n${reasoning ? '---\n\n' + reasoning : ''}`;
+        }
+      } catch (e) {
+        console.error("Failed to parse JSON for formatting", e);
+      }
+    }
+    
+    localMessages.value[aiIndex].text = finalDisplay;
 
     await db.messages.add({
       sessionId: currentSessionId.value,
       sender: 'ai',
-      text: aiResponse,
+      text: finalDisplay,
       timestamp: Date.now()
     });
   } catch (error) {
