@@ -112,7 +112,6 @@
 import { ref, onMounted, nextTick, watch } from 'vue';
 import { useOnline } from '@vueuse/core';
 import { db } from '../db';
-import { aiProviderService } from '../services/aiProviderService';
 
 import SideMenu from '../components/SideMenu.vue';
 import UserConfigDialog from '../components/UserConfigDialog.vue';
@@ -241,15 +240,6 @@ const sendMessage = async () => {
     timestamp: Date.now()
   };
 
-  const optimizedHistory = [
-    { role: 'system', content: systemPrompt.value },
-    ...localMessages.value.map(m => ({
-      role: m.sender === 'user' ? 'user' : 'assistant',
-      content: m.text
-    })),
-    { role: 'user', content: userText }
-  ];
-
   await db.messages.add(userPayload);
   inputMessage.value = '';
   localMessages.value.push(userPayload);
@@ -262,30 +252,28 @@ const sendMessage = async () => {
   }) - 1;
 
   scrollToBottom();
+  isAiThinking.value = true;
   try {
-    let accumulatedText = '';
-    let isFirstToken = true;
+    const response = await fetch('/run-instruction', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ instruction: userText })
+    });
 
-    await aiProviderService.generateChatResponse(
-      serviceProvider.value,
-      modelName.value,
-      optimizedHistory,
-      (token) => {
-        if (isFirstToken) {
-          localMessages.value[aiIndex].text = ''; 
-          isFirstToken = false;
-        }
+    if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+    }
 
-        accumulatedText += token;
-        localMessages.value[aiIndex].text = accumulatedText;
-        scrollToBottom();
-      }
-    );
+    const aiResponse = await response.text();
+    
+    localMessages.value[aiIndex].text = aiResponse;
 
     await db.messages.add({
       sessionId: currentSessionId.value,
       sender: 'ai',
-      text: accumulatedText,
+      text: aiResponse,
       timestamp: Date.now()
     });
   } catch (error) {
