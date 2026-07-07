@@ -166,6 +166,32 @@ watch(systemPrompt, async (newPrompt) => {
   }
 });
 
+const applyFormatting = (text) => {
+  if (!text) return text;
+  
+  // Try to find the JSON-like structure - made non-greedy
+  const jsonMatch = text.match(/\{[\s\S]*?\}/); 
+  if (jsonMatch) {
+    try {
+      // Validate that it's actually parsable JSON
+      const jsonObject = JSON.parse(jsonMatch[0]);
+      
+      // Ensure it's the specific structure we expect
+      if (jsonObject.suggested_numbers && jsonObject.strategy_metrics) {
+        const formattedJson = formatLotteryResponse(jsonObject);
+        if (formattedJson) {
+          const reasoning = text.replace(jsonMatch[0], '').trim();
+          return formattedJson + (reasoning ? '\n\n---\n\n' + reasoning : '');
+        }
+      }
+    } catch (e) {
+      // Not valid JSON, just ignore and return original text
+      console.warn("Match found but not valid JSON, skipping formatting.");
+    }
+  }
+  return text;
+};
+
 const subscribeToMessages = (sessionId) => {
   if (sessionId === null) {
     localMessages.value = [];
@@ -178,7 +204,11 @@ const subscribeToMessages = (sessionId) => {
     .equals(sessionId)
     .sortBy('timestamp')
     .then((messages) => {
-      localMessages.value = messages;
+      // Apply formatting to historical AI messages
+      localMessages.value = messages.map(m => ({
+        ...m,
+        text: m.sender === 'ai' ? applyFormatting(m.text) : m.text
+      }));
       if (messages.length > 0) {
         const firstUserMsg = messages.find(m => m.sender === 'user');
         topicTitle.value = firstUserMsg ? firstUserMsg.text : 'Current Conversation';
@@ -218,6 +248,7 @@ const scrollToBottom = async () => {
 };
 
 const formatLotteryResponse = (json) => {
+  console.log("Formatting lottery response:", json);
   if (!json.suggested_numbers || !json.strategy_metrics) return null;
   
   let output = `suggested numbers : ${json.suggested_numbers.join(', ')}\n`;
@@ -285,22 +316,7 @@ const sendMessage = async () => {
     const aiResponse = await response.text();
     
     // Attempt to parse and format JSON if present
-    let finalDisplay = aiResponse;
-    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      try {
-        const jsonObject = JSON.parse(jsonMatch[0]);
-        const formattedJson = formatLotteryResponse(jsonObject);
-        if (formattedJson) {
-            // Remove the JSON part from the original response to get reasoning
-            const reasoning = aiResponse.replace(jsonMatch[0], '').trim();
-            // Construct: Formatted JSON first, then reasoning if it exists
-            finalDisplay = formattedJson + (reasoning ? '\n\n---\n\n' + reasoning : '');
-        }
-      } catch (e) {
-        console.error("Failed to parse JSON for formatting", e);
-      }
-    }
+    const finalDisplay = applyFormatting(aiResponse);
     
     localMessages.value[aiIndex].text = finalDisplay;
 
