@@ -292,8 +292,10 @@ const sendMessage = async () => {
         const jsonObject = JSON.parse(jsonMatch[0]);
         const formattedJson = formatLotteryResponse(jsonObject);
         if (formattedJson) {
+            // Remove the JSON part from the original response to get reasoning
             const reasoning = aiResponse.replace(jsonMatch[0], '').trim();
-            finalDisplay = `${formattedJson}\n${reasoning ? '---\n\n' + reasoning : ''}`;
+            // Construct: Formatted JSON first, then reasoning if it exists
+            finalDisplay = formattedJson + (reasoning ? '\n\n---\n\n' + reasoning : '');
         }
       } catch (e) {
         console.error("Failed to parse JSON for formatting", e);
@@ -327,8 +329,14 @@ const sendMessage = async () => {
   }
 };
 
-onMounted(() => {
-  startNewChat();
+onMounted(async () => {
+  const sessions = await db.sessions.toArray();
+  if (sessions.length > 0) {
+    const latest = sessions.sort((a,b) => b.createdAt - a.createdAt)[0];
+    loadSession(latest.id);
+  } else {
+    startNewChat();
+  }
 });
 </script>
 
