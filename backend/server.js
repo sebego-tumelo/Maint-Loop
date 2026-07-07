@@ -147,9 +147,9 @@ app.post('/run-instruction', async (req, res) => {
 });
 
 // For any other path, serve the index.html file (for Vue Router SPA)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
-});
+app.get(/.*/, (req, res) => {                                                                                                               
+     res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));                                                                        
+   });  
 
 // Database Connectivity Initialization Hook
 mongoose.connect(process.env.MONGODB_URI)
