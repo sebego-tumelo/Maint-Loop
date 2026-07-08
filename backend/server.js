@@ -43,13 +43,20 @@ const gemmaCloudModel = {
 };
 
 // ==========================================
-// AGENT ORCHESTRATOR RUNTIME RUNNER
+// UNIVERSAL API ENDPOINT
 // ==========================================
-async function runAgentOrchestrator(userInstruction) {
-  console.log(`[Engine Activation]: Initializing Pi Agent loop for prompt: "${userInstruction}"`);
+app.post('/run-instruction', async (req, res) => {
+  const instruction = req.body.instruction;
+  
+  if (!instruction) {
+    return res.status(400).json({ error: "Missing 'instruction' property in request body." });
+  }
 
-  // Track the full textual stream produced across all agent turns
-  let finalResponseText = '';
+  // Set up SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
 
   try {
     const agent = new Agent({
@@ -71,78 +78,30 @@ async function runAgentOrchestrator(userInstruction) {
       });
     };
 
-    // Keep active operational terminal streaming active
     agent.subscribe(async (event) => {
-      if (event.type === 'message_update') return;
-
-      console.log(`📡 [Pi Raw Event Stream]: Received type -> "${event.type}"`);
-      
-      if (event.type === 'tool_execution_start') {
-        console.log(`🔧 [Pi Tool Action]: Executing -> ${event.toolName}`);
-      }
-
-      if (event.type === 'message_end' && event.message) {
-        const contentData = event.message.content;
-
-        // Print context if it's the model's turn to speak
-        if (event.message.role === 'assistant' && Array.isArray(contentData)) {
-          console.log(`\n================================================================`);
-          console.log(`🧠 [GEMMA 4 STRATEGIC ANALYSIS & REASONING PIPELINE]:`);
-          console.log(`================================================================`);
-
-          
-
-          contentData.forEach(block => {
-            // Log reasoning paths or text tokens output by the model
-            if (block.type === 'text') {
-              finalResponseText += block.text + '\n';
-            }
-          });
-
-          // Print the formatted response text (contains strategies and JSON)
-          console.log(finalResponseText.trim());
-          console.log(`================================================================\n`);
-          
+      // Send message updates as they come in
+      if (event.type === 'message_update') {
+        const content = event.message.content;
+        if (Array.isArray(content)) {
+          const latestContent = content[content.length - 1];
+          if (latestContent.type === 'text') {
+            res.write(`data: ${JSON.stringify({ type: 'token', text: latestContent.text })}\n\n`);
+          }
         }
+      }
+      
+      if (event.type === 'message_end') {
+        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+        res.end();
       }
     });
 
-    console.log(`[Engine Activation]: Routing analytical pipeline to cloud provider...`);
-    await agent.prompt(userInstruction);
-    console.log(`[Engine Success]: Pi Agent prediction cycle finalized.`);
-
-    // Return the total textual reasoning and JSON payload back to the route handler
-    return finalResponseText.trim();
+    await agent.prompt(instruction);
 
   } catch (error) {
     console.error('❌ CRITICAL: Pi Agent Core Error Stack:', error.stack);
-  }
-}
-
-// ==========================================
-// UNIVERSAL API ENDPOINT
-// ==========================================
-app.post('/run-instruction', async (req, res) => {
-  try {
-    const instruction = req.body.instruction;
-    
-    if (!instruction) {
-      return res.status(400).json({ error: "Missing 'instruction' property in request body." });
-    }
-
-    // Await the complete generation cycle of consecutive reasoning phases + final ticket block
-    const resultPayload = await runAgentOrchestrator(instruction);
-
-    // Return the response as a clean plain text block containing markdown reasoning and the JSON ticket
-    res.setHeader('Content-Type', 'text/plain');
-    return res.status(200).send(resultPayload);
-
-  } catch (error) {
-    return res.status(500).json({ 
-      status: 'error', 
-      message: 'Failed to complete agent execution pipeline.',
-      details: error.message 
-    });
+    res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+    res.end();
   }
 });
 

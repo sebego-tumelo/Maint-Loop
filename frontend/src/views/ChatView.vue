@@ -168,7 +168,6 @@ watch(systemPrompt, async (newPrompt) => {
 
 const applyFormatting = (text) => {
   if (!text) return text;
-  console.log("Received AI response:", text);
 
   // Try to find the JSON-like structure - made non-greedy
  const jsonMatch = text.match(/\{[\s\S]*?\n\}/);
@@ -315,11 +314,40 @@ const sendMessage = async () => {
         throw new Error(`Server returned ${response.status}`);
     }
 
-    const aiResponse = await response.text();
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let aiResponse = '';
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      buffer += chunk;
+      
+      const lines = buffer.split('\n\n');
+      buffer = lines.pop(); // Keep the last incomplete part in buffer
+      
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        if (line.startsWith('data: ')) {
+          const data = JSON.parse(line.replace('data: ', ''));
+          
+          if (data.type === 'token') {
+            aiResponse += data.text;
+            // Update UI
+            localMessages.value[aiIndex].text = aiResponse;
+            scrollToBottom();
+          } else if (data.type === 'error') {
+            throw new Error(data.message);
+          }
+        }
+      }
+    }
     
-    // Attempt to parse and format JSON if present
+    // Final update after full stream
     const finalDisplay = applyFormatting(aiResponse);
-    
     localMessages.value[aiIndex].text = finalDisplay;
 
     await db.messages.add({
