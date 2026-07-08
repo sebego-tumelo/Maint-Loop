@@ -91,7 +91,6 @@ app.post('/run-instruction', async (req, res) => {
 
     agent.subscribe(async (event) => {
       // Send message updates as they come in
-      console.log(`[Backend Event]: ${event.type}`);
       
       if (event.type === 'message_start') {
         lastSentIndex = -1;
@@ -110,7 +109,6 @@ app.post('/run-instruction', async (req, res) => {
             const newText = textToProcess.substring(lastProcessedTextLength);
             
             if (newText.length > 0) {
-              console.log(`[Backend Token]: Sending "${newText}"`);
               const payload = `data: ${JSON.stringify({ type: 'token', text: newText })}\n\n`;
               res.write(payload);
               if (res.flush) res.flush();
@@ -121,7 +119,6 @@ app.post('/run-instruction', async (req, res) => {
       }
       
       if (event.type === 'agent_end') {
-        console.log(`[Backend Event]: Agent work complete. Ending stream.`);
         res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
         res.end();
       }

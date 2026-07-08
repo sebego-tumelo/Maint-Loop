@@ -331,23 +331,19 @@ const sendMessage = async () => {
       
       for (const line of lines) {
         if (!line.trim()) continue;
-        console.log("Processing SSE line:", line);
         if (line.startsWith('data: ')) {
           const data = JSON.parse(line.replace('data: ', ''));
-          console.log("Parsed SSE data:", data);
           
-            if (data.type === 'token') {
-              console.log("Got token:", data.text);
-              if (aiResponse === '') {
-                aiResponse = data.text;
-              } else {
-                aiResponse += data.text;
-              }
-              // Update UI
-              localMessages.value[aiIndex].text = aiResponse;
-              console.log("Updated UI text to:", localMessages.value[aiIndex].text);
-              scrollToBottom();
-            } else if (data.type === 'error') {
+          if (data.type === 'token') {
+            if (aiResponse === '') {
+              aiResponse = data.text;
+            } else {
+              aiResponse += data.text;
+            }
+            // Update UI
+            localMessages.value[aiIndex].text = aiResponse;
+            scrollToBottom();
+          } else if (data.type === 'error') {
             throw new Error(data.message);
           }
         }
