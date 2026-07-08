@@ -13,11 +13,15 @@ import { predictionToolsList, lotterySystemInstruction } from './prediction_work
 
 dotenv.config();
 const app = express();
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 app.use(express.json());
 
 const __filename = fileURLToPath(import.meta.url);
@@ -46,9 +50,12 @@ const gemmaCloudModel = {
 // UNIVERSAL API ENDPOINT
 // ==========================================
 app.post('/run-instruction', async (req, res) => {
+  console.log(`[DEBUG]: Received ${req.method} request to ${req.url}`);
+  console.log(`[DEBUG]: Request Body:`, JSON.stringify(req.body));
   const instruction = req.body.instruction;
   
   if (!instruction) {
+    console.log(`[DEBUG]: Missing instruction`);
     return res.status(400).json({ error: "Missing 'instruction' property in request body." });
   }
 
@@ -56,6 +63,7 @@ app.post('/run-instruction', async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();
 
   try {
@@ -78,19 +86,42 @@ app.post('/run-instruction', async (req, res) => {
       });
     };
 
+    let lastSentIndex = -1;
+    let lastProcessedTextLength = 0;
+
     agent.subscribe(async (event) => {
       // Send message updates as they come in
+      console.log(`[Backend Event]: ${event.type}`);
+      
+      if (event.type === 'message_start') {
+        lastSentIndex = -1;
+        lastProcessedTextLength = 0;
+      }
+      
       if (event.type === 'message_update') {
         const content = event.message.content;
-        if (Array.isArray(content)) {
-          const latestContent = content[content.length - 1];
-          if (latestContent.type === 'text') {
-            res.write(`data: ${JSON.stringify({ type: 'token', text: latestContent.text })}\n\n`);
+        
+        // Iterate through all content blocks to ensure we don't miss anything
+        for (let i = 0; i < content.length; i++) {
+          const part = content[i];
+          if (part.type === 'text') {
+            const textToProcess = part.text || '';
+            // Only send the *new* part of this specific text block
+            const newText = textToProcess.substring(lastProcessedTextLength);
+            
+            if (newText.length > 0) {
+              console.log(`[Backend Token]: Sending "${newText}"`);
+              const payload = `data: ${JSON.stringify({ type: 'token', text: newText })}\n\n`;
+              res.write(payload);
+              if (res.flush) res.flush();
+              lastProcessedTextLength += newText.length;
+            }
           }
         }
       }
       
-      if (event.type === 'message_end') {
+      if (event.type === 'agent_end') {
+        console.log(`[Backend Event]: Agent work complete. Ending stream.`);
         res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
         res.end();
       }
