@@ -59,3 +59,12 @@ Checks if there are any new updates (new records added).
 ## Notes
 - All POST endpoints (`/api/scrape`, `/api/upload`) run processes in the background to avoid blocking the response.
 - Use the `jobId` returned from `/api/upload` to poll for completion using `/api/upload/status/:jobId`.
+
+## Frontend Implementation Notes
+- The application implements polling on the client side using a 30-second interval.
+- A maximum timeout of 2 minutes (120,000ms) is enforced for the polling process.
+- The UI reflects the upload state:
+  - `idle`: Displays paperclip icon.
+  - `uploading`: Displays animated loading spinner.
+  - `error`: Displays red cross icon if status check fails or times out.
+  - `success`: Disables button upon successful processing.
