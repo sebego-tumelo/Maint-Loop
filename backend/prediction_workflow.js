@@ -1,5 +1,7 @@
 // backend/prediction_workflow.js
 
+import { LottoFeatures } from './models/LottoFeatures.js';
+
 /**
  * Core System Instruction outlining the consecutive strategy 
  * that gemma4:31b must follow step-by-step.
@@ -16,98 +18,109 @@ You must generate a final set of lottery numbers by executing the following stra
 CRITICAL: Show your step-by-step reasoning chain for each strategy phase before outputting the final JSON object containing the suggested ticket numbers.
 `;
 
-async function calculateTenLottoFeatures() {
-  try {
-    const apiBaseUrl = process.env.LOTTERY_API_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${apiBaseUrl}/api/results`);
-    
-    if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
-    }
-    
-    const result = await response.json();
-    if (!result.success || !Array.isArray(result.data)) {
-      throw new Error("Invalid API response format");
-    }
+async function getOrUpdateLottoFeatures() {
+  const apiBaseUrl = process.env.LOTTERY_API_BASE_URL || 'http://localhost:3000';
+  
+  // 1. Check for updates
+  const updateCheck = await fetch(`${apiBaseUrl}/api/newupdate`);
+  const updateData = await updateCheck.json();
+  const hasUpdate = updateData.updateAvailable; // Assuming this structure
 
-    // Assuming API data objects have a 'numbers' array property
-    const lines = result.data
-      .map(drawObj => drawObj.numbers || [])
-      .filter(draw => draw.length > 0);
-    
-    const totalDraws = lines.length;
-    if (totalDraws === 0) return { error: "No historical records could be parsed properly." };
+  // 2. Try to get cached features
+  const cached = await LottoFeatures.findOne().sort({ lastUpdated: -1 });
 
-    const frequencies = {};
-    const positionTotals = [{}, {}, {}, {}, {}];
-    let totalGapsSum = 0;
-    const positionalGaps = [[], [], [], []];
-    let consecutivePairsCount = 0;
-    let sumTotalInCurve = 0;
-    const lastDigits = {};
+  if (cached && !hasUpdate) {
+    return cached.features;
+  }
 
-    lines.forEach((draw) => {
-      const sortedDraw = [...draw].sort((a, b) => a - b);
-      let ticketSum = 0;
+  // 3. Recalculate if no cache or update available
+  const response = await fetch(`${apiBaseUrl}/api/results`);
+  if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+  const result = await response.json();
+  
+  const features = calculateFeaturesFromData(result.data);
+  
+  // 4. Persist
+  await LottoFeatures.updateOne({}, { lastUpdated: new Date(), features }, { upsert: true });
+  
+  return features;
+}
 
-      for (let i = 0; i < sortedDraw.length; i++) {
-        const num = sortedDraw[i];
-        ticketSum += num;
+function calculateFeaturesFromData(data) {
+  const lines = data
+    .map(drawObj => drawObj.numbers || [])
+    .filter(draw => draw.length > 0);
+  
+  const totalDraws = lines.length;
+  if (totalDraws === 0) return { error: "No historical records could be parsed properly." };
 
-        frequencies[num] = (frequencies[num] || 0) + 1;
-        if (positionTotals[i]) {
-          positionTotals[i][num] = (positionTotals[i][num] || 0) + 1;
-        }
+  const frequencies = {};
+  const positionTotals = [{}, {}, {}, {}, {}];
+  let totalGapsSum = 0;
+  const positionalGaps = [[], [], [], []];
+  let consecutivePairsCount = 0;
+  let sumTotalInCurve = 0;
+  const lastDigits = {};
 
-        const lastDigit = num % 10;
-        lastDigits[lastDigit] = (lastDigits[lastDigit] || 0) + 1;
+  lines.forEach((draw) => {
+    const sortedDraw = [...draw].sort((a, b) => a - b);
+    let ticketSum = 0;
 
-        if (i > 0) {
-          const gap = sortedDraw[i] - sortedDraw[i - 1];
-          totalGapsSum += gap;
-          if (positionalGaps[i - 1]) {
-            positionalGaps[i - 1].push(gap);
-          }
-          if (gap === 1) consecutivePairsCount++;
-        }
+    for (let i = 0; i < sortedDraw.length; i++) {
+      const num = sortedDraw[i];
+      ticketSum += num;
+
+      frequencies[num] = (frequencies[num] || 0) + 1;
+      if (positionTotals[i]) {
+        positionTotals[i][num] = (positionTotals[i][num] || 0) + 1;
       }
 
-      if (ticketSum >= 100 && ticketSum <= 175) sumTotalInCurve++;
-    });
+      const lastDigit = num % 10;
+      lastDigits[lastDigit] = (lastDigits[lastDigit] || 0) + 1;
 
-    const sortedFreqs = Object.entries(frequencies).sort((a, b) => b[1] - a[1]).map(e => Number(e[0]));
-    const hotNumbers = sortedFreqs.slice(0, 10);
-    const coldNumbers = sortedFreqs.slice(-10);
-
-    const avgDeltaGap = (totalGapsSum / (totalDraws * 4)).toFixed(2);
-    const posDeltaAvgs = positionalGaps.map(gaps => 
-      gaps.length > 0 ? (gaps.reduce((a, b) => a + b, 0) / gaps.length).toFixed(2) : "0.00"
-    );
-
-    return {
-      total_records_analyzed: totalDraws,
-      feature_1_frequency_tiers: { hot: hotNumbers, cold: coldNumbers },
-      feature_2_positional_data: positionTotals.map(pos => Object.entries(pos).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>Number(e[0]))),
-      feature_3_delta_spacing_trends: {
-        global_average_gap: Number(avgDeltaGap),
-        positional_delta_averages: {
-          gap_1_to_2: Number(posDeltaAvgs[0]),
-          gap_2_to_3: Number(posDeltaAvgs[1]),
-          gap_3_to_4: Number(posDeltaAvgs[2]),
-          gap_4_to_5: Number(posDeltaAvgs[3])
+      if (i > 0) {
+        const gap = sortedDraw[i] - sortedDraw[i - 1];
+        totalGapsSum += gap;
+        if (positionalGaps[i - 1]) {
+          positionalGaps[i - 1].push(gap);
         }
-      },
-      feature_4_consecutive_pairs_probability: `${((consecutivePairsCount / totalDraws) * 100).toFixed(1)}%`,
-      feature_5_optimal_hot_cold_ratio: "3 Hot / 1 Warm / 1 Cold",
-      feature_6_sum_total_bell_curve: { min: 100, max: 175, games_within_range: `${((sumTotalInCurve / totalDraws) * 100).toFixed(1)}%` },
-      feature_7_last_digit_trends: Object.entries(lastDigits).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>Number(e[0])),
-      feature_8_historical_skip_intervals: "Calculated via active timeline logs",
-      feature_9_high_low_sector_ratio: "Recent 10 games show a 3:2 baseline",
-      feature_10_repeater_echo_probability: "14.2% chance of 1 trailing number repeating"
-    };
-  } catch (error) {
-    return { error: `Failed to compile statistical features: ${error.message}` };
-  }
+        if (gap === 1) consecutivePairsCount++;
+      }
+    }
+
+    if (ticketSum >= 100 && ticketSum <= 175) sumTotalInCurve++;
+  });
+
+  const sortedFreqs = Object.entries(frequencies).sort((a, b) => b[1] - a[1]).map(e => Number(e[0]));
+  const hotNumbers = sortedFreqs.slice(0, 10);
+  const coldNumbers = sortedFreqs.slice(-10);
+
+  const avgDeltaGap = (totalGapsSum / (totalDraws * 4)).toFixed(2);
+  const posDeltaAvgs = positionalGaps.map(gaps => 
+    gaps.length > 0 ? (gaps.reduce((a, b) => a + b, 0) / gaps.length).toFixed(2) : "0.00"
+  );
+
+  return {
+    total_records_analyzed: totalDraws,
+    feature_1_frequency_tiers: { hot: hotNumbers, cold: coldNumbers },
+    feature_2_positional_data: positionTotals.map(pos => Object.entries(pos).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>Number(e[0]))),
+    feature_3_delta_spacing_trends: {
+      global_average_gap: Number(avgDeltaGap),
+      positional_delta_averages: {
+        gap_1_to_2: Number(posDeltaAvgs[0]),
+        gap_2_to_3: Number(posDeltaAvgs[1]),
+        gap_3_to_4: Number(posDeltaAvgs[2]),
+        gap_4_to_5: Number(posDeltaAvgs[3])
+      }
+    },
+    feature_4_consecutive_pairs_probability: `${((consecutivePairsCount / totalDraws) * 100).toFixed(1)}%`,
+    feature_5_optimal_hot_cold_ratio: "3 Hot / 1 Warm / 1 Cold",
+    feature_6_sum_total_bell_curve: { min: 100, max: 175, games_within_range: `${((sumTotalInCurve / totalDraws) * 100).toFixed(1)}%` },
+    feature_7_last_digit_trends: Object.entries(lastDigits).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>Number(e[0])),
+    feature_8_historical_skip_intervals: "Calculated via active timeline logs",
+    feature_9_high_low_sector_ratio: "Recent 10 games show a 3:2 baseline",
+    feature_10_repeater_echo_probability: "14.2% chance of 1 trailing number repeating"
+  };
 }
 
 export const predictionToolsList = [
@@ -121,7 +134,7 @@ export const predictionToolsList = [
 
         try {
           console.log("🛠️ [Backend Tool Script]: Beginning mathematical feature extraction...");
-          const statsObj = await calculateTenLottoFeatures();
+          const statsObj = await getOrUpdateLottoFeatures();
 
           if (!statsObj || statsObj.error) {
             const errorMsg = statsObj?.error || "Returned telemetry object is undefined or empty.";
