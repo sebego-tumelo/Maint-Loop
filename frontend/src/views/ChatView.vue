@@ -233,12 +233,12 @@ const pollUploadStatus = (jobId) => {
         return;
       }
       
-      setTimeout(poll, 30000);
+      setTimeout(poll, 10000);
     } catch (e) {
       if (Date.now() - startTime > 120000) {
         uploadState.value = 'error';
       } else {
-        setTimeout(poll, 30000);
+        setTimeout(poll, 10000);
       }
     }
   };
