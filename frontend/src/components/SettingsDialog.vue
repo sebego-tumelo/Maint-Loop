@@ -15,52 +15,30 @@
         </span>
       </div>
 
-      <!-- System Prompt Textarea -->
+      <!-- Features Display -->
       <div class="mb-5">
-        <label class="text-xs font-bold uppercase tracking-wider block mb-1.5 text-gray-700">System Prompt</label>
-        <textarea 
-          :value="systemPrompt"
-          @input="$emit('update:systemPrompt', $event.target.value)"
-          @focus="closeAllDropdowns"
-          class="w-full p-3 border-[1.5px] border-[#111111] bg-white text-[#111111] font-medium rounded-xl text-sm h-24 outline-none focus:bg-[#FAFFA0]/10 focus:shadow-[2px_2px_0_0_#111111] transition-all resize-none"
-          placeholder="Describe assistant behaviors..."
-        ></textarea>
+        <label class="text-xs font-bold uppercase tracking-wider block mb-1.5 text-gray-700">FEATURES</label>
+        <div class="w-full p-3 border-[1.5px] border-[#111111] bg-gray-50 text-[#111111] font-medium rounded-xl text-sm h-24 overflow-y-auto">
+          <p>• Advanced local AI processing</p>
+          <p>• PWA offline support</p>
+          <p>• Markdown rendering enabled</p>
+          <p class="text-xs text-gray-500 mt-2">Last updated: 2026-07-27</p>
+        </div>
       </div>
       
       <div class="space-y-4">
-        <!-- Service Provider Selector -->
+        <!-- Upload Results Selector -->
         <div class="relative">
-          <label class="text-xs font-bold uppercase tracking-wider block mb-1.5 text-gray-700">Service Provider</label>
+          <label class="text-xs font-bold uppercase tracking-wider block mb-1.5 text-gray-700">UPLOAD RESULTS</label>
           
           <!-- Custom Trigger Button -->
-          <button 
-            type="button"
-            :disabled="isLocked"
-            @click.stop="toggleDropdown('service')"
-            class="w-full flex items-center justify-between p-2.5 px-3.5 border-[1.5px] border-[#111111] bg-white text-[#111111] font-semibold rounded-xl text-sm outline-none transition-all text-left disabled:bg-[#E6DFD3] disabled:text-gray-500 disabled:cursor-not-allowed"
-            :class="{ 'shadow-[2px_2px_0_0_#111111] bg-[#FAFFA0]/10': activeDropdown === 'service' }"
+          <div
+            class="w-full flex items-center justify-between p-2.5 px-3.5 border-[1.5px] border-[#111111] bg-white text-gray-500 font-semibold rounded-xl text-sm outline-none"
           >
-            <span>{{ serviceProvider === 'Ollama' ? 'Ollama (Local)' : 'Hugging Face (Cloud)' }}</span>
-            <span class="font-black text-[0.7rem] transition-transform duration-200" :class="{ 'rotate-180': activeDropdown === 'service' }">▼</span>
-          </button>
-
-          <!-- Rebuilt Options Compartment -->
-          <div 
-            v-if="activeDropdown === 'service' && !isLocked" 
-            class="absolute left-0 right-0 top-[calc(100%+4px)] z-50 bg-[#FAF6F0] border-[1.5px] border-[#111111] rounded-xl overflow-hidden shadow-[4px_4px_0_0_#111111]"
-          >
-            <div 
-              @click="handleServiceChange('Ollama')"
-              class="p-2.5 px-3.5 text-sm font-semibold cursor-pointer transition-colors hover:bg-[#FAFFA0] border-b-[1.5px] border-[#111111]"
-            >
-              Ollama (Local)
-            </div>
-            <div 
-              @click="handleServiceChange('Hugging Face')"
-              class="p-2.5 px-3.5 text-sm font-semibold cursor-pointer transition-colors hover:bg-[#FAFFA0]"
-            >
-              Hugging Face (Cloud)
-            </div>
+            <span>Select file to upload...</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+            </svg>
           </div>
         </div>
 
@@ -115,7 +93,7 @@ const props = defineProps({
   noApiKey: Boolean
 });
 
-const emit = defineEmits(['close', 'update:modelName', 'update:serviceProvider', 'update:systemPrompt']);
+const emit = defineEmits(['close', 'update:modelName']);
 
 // Track which menu container is dropped open
 const activeDropdown = ref(null);
@@ -174,15 +152,8 @@ const availableModels = computed(() => {
   }
 });
 
-const handleServiceChange = (value) => {
-  emit('update:serviceProvider', value);
-  if (value === 'Hugging Face') {
-    emit('update:modelName', 'Llama 3 8B Instruct');
-  } else {
-    emit('update:modelName', 'gemma4-31b');
-  }
-  closeAllDropdowns();
-};
+// const handleServiceChange = ... (removed)
+
 
 const handleModelChange = (value) => {
   emit('update:modelName', value);
