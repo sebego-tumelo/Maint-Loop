@@ -129,38 +129,35 @@ export const predictionToolsList = [
     description: 'Computes the 10 high-level synthesized metrics from the lottery results API, including historical positional delta trend averages where the sum of adjacent gaps always exactly equals the highest number minus the lowest number.',
     parameters: { type: 'object', properties: {} }, 
     execute: async () => {
-      return new Promise((resolve, reject) => {
-        console.log("🛠️ [Backend Tool Script]: Handshake established. Preparing wrapper...");
+      console.log("🛠️ [Backend Tool Script]: Handshake established. Preparing wrapper...");
 
-        try {
-          console.log("🛠️ [Backend Tool Script]: Beginning mathematical feature extraction...");
-          const statsObj = await getOrUpdateLottoFeatures();
+      try {
+        console.log("🛠️ [Backend Tool Script]: Beginning mathematical feature extraction...");
+        const statsObj = await getOrUpdateLottoFeatures();
 
-          if (!statsObj || statsObj.error) {
-            const errorMsg = statsObj?.error || "Returned telemetry object is undefined or empty.";
-            console.error(`❌ [Backend Tool Script Error]: ${errorMsg}`);
-            resolve({
-              content: [{ type: 'text', text: JSON.stringify({ error: `Feature calculation failed: ${errorMsg}` }) }],
-              isError: true
-            });
-            return;
-          }
-
-          console.log("✅ [Backend Tool Script]: Calculations complete. Serializing data back to Gemma...");
-          const serializedData = JSON.stringify(statsObj);
-
-          resolve({
-            content: [{ type: 'text', text: serializedData }]
-          });
-
-        } catch (innerCalculationError) {
-          console.error("❌ [Backend Tool Script Fatal Computation Crash]:", innerCalculationError.stack);
-          resolve({
-            content: [{ type: 'text', text: JSON.stringify({ error: `Fatal internal exception caught during parsing loop: ${innerCalculationError.message}` }) }],
+        if (!statsObj || statsObj.error) {
+          const errorMsg = statsObj?.error || "Returned telemetry object is undefined or empty.";
+          console.error(`❌ [Backend Tool Script Error]: ${errorMsg}`);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: `Feature calculation failed: ${errorMsg}` }) }],
             isError: true
-          });
+          };
         }
-      });
+
+        console.log("✅ [Backend Tool Script]: Calculations complete. Serializing data back to Gemma...");
+        const serializedData = JSON.stringify(statsObj);
+
+        return {
+          content: [{ type: 'text', text: serializedData }]
+        };
+
+      } catch (innerCalculationError) {
+        console.error("❌ [Backend Tool Script Fatal Computation Crash]:", innerCalculationError.stack);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: `Fatal internal exception caught during parsing loop: ${innerCalculationError.message}` }) }],
+          isError: true
+        };
+      }
     }
   }
 ];
