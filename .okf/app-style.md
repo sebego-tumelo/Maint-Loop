@@ -38,6 +38,12 @@ To maintain visual consistency, follow these patterns for UI elements:
     active:translate-x-[1px] active:translate-y-[1px] active:shadow-none
     ```
 
+### Header Action Buttons
+When adding actionable buttons (like navigation or settings) to the `ChatView` header:
+*   Ensure they match the container size (e.g., `h-10 w-10`).
+*   Follow the interaction feedback pattern (active translate/shadow removal) for tactile feel.
+*   Use standard border and background colors consistent with other header elements to maintain visual harmony.
+
 ## Component Architecture
 
 The frontend is built using Vue 3 with the Composition API (`script setup`).
@@ -47,6 +53,7 @@ The frontend is built using Vue 3 with the Composition API (`script setup`).
 *   **Sub-components**:
     *   `SideMenu.vue`: Manages conversation history navigation and new chat initiation.
     *   `UserConfigDialog.vue`: Handles user-specific configurations.
+    *   `SettingsDialog.vue`: Manages AI model and provider configurations.
 
 ### Data Flow
 - **Local DB:** Data is persisted locally using `Dexie.js` (`db.js`).
