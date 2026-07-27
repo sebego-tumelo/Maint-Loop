@@ -2,16 +2,7 @@ import { db } from '../db.js';
 
 // Dynamically calculate the development backend port using the active browser location.
 // This prevents hardcoded workspace URLs from breaking when your container restarts!
-const getBackendBase = () => {
-  if (import.meta.env.DEV) {
-    const currentHost = window.location.hostname; // e.g., congenial-goldfish-979gx49gwp44f75qp-5173.app.github.dev
-    const devBackendHost = currentHost.replace('-5173.', '-5000.');
-    return `https://${devBackendHost}/.netlify/functions/api`;
-  }
-  return '/.netlify/functions/api';
-};
-
-const BACKEND_BASE = getBackendBase();
+const BACKEND_BASE = '';
 
 export const aiProviderService = {
 

@@ -133,6 +133,35 @@ app.post('/run-instruction', async (req, res) => {
   }
 });
 
+// Proxy endpoint for chat requests
+app.post('/chat-proxy', async (req, res) => {
+  const { provider, model, messages, apiKey, cloudOllamaUrl } = req.body;
+  
+  // Forward request based on provider
+  try {
+    let response;
+    if (provider === 'Ollama') {
+        // Implement Ollama forwarding logic
+        // This would use the cloudOllamaUrl and apiKey
+        res.status(501).json({ error: "Ollama proxy not yet fully implemented" });
+        return;
+    } else {
+        // Assume Hugging Face or other
+        res.status(501).json({ error: "Provider proxy not yet fully implemented" });
+        return;
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint for model validation
+app.post('/validate-model', async (req, res) => {
+  const { provider, tag, apiKey, cloudOllamaUrl } = req.body;
+  // Implement validation logic
+  res.status(501).json({ valid: false, error: "Validation not yet fully implemented" });
+});
+
 // For any other path, serve the index.html file (for Vue Router SPA)
 app.get(/.*/, (req, res) => {                                                                                                               
      res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));                                                                        
