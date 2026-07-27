@@ -48,6 +48,14 @@ Checks the status of a specific AI extraction job.
   - `200 OK`: `{ "success": true, "status": string, "count"?: number, "error"?: string }`
   - `404 Not Found`: `{ "success": false, "message": string }`
 
+### 5. Check for New Updates
+Checks if there are any new updates (new records added).
+
+- **Method**: `GET`
+- **Path**: `/api/newupdate`
+- **Response**:
+  - `200 OK`: `{ "success": true, "hasNewUpdate": boolean, "message": string }`
+
 ## Notes
 - All POST endpoints (`/api/scrape`, `/api/upload`) run processes in the background to avoid blocking the response.
 - Use the `jobId` returned from `/api/upload` to poll for completion using `/api/upload/status/:jobId`.

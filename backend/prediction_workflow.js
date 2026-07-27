@@ -24,7 +24,7 @@ async function getOrUpdateLottoFeatures() {
   // 1. Check for updates
   const updateCheck = await fetch(`${apiBaseUrl}/api/newupdate`);
   const updateData = await updateCheck.json();
-  const hasUpdate = updateData.updateAvailable; // Assuming this structure
+  const hasUpdate = updateData.hasNewUpdate; // Assuming this structure
 
   // 2. Try to get cached features
   const cached = await LottoFeatures.findOne().sort({ lastUpdated: -1 });
