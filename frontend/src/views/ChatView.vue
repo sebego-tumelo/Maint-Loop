@@ -18,6 +18,19 @@
         @close="handleConfigDialogClose"
       />
 
+      <SettingsDialog
+        v-if="isSettingsOpen"
+        :model-name="modelName"
+        :service-provider="serviceProvider"
+        :system-prompt="systemPrompt"
+        :is-locked="false"
+        :no-api-key="false"
+        @close="isSettingsOpen = false"
+        @update:model-name="modelName = $event"
+        @update:service-provider="serviceProvider = $event"
+        @update:system-prompt="systemPrompt = $event"
+      />
+
       <div 
         v-if="!isOnline" 
         class="bg-[#E75A24] text-white text-center text-xs py-1 font-semibold border-b-[1.5px] border-[#111111] tracking-wide z-10"
@@ -55,7 +68,16 @@
           <p class="text-[0.75rem] text-gray-600 mt-0.5">{{ modelName }}</p>
         </div>
 
-        <div class="w-10 h-10"></div>
+        <button 
+          @click="isSettingsOpen = true" 
+          class="flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] border-[#111111] bg-[#FAFFA0] transition-all hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+          title="Open Settings"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
       </header>
 
       <main ref="chatContainer" class="flex-1 flex flex-col overflow-y-auto bg-[#FAF6F0] p-4 space-y-4">
@@ -136,6 +158,7 @@ import { db } from '../db';
 
 import SideMenu from '../components/SideMenu.vue';
 import UserConfigDialog from '../components/UserConfigDialog.vue';
+import SettingsDialog from '../components/SettingsDialog.vue';
 
 import { marked } from 'marked';
 import { useRegisterSW } from 'virtual:pwa-register/vue';
@@ -152,6 +175,7 @@ const chatContainer = ref(null);
 
 const isMenuOpen = ref(false);
 const isUserConfigOpen = ref(false);
+const isSettingsOpen = ref(false);
 const topicTitle = ref('New Chat');
 const modelName = ref('gemma4:31b');
 const serviceProvider = ref('Ollama');
