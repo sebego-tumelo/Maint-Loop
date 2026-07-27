@@ -1,6 +1,4 @@
-const baseUrl = import.meta.env.DEV 
-  ? `https://${window.location.hostname.replace('-5173.', '-3000.')}` 
-  : '';
+const baseUrl = import.meta.env.LOTTERY_API_BASE_URL || '';
 
 export const uploadFile = async (file, onStateChange) => {
   onStateChange('uploading', file.name);
