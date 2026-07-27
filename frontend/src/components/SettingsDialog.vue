@@ -6,13 +6,25 @@
     <!-- Main Modal Container -->
     <div class="w-full max-w-[340px] bg-[#FAF6F0] border-[1.5px] border-[#111111] rounded-[24px] p-6 shadow-[0_8px_0_0_#111111] animate-fade-in">
       <div class="flex items-center justify-between mb-5">
-        <h3 class="text-lg font-bold tracking-tight">Model Settings</h3>
+        <h3 class="text-lg font-bold tracking-tight">App State</h3>
         <span 
           v-if="isLocked" 
           class="text-[0.65rem] font-bold bg-[#E75A24] text-white px-2 py-0.5 rounded border-[1.5px] border-[#111111] uppercase tracking-wider shadow-[1px_1px_0_0_#111111]"
         >
           Locked
         </span>
+      </div>
+
+      <!-- System Prompt Textarea -->
+      <div class="mb-5">
+        <label class="text-xs font-bold uppercase tracking-wider block mb-1.5 text-gray-700">System Prompt</label>
+        <textarea 
+          :value="systemPrompt"
+          @input="$emit('update:systemPrompt', $event.target.value)"
+          @focus="closeAllDropdowns"
+          class="w-full p-3 border-[1.5px] border-[#111111] bg-white text-[#111111] font-medium rounded-xl text-sm h-24 outline-none focus:bg-[#FAFFA0]/10 focus:shadow-[2px_2px_0_0_#111111] transition-all resize-none"
+          placeholder="Describe assistant behaviors..."
+        ></textarea>
       </div>
       
       <div class="space-y-4">
@@ -85,17 +97,7 @@
           </div>
         </div>
 
-        <!-- System Prompt Textarea -->
-        <div>
-          <label class="text-xs font-bold uppercase tracking-wider block mb-1.5 text-gray-700">System Prompt</label>
-          <textarea 
-            :value="systemPrompt"
-            @input="$emit('update:systemPrompt', $event.target.value)"
-            @focus="closeAllDropdowns"
-            class="w-full p-3 border-[1.5px] border-[#111111] bg-white text-[#111111] font-medium rounded-xl text-sm h-24 outline-none focus:bg-[#FAFFA0]/10 focus:shadow-[2px_2px_0_0_#111111] transition-all resize-none"
-            placeholder="Describe assistant behaviors..."
-          ></textarea>
-        </div>
+
       </div>
     </div>
   </div>
