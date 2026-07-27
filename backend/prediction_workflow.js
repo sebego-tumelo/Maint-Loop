@@ -1,6 +1,4 @@
 // backend/prediction_workflow.js
-import fs from 'fs';
-import path from 'path';
 
 /**
  * Core System Instruction outlining the consecutive strategy 
@@ -18,26 +16,23 @@ You must generate a final set of lottery numbers by executing the following stra
 CRITICAL: Show your step-by-step reasoning chain for each strategy phase before outputting the final JSON object containing the suggested ticket numbers.
 `;
 
-function calculateTenLottoFeatures() {
+async function calculateTenLottoFeatures() {
   try {
-    const filePath = path.join(process.cwd(), 'daily_lotto.txt');
+    const apiBaseUrl = process.env.LOTTERY_API_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${apiBaseUrl}/api/results`);
     
-    if (!fs.existsSync(filePath)) {
-      return { error: "daily_lotto.txt file not found. Ingest historical records first." };
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+    
+    const result = await response.json();
+    if (!result.success || !Array.isArray(result.data)) {
+      throw new Error("Invalid API response format");
     }
 
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    
-    const lines = fileContent.trim().split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0 && !line.startsWith('Date') && !line.startsWith('Past'))
-      .map(line => {
-        const parts = line.split(/[\t\s]+/);
-        if (parts[0] && parts[0].includes('-')) {
-          parts.shift();
-        }
-        return parts.map(Number).filter(num => !isNaN(num) && num > 0);
-      })
+    // Assuming API data objects have a 'numbers' array property
+    const lines = result.data
+      .map(drawObj => drawObj.numbers || [])
       .filter(draw => draw.length > 0);
     
     const totalDraws = lines.length;
@@ -118,7 +113,7 @@ function calculateTenLottoFeatures() {
 export const predictionToolsList = [
   {
     name: 'calculate_lotto_stats',
-    description: 'Computes the 10 high-level synthesized metrics from the live daily_lotto.txt database file, including historical positional delta trend averages where the sum of adjacent gaps always exactly equals the highest number minus the lowest number.',
+    description: 'Computes the 10 high-level synthesized metrics from the lottery results API, including historical positional delta trend averages where the sum of adjacent gaps always exactly equals the highest number minus the lowest number.',
     parameters: { type: 'object', properties: {} }, 
     execute: async () => {
       return new Promise((resolve, reject) => {
@@ -126,7 +121,7 @@ export const predictionToolsList = [
 
         try {
           console.log("🛠️ [Backend Tool Script]: Beginning mathematical feature extraction...");
-          const statsObj = calculateTenLottoFeatures();
+          const statsObj = await calculateTenLottoFeatures();
 
           if (!statsObj || statsObj.error) {
             const errorMsg = statsObj?.error || "Returned telemetry object is undefined or empty.";
