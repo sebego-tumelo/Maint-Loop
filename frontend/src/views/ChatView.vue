@@ -89,8 +89,16 @@
             type="text" 
             placeholder="Ask me anything..."
             :disabled="isAiThinking"
-            class="w-full rounded-full border-[1.5px] border-[#111111] bg-[#E6DFD3] py-3.5 px-4 text-[0.9rem] font-medium text-[#111111] placeholder-gray-600 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full rounded-full border-[1.5px] border-[#111111] bg-[#E6DFD3] py-3.5 pl-4 pr-12 text-[0.9rem] font-medium text-[#111111] placeholder-gray-600 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           />
+          <button
+            class="absolute right-2 flex h-8 w-8 items-center justify-center rounded-full border-[1.5px] border-[#111111] bg-[#FAFFA0] transition-all hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+            title="Attach File"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+            </svg>
+          </button>
         </div>
         <button 
           @click="sendMessage"
