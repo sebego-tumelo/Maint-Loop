@@ -1,11 +1,10 @@
-const baseUrl = import.meta.env.LOTTERY_API_BASE_URL || '';
+const baseUrl = import.meta.env.VITE_LOTTERY_API_BASE_URL || '';
 
 export const uploadFile = async (file, onStateChange) => {
   onStateChange('uploading', file.name);
-  
+  // console.log('baseUrl: ', baseUrl);
   const formData = new FormData();
   formData.append('lottoFile', file);
-
   try {
     const response = await fetch(`${baseUrl}/api/upload`, {
       method: 'POST',
