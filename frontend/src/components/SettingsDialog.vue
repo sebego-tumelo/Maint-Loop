@@ -18,10 +18,12 @@
       <!-- Features Display -->
       <div class="mb-5">
         <label class="text-xs font-bold uppercase tracking-wider block mb-1.5 text-gray-700">FEATURES</label>
-        <div class="w-full p-3 border-[1.5px] border-[#111111] bg-gray-50 text-[#111111] font-medium rounded-xl text-sm h-24 overflow-y-auto">
+        <div class="w-full p-3 border-[1.5px] border-[#111111] bg-gray-50 text-[#111111] font-medium rounded-xl text-sm h-32 overflow-y-auto">
           <p>• Advanced local AI processing</p>
           <p>• PWA offline support</p>
           <p>• Markdown rendering enabled</p>
+          <p v-if="stats.years">• Year Processed: {{ stats.years.join(', ') }}</p>
+          <p v-if="stats.totalRecords">• No. of Records: {{ stats.totalRecords }}</p>
           <p class="text-xs text-gray-500 mt-2">Last updated: 2026-07-27</p>
         </div>
       </div>
@@ -62,7 +64,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { uploadFile } from '../services/uploadService';
 
 const props = defineProps({
@@ -74,6 +76,19 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close', 'update:modelName']);
+
+const stats = ref({ years: [], totalRecords: 0 });
+
+onMounted(async () => {
+  try {
+    const response = await fetch('/api/lotto-stats');
+    if (response.ok) {
+      stats.value = await response.json();
+    }
+  } catch (err) {
+    console.error('Failed to fetch stats:', err);
+  }
+});
 
 const fileInput = ref(null);
 const uploadState = ref('idle');

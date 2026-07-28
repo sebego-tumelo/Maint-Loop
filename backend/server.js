@@ -162,6 +162,31 @@ app.post('/validate-model', async (req, res) => {
   res.status(501).json({ valid: false, error: "Validation not yet fully implemented" });
 });
 
+app.get('/api/lotto-stats', async (req, res) => {
+  try {
+    const apiBaseUrl = process.env.LOTTERY_API_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${apiBaseUrl}/api/results`);
+    if (!response.ok) throw new Error('Failed to fetch from API');
+    
+    const result = await response.json();
+    const data = result.data || [];
+    
+    const years = new Set();
+    data.forEach(draw => {
+      if (draw.date) {
+        years.add(draw.date.substring(0, 4));
+      }
+    });
+    
+    res.json({
+      years: Array.from(years).sort(),
+      totalRecords: data.length
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch lotto stats' });
+  }
+});
+
 // For any other path, serve the index.html file (for Vue Router SPA)
 app.get(/.*/, (req, res) => {                                                                                                               
      res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));                                                                        

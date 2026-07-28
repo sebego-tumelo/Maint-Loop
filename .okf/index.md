@@ -10,3 +10,4 @@ This folder contains technical documentation for the project.
 - [Database Schema](database-schema.md)
 - [Deployment](deployment.md)
 - [Development Environment](development-environment.md)
+- [Lottery Statistics](lotto-stats.md)
