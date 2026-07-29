@@ -26,7 +26,7 @@ const pollUploadStatus = (jobId, onStateChange) => {
   const startTime = Date.now();
   const poll = async () => {
     try {
-      const response = await fetch(`${baseUrl}/api/upload/status/${jobId}`);
+      const response = await fetch(`${baseUrl}/api/status/${jobId}`);
       const data = await response.json();
 
       if (data.status === 'completed') {

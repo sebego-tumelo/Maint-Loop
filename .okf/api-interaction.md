@@ -26,7 +26,7 @@ Initiates an asynchronous scrape process in the background.
 - **Method**: `POST`
 - **Path**: `/api/scrape`
 - **Response**:
-  - `200 OK`: `{ "success": true, "message": string }`
+  - `202 Accepted`: `{ "success": true, "jobId": string, "message": string }`
 
 ### 3. Upload File for AI Extraction
 Uploads a file for text-based AI extraction. The process is asynchronous.
@@ -39,13 +39,13 @@ Uploads a file for text-based AI extraction. The process is asynchronous.
   - `202 Accepted`: `{ "success": true, "jobId": string, "message": string }`
   - `400 Bad Request`: `{ "success": false, "error": string }` (if no file)
 
-### 4. Check Extraction Status
-Checks the status of a specific AI extraction job.
+### 4. Check Job Status
+Checks the status of a specific job (either scrape or AI extraction).
 
 - **Method**: `GET`
-- **Path**: `/api/upload/status/:jobId`
+- **Path**: `/api/status/:jobId`
 - **Response**:
-  - `200 OK`: `{ "success": true, "status": string, "count"?: number, "error"?: string }`
+  - `200 OK`: `{ "success": true, "status": string, "type": "scrape" | "ai", "count"?: number, "error"?: string }`
   - `404 Not Found`: `{ "success": false, "message": string }`
 
 ### 5. Check for New Updates
@@ -58,13 +58,4 @@ Checks if there are any new updates (new records added).
 
 ## Notes
 - All POST endpoints (`/api/scrape`, `/api/upload`) run processes in the background to avoid blocking the response.
-- Use the `jobId` returned from `/api/upload` to poll for completion using `/api/upload/status/:jobId`.
-
-## Frontend Implementation Notes
-- The application implements polling on the client side using a 10-second interval.
-- A maximum timeout of 2 minutes (120,000ms) is enforced for the polling process.
-- The UI reflects the upload state:
-  - `idle`: Displays paperclip icon.
-  - `uploading`: Displays animated loading spinner.
-  - `error`: Displays red cross icon if status check fails or times out.
-  - `success`: Disables button upon successful processing.
+- Use the `jobId` returned from these endpoints to poll for status using `/api/status/:jobId`.

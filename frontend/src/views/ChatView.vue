@@ -244,7 +244,7 @@ const pollUploadStatus = (jobId) => {
       const baseUrl = import.meta.env.DEV 
         ? `https://${window.location.hostname.replace('-5173.', '-3000.')}` 
         : '';
-      const response = await fetch(`${baseUrl}/api/upload/status/${jobId}`);
+      const response = await fetch(`${baseUrl}/api/status/${jobId}`);
       const data = await response.json();
 
       if (data.status === 'completed') {
