@@ -270,13 +270,12 @@ app.post('/api/scrape', async (req, res) => {
 
 
 // For any other path, serve the index.html file (for Vue Router SPA)
-app.get(/^(?!\/api).*/, (req, res) => {                                                                                                               
-     res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));                                                                        
-   });
-
-// Ensure any request starting with /api that isn't handled returns 404
-app.all('/api/*', (req, res) => {
-  res.status(404).json({ success: false, error: 'API endpoint not found' });
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) {
+    res.status(404).json({ success: false, error: 'API endpoint not found' });
+  } else {
+    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+  }
 });
 
 // Database Connectivity Initialization Hook
