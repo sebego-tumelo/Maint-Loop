@@ -194,7 +194,7 @@ async function syncAndGetStats() {
   const metadata = await LottoMetadata.findOneAndUpdate(
     {},
     { lastUpdated: new Date(), totalRecords, latestResult },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: 'after' }
   );
 
   return {
@@ -206,6 +206,7 @@ async function syncAndGetStats() {
 // 5. API Endpoint
 app.get('/api/stats', async (req, res) => {
   try {
+    console.log(`[DEBUG]: Received ${req.method} request to ${req.url}`);
     const stats = await syncAndGetStats();
     res.json({ success: true, ...stats });
   } catch (error) {
