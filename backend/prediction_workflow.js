@@ -61,10 +61,12 @@ async function getOrUpdateLottoFeatures() {
 }
 
 function calculateFeaturesFromData(data) {
+  console.log(`[DEBUG]: Data sample (first element):`, JSON.stringify(data[0]));
   const lines = data
-    .map(drawObj => drawObj.numbers || [])
+    .map(drawObj => drawObj.winningNumbers || []) // Changed from drawObj.numbers
     .filter(draw => draw.length > 0);
   
+  console.log(`[DEBUG]: Lines length after processing: ${lines.length}`);
   const totalDraws = lines.length;
   if (totalDraws === 0) return { error: "No historical records could be parsed properly." };
 
