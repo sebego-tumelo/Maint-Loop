@@ -30,11 +30,15 @@ async function getOrUpdateLottoFeatures() {
   console.log(`[DEBUG]: Has update: ${hasUpdate}`);
 
   // 2. Try to get cached features
+  console.log(`[DEBUG]: Checking cache...`);
   const cached = await LottoFeatures.findOne().sort({ lastUpdated: -1 });
+  console.log(`[DEBUG]: Cache found: ${!!cached}`);
 
   if (cached && !hasUpdate) {
+    console.log(`[DEBUG]: Returning cached features.`);
     return cached.features;
   }
+  console.log(`[DEBUG]: No cache or update required, fetching fresh data.`);
 
   // 3. Recalculate if no cache or update available
   console.log(`[DEBUG]: Fetching results from: ${apiBaseUrl}/api/results`);
