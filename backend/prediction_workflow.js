@@ -40,8 +40,12 @@ async function getOrUpdateLottoFeatures() {
   console.log(`[DEBUG]: Fetching results from: ${apiBaseUrl}/api/results`);
   const response = await fetch(`${apiBaseUrl}/api/results`);
   console.log(`[DEBUG]: API response status: ${response.status}`);
+  const responseText = await response.text();
+  console.log(`[DEBUG]: API response text (first 200 chars): ${responseText.substring(0, 200)}`);
+  
   if (!response.ok) throw new Error(`API request failed: ${response.status}`);
-  const result = await response.json();
+  
+  const result = JSON.parse(responseText);
   console.log(`[DEBUG]: Successfully fetched ${result.data?.length || 0} records.`);
   
   const features = calculateFeaturesFromData(result.data);
