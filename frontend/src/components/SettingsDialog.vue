@@ -115,8 +115,14 @@ const pollScrapeStatus = (jobId) => {
         console.log('DEBUG: Scrape completed, refreshing stats');
         // Refresh local stats
         const statsResponse = await fetch('/api/stats');
+        console.log('DEBUG: statsResponse status:', statsResponse.status);
         if (statsResponse.ok) {
-          stats.value = await statsResponse.json();
+          const newStats = await statsResponse.json();
+          console.log('DEBUG: newStats:', newStats);
+          stats.value = newStats;
+        } else {
+          const text = await statsResponse.text();
+          console.log('DEBUG: statsResponse text:', text);
         }
         scrapeMessage.value = 'SCRAPE';
         scrapeState.value = 'idle';
