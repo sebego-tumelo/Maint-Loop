@@ -272,7 +272,12 @@ app.post('/api/scrape', async (req, res) => {
 // For any other path, serve the index.html file (for Vue Router SPA)
 app.get(/^(?!\/api).*/, (req, res) => {                                                                                                               
      res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));                                                                        
-   });  
+   });
+
+// Ensure any request starting with /api that isn't handled returns 404
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ success: false, error: 'API endpoint not found' });
+});
 
 // Database Connectivity Initialization Hook
 mongoose.connect(process.env.MONGODB_URI)
