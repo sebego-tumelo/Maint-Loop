@@ -111,29 +111,8 @@
             type="text" 
             placeholder="Ask me anything..."
             :disabled="isAiThinking"
-            class="w-full rounded-full border-[1.5px] border-[#111111] bg-[#E6DFD3] py-3.5 pl-4 pr-12 text-[0.9rem] font-medium text-[#111111] placeholder-gray-600 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full rounded-full border-[1.5px] border-[#111111] bg-[#E6DFD3] py-3.5 px-4 text-[0.9rem] font-medium text-[#111111] placeholder-gray-600 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           />
-          <input type="file" ref="fileInput" class="hidden" @change="handleFileUpload" accept="*">
-          <button
-            @click="triggerFileUpload"
-            :disabled="uploadState === 'uploading' || uploadState === 'success'"
-            class="absolute right-2 flex h-8 w-8 items-center justify-center rounded-full border-[1.5px] border-[#111111] bg-[#FAFFA0] transition-all hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none disabled:opacity-50"
-            title="Attach File"
-          >
-            <!-- Paperclip -->
-            <svg v-if="uploadState === 'idle'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
-            </svg>
-            <!-- Loading -->
-            <svg v-else-if="uploadState === 'uploading'" class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
-            </svg>
-            <!-- Error -->
-            <svg v-else-if="uploadState === 'error'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
         </div>
         <button 
           @click="sendMessage"
@@ -185,8 +164,6 @@ const currentSessionId = ref(null);
 const localMessages = ref([]);
 
 const isAiThinking = ref(false);
-const fileInput = ref(null);
-const uploadState = ref('idle');
 
 marked.setOptions({
   gfm: true,
@@ -203,71 +180,6 @@ const formatMarkdown = (rawText) => {
   }
 };
 
-const triggerFileUpload = () => {
-  fileInput.value.click();
-};
-
-const handleFileUpload = async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  uploadState.value = 'uploading';
-  
-  const formData = new FormData();
-  formData.append('lottoFile', file);
-
-  try {
-    const baseUrl = import.meta.env.DEV 
-      ? `https://${window.location.hostname.replace('-5173.', '-3000.')}` 
-      : '';
-    
-    const response = await fetch(`${baseUrl}/api/upload`, {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!response.ok) throw new Error('Upload failed');
-    
-    const { jobId } = await response.json();
-    pollUploadStatus(jobId);
-    
-  } catch (error) {
-    console.error(error);
-    uploadState.value = 'error';
-  }
-};
-
-const pollUploadStatus = (jobId) => {
-  const startTime = Date.now();
-  const poll = async () => {
-    try {
-      const baseUrl = import.meta.env.DEV 
-        ? `https://${window.location.hostname.replace('-5173.', '-3000.')}` 
-        : '';
-      const response = await fetch(`${baseUrl}/api/status/${jobId}`);
-      const data = await response.json();
-
-      if (data.status === 'completed') {
-        uploadState.value = 'success';
-        return;
-      }
-      
-      if (Date.now() - startTime > 120000) { // 2 minutes
-        uploadState.value = 'error';
-        return;
-      }
-      
-      setTimeout(poll, 10000);
-    } catch (e) {
-      if (Date.now() - startTime > 120000) {
-        uploadState.value = 'error';
-      } else {
-        setTimeout(poll, 10000);
-      }
-    }
-  };
-  poll();
-};
 
 const handleConfigDialogClose = async () => {
   isUserConfigOpen.value = false;
