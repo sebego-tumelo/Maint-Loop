@@ -88,9 +88,14 @@ const runScrape = async () => {
   scrapeState.value = 'scraping';
   scrapeMessage.value = 'Scraping...';
   try {
-    const response = await fetch('/api/scrape', { method: 'POST' });
+    // Call the scrape endpoint on the external API
+    const response = await fetch(`${import.meta.env.VITE_LOTTERY_API_BASE_URL}/api/scrape`, { method: 'POST' });
     if (response.ok) {
-      stats.value = await response.json();
+      // Refresh local stats after successful external scrape
+      const statsResponse = await fetch('/api/stats');
+      if (statsResponse.ok) {
+        stats.value = await statsResponse.json();
+      }
       scrapeMessage.value = 'SCRAPE';
     } else {
       scrapeMessage.value = 'Error';
