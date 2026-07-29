@@ -174,7 +174,9 @@ async function syncAndGetStats() {
   if (cached) {
     return {
       totalRecords: cached.totalRecords,
-      latestResult: cached.latestResult
+      yearsProcessed: cached.yearsProcessed,
+      latestResult: cached.latestResult,
+      lastUpdated: cached.lastUpdated
     };
   }
 
@@ -189,21 +191,59 @@ async function syncAndGetStats() {
   // Assuming data is sorted by date, or we sort it
   const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
   const latestResult = sortedData[0] || { date: 'N/A', numbers: [] };
+  
+  // Calculate years
+  const yearsProcessed = [...new Set(data.map(item => new Date(item.date).getFullYear()))].sort();
 
   // 4. Persist
   const metadata = await LottoMetadata.findOneAndUpdate(
     {},
-    { lastUpdated: new Date(), totalRecords, latestResult },
+    { lastUpdated: new Date(), totalRecords, yearsProcessed, latestResult },
     { upsert: true, returnDocument: 'after' }
   );
 
   return {
     totalRecords: metadata.totalRecords,
-    latestResult: metadata.latestResult
+    yearsProcessed: metadata.yearsProcessed,
+    latestResult: metadata.latestResult,
+    lastUpdated: metadata.lastUpdated
   };
 }
 
-// 5. API Endpoint
+async function scrapeAndGetStats() {
+  const apiBaseUrl = process.env.LOTTERY_API_BASE_URL || 'http://localhost:3000';
+  
+  // Fetch fresh data
+  const response = await fetch(`${apiBaseUrl}/api/results`);
+  if (!response.ok) throw new Error('Failed to fetch results');
+  const result = await response.json();
+  const data = result.data || [];
+
+  // Prepare metadata
+  const totalRecords = data.length;
+  // Assuming data is sorted by date, or we sort it
+  const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const latestResult = sortedData[0] || { date: 'N/A', numbers: [] };
+  
+  // Calculate years
+  const yearsProcessed = [...new Set(data.map(item => new Date(item.date).getFullYear()))].sort();
+
+  // Persist
+  const metadata = await LottoMetadata.findOneAndUpdate(
+    {},
+    { lastUpdated: new Date(), totalRecords, yearsProcessed, latestResult },
+    { upsert: true, returnDocument: 'after' }
+  );
+
+  return {
+    totalRecords: metadata.totalRecords,
+    yearsProcessed: metadata.yearsProcessed,
+    latestResult: metadata.latestResult,
+    lastUpdated: metadata.lastUpdated
+  };
+}
+
+// 5. API Endpoints
 app.get('/api/stats', async (req, res) => {
   try {
     console.log(`[DEBUG]: Received ${req.method} request to ${req.url}`);
@@ -213,6 +253,17 @@ app.get('/api/stats', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+app.post('/api/scrape', async (req, res) => {
+  try {
+    console.log(`[DEBUG]: Received ${req.method} request to ${req.url}`);
+    const stats = await scrapeAndGetStats();
+    res.json({ success: true, ...stats });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 
 // For any other path, serve the index.html file (for Vue Router SPA)
 app.get(/.*/, (req, res) => {                                                                                                               
