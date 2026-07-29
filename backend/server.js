@@ -193,7 +193,9 @@ async function syncAndGetStats() {
   const latestResult = sortedData[0] || { date: 'N/A', numbers: [] };
   
   // Calculate years
-  const yearsProcessed = [...new Set(data.map(item => new Date(item.date).getFullYear()))].sort();
+  const yearsProcessed = [...new Set(data.map(item => new Date(item.date).getFullYear()))]
+    .filter(year => !isNaN(year))
+    .sort();
 
   // 4. Persist
   const metadata = await LottoMetadata.findOneAndUpdate(
@@ -226,7 +228,9 @@ async function scrapeAndGetStats() {
   const latestResult = sortedData[0] || { date: 'N/A', numbers: [] };
   
   // Calculate years
-  const yearsProcessed = [...new Set(data.map(item => new Date(item.date).getFullYear()))].sort();
+  const yearsProcessed = [...new Set(data.map(item => new Date(item.date).getFullYear()))]
+    .filter(year => !isNaN(year))
+    .sort();
 
   // Persist
   const metadata = await LottoMetadata.findOneAndUpdate(
@@ -248,6 +252,16 @@ app.get('/api/stats', async (req, res) => {
   try {
     console.log(`[DEBUG]: Received ${req.method} request to ${req.url}`);
     const stats = await syncAndGetStats();
+    res.json({ success: true, ...stats });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/scrape', async (req, res) => {
+  try {
+    console.log(`[DEBUG]: Received ${req.method} request to ${req.url}`);
+    const stats = await scrapeAndGetStats();
     res.json({ success: true, ...stats });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
