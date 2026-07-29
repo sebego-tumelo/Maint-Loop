@@ -17,3 +17,8 @@ Database: `MusmentorLocalDB`
 - `LottoFeatures`: Stores the latest synthesized lottery analysis features to optimize AI performance and reduce API load.
     - `lastUpdated`: Date of last calculation.
     - `features`: Object containing hot/cold numbers, delta trends, etc.
+- `LottoMetadata`: Stores high-level summary metadata for the lottery dataset.
+    - `lastUpdated`: Date of last scrape/update.
+    - `totalRecords`: Count of all records.
+    - `yearsProcessed`: Array of years covered in the dataset.
+    - `latestResult`: Object containing the most recent draw date and numbers.
