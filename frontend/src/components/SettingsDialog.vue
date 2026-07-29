@@ -69,7 +69,9 @@ onMounted(async () => {
   try {
     const response = await fetch('/api/stats');
     if (response.ok) {
-      stats.value = await response.json();
+      const data = await response.json();
+      console.log('DEBUG: Mounted stats:', data);
+      stats.value = data;
     }
   } catch (err) {
     console.error('Failed to fetch stats:', err);
