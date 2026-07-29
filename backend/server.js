@@ -270,10 +270,12 @@ app.post('/api/scrape', async (req, res) => {
 
 
 // For any other path, serve the index.html file (for Vue Router SPA)
-app.get('*', (req, res) => {
+app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) {
+    // This is an API route that wasn't matched above.
     res.status(404).json({ success: false, error: 'API endpoint not found' });
   } else {
+    // Serve index.html for all other routes.
     res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
   }
 });
