@@ -116,10 +116,18 @@ const pollScrapeStatus = (jobId) => {
         // Refresh local stats
         const statsResponse = await fetch('/api/stats');
         console.log('DEBUG: statsResponse status:', statsResponse.status);
+        console.log('DEBUG: statsResponse headers:', [...statsResponse.headers.entries()]);
         if (statsResponse.ok) {
-          const newStats = await statsResponse.json();
-          console.log('DEBUG: newStats:', newStats);
-          stats.value = newStats;
+          const text = await statsResponse.text();
+          console.log('DEBUG: statsResponse raw text:', text);
+          try {
+            const newStats = JSON.parse(text);
+            console.log('DEBUG: newStats parsed:', newStats);
+            stats.value = newStats;
+          } catch (e) {
+            console.error('DEBUG: Failed to parse JSON:', e);
+            throw new Error('Invalid JSON response from /api/stats');
+          }
         } else {
           const text = await statsResponse.text();
           console.log('DEBUG: statsResponse text:', text);
