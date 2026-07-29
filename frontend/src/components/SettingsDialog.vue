@@ -109,8 +109,10 @@ const pollScrapeStatus = (jobId) => {
     try {
       const response = await fetch(`${import.meta.env.VITE_LOTTERY_API_BASE_URL}/api/status/${jobId}`);
       const data = await response.json();
+      console.log('DEBUG: Poll status response:', data);
 
       if (data.status === 'completed') {
+        console.log('DEBUG: Scrape completed, refreshing stats');
         // Refresh local stats
         const statsResponse = await fetch('/api/stats');
         if (statsResponse.ok) {
@@ -122,12 +124,14 @@ const pollScrapeStatus = (jobId) => {
       }
       
       if (data.status === 'failed') {
+        console.log('DEBUG: Scrape failed');
         scrapeMessage.value = 'Error';
         scrapeState.value = 'idle';
         return;
       }
       
       // Continue polling
+      console.log('DEBUG: Scrape in progress, polling again...');
       setTimeout(poll, 5000);
     } catch (e) {
       console.error('Polling error:', e);
