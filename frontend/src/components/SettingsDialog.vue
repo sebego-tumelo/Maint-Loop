@@ -81,7 +81,7 @@ const stats = ref({ years: [], totalRecords: 0 });
 
 onMounted(async () => {
   try {
-    const response = await fetch('/api/lotto-stats');
+    const response = await fetch('/api/stats');
     if (response.ok) {
       stats.value = await response.json();
     }
