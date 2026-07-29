@@ -22,9 +22,12 @@ async function getOrUpdateLottoFeatures() {
   const apiBaseUrl = process.env.LOTTERY_API_BASE_URL || 'http://localhost:3000';
   
   // 1. Check for updates
+  console.log(`[DEBUG]: Checking for updates at: ${apiBaseUrl}/api/newupdate`);
   const updateCheck = await fetch(`${apiBaseUrl}/api/newupdate`);
+  console.log(`[DEBUG]: New update check status: ${updateCheck.status}`);
   const updateData = await updateCheck.json();
   const hasUpdate = updateData.hasNewUpdate; // Assuming this structure
+  console.log(`[DEBUG]: Has update: ${hasUpdate}`);
 
   // 2. Try to get cached features
   const cached = await LottoFeatures.findOne().sort({ lastUpdated: -1 });
@@ -34,9 +37,12 @@ async function getOrUpdateLottoFeatures() {
   }
 
   // 3. Recalculate if no cache or update available
+  console.log(`[DEBUG]: Fetching results from: ${apiBaseUrl}/api/results`);
   const response = await fetch(`${apiBaseUrl}/api/results`);
+  console.log(`[DEBUG]: API response status: ${response.status}`);
   if (!response.ok) throw new Error(`API request failed: ${response.status}`);
   const result = await response.json();
+  console.log(`[DEBUG]: Successfully fetched ${result.data?.length || 0} records.`);
   
   const features = calculateFeaturesFromData(result.data);
   
