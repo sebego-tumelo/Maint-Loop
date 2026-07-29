@@ -12,7 +12,7 @@ The application relies on an external API provider to retrieve historical lotter
 2.  **API Integration**: 
     - The engine first checks for new updates via `GET /api/newupdate`.
     - If updates are required or cache is missing, it fetches raw historical data from `GET /api/results`.
-3.  **Data Processing**: The raw data (expected in JSON format) is processed by `calculateFeaturesFromData` to compute strategic metrics.
+3.  **Data Processing**: The raw data (expected in JSON format) is processed by `calculateFeaturesFromData` to compute strategic metrics. Note: The data object returned from `/api/results` must contain an array of objects where each object has a `winningNumbers` field (an array of numbers).
 4.  **Backend Proxy**: The `backend/server.js` acts as a coordinator, managing the `MONGODB_URI` for caching and proxying communication with the external `LOTTERY_API_BASE_URL`.
 
 ## API Requirements
