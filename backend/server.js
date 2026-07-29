@@ -254,19 +254,9 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
-app.post('/api/scrape', async (req, res) => {
-  try {
-    console.log(`[DEBUG]: Received ${req.method} request to ${req.url}`);
-    const stats = await scrapeAndGetStats();
-    res.json({ success: true, ...stats });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
 
 // For any other path, serve the index.html file (for Vue Router SPA)
-app.get(/.*/, (req, res) => {                                                                                                               
+app.get(/^(?!\/api).*/, (req, res) => {                                                                                                               
      res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));                                                                        
    });  
 
