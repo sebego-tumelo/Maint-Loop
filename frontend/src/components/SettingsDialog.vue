@@ -88,23 +88,53 @@ const runScrape = async () => {
   scrapeState.value = 'scraping';
   scrapeMessage.value = 'Scraping...';
   try {
-    // Call the scrape endpoint on the external API
+    // 1. Trigger the scrape process
     const response = await fetch(`${import.meta.env.VITE_LOTTERY_API_BASE_URL}/api/scrape`, { method: 'POST' });
-    if (response.ok) {
-      // Refresh local stats after successful external scrape
-      const statsResponse = await fetch('/api/stats');
-      if (statsResponse.ok) {
-        stats.value = await statsResponse.json();
-      }
-      scrapeMessage.value = 'SCRAPE';
-    } else {
-      scrapeMessage.value = 'Error';
-    }
+    if (!response.ok) throw new Error('Scrape trigger failed');
+    
+    const { jobId } = await response.json();
+    
+    // 2. Poll for status
+    pollScrapeStatus(jobId);
+    
   } catch (err) {
-    console.error('Failed to scrape:', err);
+    console.error('Failed to initiate scrape:', err);
     scrapeMessage.value = 'Error';
-  } finally {
     scrapeState.value = 'idle';
   }
+};
+
+const pollScrapeStatus = (jobId) => {
+  const poll = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_LOTTERY_API_BASE_URL}/api/status/${jobId}`);
+      const data = await response.json();
+
+      if (data.status === 'completed') {
+        // Refresh local stats
+        const statsResponse = await fetch('/api/stats');
+        if (statsResponse.ok) {
+          stats.value = await statsResponse.json();
+        }
+        scrapeMessage.value = 'SCRAPE';
+        scrapeState.value = 'idle';
+        return;
+      }
+      
+      if (data.status === 'failed') {
+        scrapeMessage.value = 'Error';
+        scrapeState.value = 'idle';
+        return;
+      }
+      
+      // Continue polling
+      setTimeout(poll, 5000);
+    } catch (e) {
+      console.error('Polling error:', e);
+      scrapeMessage.value = 'Error';
+      scrapeState.value = 'idle';
+    }
+  };
+  poll();
 };
 </script>
