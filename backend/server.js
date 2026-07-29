@@ -162,28 +162,54 @@ app.post('/validate-model', async (req, res) => {
   res.status(501).json({ valid: false, error: "Validation not yet fully implemented" });
 });
 
-app.get('/api/lotto-stats', async (req, res) => {
+import { LottoMetadata } from './models/LottoMetadata.js';
+
+async function syncAndGetStats() {
+  const apiBaseUrl = process.env.LOTTERY_API_BASE_URL || 'http://localhost:3000';
+  
+  // 1. Check if we have recent data (e.g., less than 24 hours old)
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const cached = await LottoMetadata.findOne({ lastUpdated: { $gte: oneDayAgo } });
+
+  if (cached) {
+    return {
+      totalRecords: cached.totalRecords,
+      latestResult: cached.latestResult
+    };
+  }
+
+  // 2. Fetch fresh data
+  const response = await fetch(`${apiBaseUrl}/api/results`);
+  if (!response.ok) throw new Error('Failed to fetch results');
+  const result = await response.json();
+  const data = result.data || [];
+
+  // 3. Prepare metadata
+  const totalRecords = data.length;
+  // Assuming data is sorted by date, or we sort it
+  const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const latestResult = sortedData[0] || { date: 'N/A', numbers: [] };
+
+  // 4. Persist
+  const metadata = await LottoMetadata.findOneAndUpdate(
+    {},
+    { lastUpdated: new Date(), totalRecords, latestResult },
+    { upsert: true, new: true }
+  );
+
+  return {
+    totalRecords: metadata.totalRecords,
+    latestResult: metadata.latestResult
+  };
+}
+
+// 5. API Endpoint
+app.get('/api/stats', async (req, res) => {
   try {
-    const apiBaseUrl = process.env.LOTTERY_API_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${apiBaseUrl}/api/results`);
-    if (!response.ok) throw new Error('Failed to fetch from API');
-    
-    const result = await response.json();
-    const data = result.data || [];
-    
-    const years = new Set();
-    data.forEach(draw => {
-      if (draw.date) {
-        years.add(draw.date.substring(0, 4));
-      }
-    });
-    
-    res.json({
-      years: Array.from(years).sort(),
-      totalRecords: data.length
-    });
+    const stats = await syncAndGetStats();
+    res.json({ success: true, ...stats });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch lotto stats' });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
