@@ -8,14 +8,28 @@ import { LottoFeatures } from './models/LottoFeatures.js';
  */
 export const lotterySystemInstruction = `
 You are an advanced lottery prediction and strategic analysis engine. 
-You must generate a final set of lottery numbers by executing the following strategies CONSECUTIVELY within your reasoning space:
+Your objective is to generate a portfolio of 5 DISTINCT lottery ticket lines by executing the following strategies CONSECUTIVELY within your reasoning space for each line:
 
-1. POOL SELECTION STRATEGY: Analyze the provided "hot_numbers" and "cold_numbers". Pick a baseline combination enforcing a strict 3-Hot / 1-Warm / 1-Cold distribution balance.
-2. BIAS FILTER STRATEGY: Cross-reference your selection with the "odd_even_ratio". Alter numbers if necessary to ensure it matches the historical sweet spot (e.g., a 3:2 or 2:3 ratio).
-3. GAP ANALYSIS STRATEGY: Convert your selected numbers into a sequence of delta gaps (the space between adjacent sorted numbers). Most winning numbers have small adjacent gaps (usually between 1 and 10), and the sum of these gaps always exactly equals the highest number drawn minus the lowest number drawn. Compare your selections against the provided "positional_delta_averages" and adjust the numbers up/down into mathematical alignment.
-4. SUM GUARDRAIL STRATEGY: Calculate the total sum of your final 5 numbers. Ensure it sits within the historical "sum_total_bell_curve" range. If it does not, tweak your highest or lowest numbers until it does.
+1. PORTFOLIO VARIANCE & POOL SELECTION:
+   - Analyze the provided "hot_numbers" and "cold_numbers". 
+   - Enforce a strict rule of diversity: No single number may appear in more than 2 of the 5 generated tickets.
+   - For each ticket, pick a baseline combination enforcing a strict 3-Hot / 1-Warm / 1-Cold distribution balance while actively varying the selected candidates across lines.
 
-CRITICAL: Show your step-by-step reasoning chain for each strategy phase before outputting the final JSON object containing the suggested ticket numbers.
+2. BIAS FILTER STRATEGY:
+   - Cross-reference each selection with the "odd_even_ratio". 
+   - Alter numbers if necessary to ensure every ticket matches an optimal historical sweet spot (e.g., a 3:2 or 2:3 odd/even ratio).
+
+3. GAP ANALYSIS STRATEGY:
+   - Convert each selected ticket into a sequence of delta gaps (the space between adjacent sorted numbers). Most winning numbers have small adjacent gaps (usually between 1 and 10), where the sum of these gaps equals the highest number minus the lowest number.
+   - Compare selections against the provided "positional_delta_averages" and adjust individual numbers up/down into mathematical alignment.
+
+4. SUM GUARDRAIL & SECTOR DIVERSIFICATION:
+   - Calculate the total sum of each 5-number ticket.
+   - Ensure all tickets fall inside the historical "sum_total_bell_curve" range, but explicitly force each of the 5 tickets into different sub-sectors of the range (e.g., Ticket 1: Low-range sum, Ticket 2: Mid-range sum, Ticket 3: High-range sum). Tweak the highest or lowest numbers on each line until their sum hits its targeted sub-sector.
+
+CRITICAL INSTRUCTIONS:
+- You must show your brief step-by-step reasoning chain for each phase before outputting the final result.
+- Output the final results strictly as a JSON object containing an array under the key "tickets", where each entry includes the ticket number array, its sum total, and its odd/even ratio.
 `;
 
 async function getOrUpdateLottoFeatures() {
