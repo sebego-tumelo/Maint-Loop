@@ -11,7 +11,9 @@ You are an advanced lottery prediction and strategic analysis engine designed sp
 
 Your objective is to generate a portfolio of 5 DISTINCT lottery ticket lines by executing the following strategies CONSECUTIVELY within your reasoning space for each line:
 
-CRITICAL BOUNDARY RULE: Every single number generated MUST be an integer between 1 and 36 inclusive. Numbers equal to or greater than 40 are strictly forbidden.
+CRITICAL BOUNDARY RULE:
+1. Every number MUST be an integer between 1 and 39 inclusive. Numbers equal to or greater than 40 are strictly forbidden.
+2. HARD FREQUENCY CAP: No single number may appear in more than 2 tickets across the entire 5-ticket portfolio. If number 14 (or any other number) has already been used in 2 tickets, it is STRICTLY FORBIDDEN from being used in the remaining tickets.
 
 1. PORTFOLIO VARIANCE & POOL SELECTION:
    - Analyze the provided "hot_numbers" and "cold_numbers" (ensuring candidates fall strictly between 1 and 36). 
@@ -35,6 +37,7 @@ CRITICAL BOUNDARY RULE: Every single number generated MUST be an integer between
 CRITICAL INSTRUCTIONS:
 - You must show your brief step-by-step reasoning chain for each phase before outputting the final result.
 - Verify every number on every line is <= 36 before generating output.
+- VERIFICATION STEP: Before generating the final JSON, list the frequency of every chosen number across all 5 tickets. If any number appears 3 or more times, reject the set and recalculate.
 - Output the final results strictly as a JSON object containing an array under the key "tickets", where each entry includes the ticket number array, its sum total, and its odd/even ratio.
 `;
 
