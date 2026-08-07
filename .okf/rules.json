@@ -1,0 +1,87 @@
+{
+  "system_info": {
+    "lottery_format": "Daily Lotto 5/36",
+    "dataset_range": "2019-Present",
+    "last_updated": "2026-08-06",
+    "total_active_rules": 5
+  },
+  "rules": [
+    {
+      "rule_id": "RULE_DECADE_SPREAD_01",
+      "category": "Structural Bounds",
+      "description": "A valid candidate draw must span at least 3 distinct decade groups (1-9, 10-19, 20-29, 30-36).",
+      "empirical_metrics": {
+        "historical_occurrence_rate": 0.912,
+        "sample_size_draws": 2500,
+        "confidence_level": "HIGH"
+      },
+      "scoring": {
+        "weight_type": "HARD_FILTER",
+        "action_on_pass": "KEEP",
+        "action_on_fail": "DISCARD_CANDIDATE"
+      },
+      "last_journal_note": "Rule held true across 91.2% of all historic draws since 2019."
+    },
+    {
+      "rule_id": "RULE_SUM_WINDOW_02",
+      "category": "Statistical Average",
+      "description": "The sum of all 5 drawn numbers must fall within the range of 65 to 120.",
+      "empirical_metrics": {
+        "historical_occurrence_rate": 0.845,
+        "theoretical_mean": 92.5,
+        "confidence_level": "HIGH"
+      },
+      "scoring": {
+        "weight_type": "SOFT_SCORE",
+        "multiplier": 1.25,
+        "penalty_if_violated": -0.80
+      },
+      "last_journal_note": "Extremely low sums (<50) or high sums (>130) occur in less than 5% of cases."
+    },
+    {
+      "rule_id": "RULE_PREVIOUS_DRAW_REPEAT_03",
+      "category": "Consecutive Draw Relationship",
+      "description": "At least one number from draw D(t-1) carries over to draw D(t).",
+      "empirical_metrics": {
+        "historical_occurrence_rate": 0.524,
+        "confidence_level": "MODERATE"
+      },
+      "scoring": {
+        "weight_type": "PROBABILISTIC_BOOST",
+        "multiplier": 1.15,
+        "probability_factor": 0.52
+      },
+      "last_journal_note": "When no numbers repeat for 2 consecutive draws, probability of repeat on 3rd draw rises to 68%."
+    },
+    {
+      "rule_id": "RULE_CONSECUTIVE_PAIRS_04",
+      "category": "Clustering",
+      "description": "The draw contains exactly one adjacent consecutive pair (e.g., 14, 15).",
+      "empirical_metrics": {
+        "historical_occurrence_rate": 0.382,
+        "confidence_level": "MODERATE"
+      },
+      "scoring": {
+        "weight_type": "PROBABILISTIC_BOOST",
+        "multiplier": 1.10,
+        "probability_factor": 0.38
+      },
+      "last_journal_note": "Clusters of 3+ consecutive numbers (e.g., 29, 30, 31) are capped at a 20% max selection probability."
+    },
+    {
+      "rule_id": "RULE_EVEN_ODD_BALANCE_05",
+      "category": "Parity Distribution",
+      "description": "The odd-to-even ratio of selected numbers must be 3:2 or 2:3.",
+      "empirical_metrics": {
+        "historical_occurrence_rate": 0.658,
+        "confidence_level": "HIGH"
+      },
+      "scoring": {
+        "weight_type": "SOFT_SCORE",
+        "multiplier": 1.20,
+        "penalty_if_violated": -0.50
+      },
+      "last_journal_note": "All-even or all-odd draws represent an anomaly state (under 6% total frequency)."
+    }
+  ]
+}

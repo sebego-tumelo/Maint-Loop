@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LotteryAgentStepResponse",
+  "type": "object",
+  "required": [
+    "step",
+    "status",
+    "okf_journal_draft",
+    "tool_calls",
+    "next_prompt_payload"
+  ],
+  "properties": {
+    "step": {
+      "type": "integer",
+      "description": "The current step number in the execution chain (1, 2, 3...)."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["AWAITING_TOOL_RESULTS", "UPDATING_RULES", "COMPLETE"],
+      "description": "Signals whether to run tools, update rules, or finalize the prediction."
+    },
+    "okf_journal_draft": {
+      "type": "object",
+      "required": ["entry_type", "summary"],
+      "properties": {
+        "entry_type": {
+          "type": "string",
+          "enum": ["INITIAL_OBSERVATION", "RULE_MUTATION", "ANOMALY_LOG", "FINAL_RATIONALE"]
+        },
+        "summary": {
+          "type": "string",
+          "description": "The human-readable thought process to append to /okf/journal.md."
+        },
+        "rule_updates": {
+          "type": "array",
+          "description": "Optional updates to modify /okf/rules.json confidence levels.",
+          "items": {
+            "type": "object",
+            "required": ["rule_id", "historical_occurrence_rate", "action"],
+            "properties": {
+              "rule_id": { "type": "string" },
+              "historical_occurrence_rate": { "type": "number" },
+              "action": { 
+                "type": "string", 
+                "enum": ["BOOST_WEIGHT", "PENALIZE_WEIGHT", "DEACTIVATE_RULE"] 
+              },
+              "justification": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "tool_calls": {
+      "type": "array",
+      "description": "Array of deterministic calculations requested from Node.js.",
+      "items": {
+        "type": "object",
+        "required": ["tool_name", "params"],
+        "properties": {
+          "tool_name": { "type": "string" },
+          "params": { "type": "object" }
+        }
+      }
+    },
+    "next_prompt_payload": {
+      "type": "string",
+      "description": "Instructions for the next step, or null if status is COMPLETE."
+    },
+    "final_prediction": {
+      "type": "object",
+      "description": "Populated only when status is COMPLETE.",
+      "properties": {
+        "candidate_numbers": {
+          "type": "array",
+          "items": { "type": "integer" }
+        },
+        "rationale_narrative": { "type": "string" }
+      }
+    }
+  }
+}
