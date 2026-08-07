@@ -7,6 +7,7 @@ type: index
 This folder contains technical documentation for the project.
 
 - [Architecture](architecture.md)
+- [Branching Strategy](branching-strategy.md)
 - [Database Schema](database-schema.md)
 - [Deployment](deployment.md)
 - [Development Environment](development-environment.md)
