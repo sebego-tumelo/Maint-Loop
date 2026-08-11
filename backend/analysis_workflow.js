@@ -8,6 +8,7 @@ import {
   appendToJournal, 
   updateRulesFile 
 } from './prediction_workflow.js';
+import { validateAgentResponse } from './validator.js';
 
 const gemmaCloudModel = {
   id: process.env.OLLAMA_MODEL || 'gemma4:31b',
@@ -63,6 +64,8 @@ export async function runAnalysis() {
         // 4. Parse and Persist
         try {
           const parsed = JSON.parse(accumulatedText);
+          await validateAgentResponse(parsed);
+          
           if (parsed.okf_journal_draft) {
             await appendToJournal(parsed.okf_journal_draft);
             if (parsed.okf_journal_draft.rule_updates) {
