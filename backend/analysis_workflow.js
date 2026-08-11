@@ -63,7 +63,8 @@ export async function runAnalysis() {
       if (event.type === 'agent_end') {
         // 4. Parse and Persist
         try {
-          // Attempt to extract JSON from potential markdown code blocks
+          // Attempt to extract JSON, being more lenient
+          console.debug('Raw Output to parse:', accumulatedText);
           const jsonMatch = accumulatedText.match(/\{[\s\S]*\}/);
           const jsonString = jsonMatch ? jsonMatch[0] : accumulatedText;
           
