@@ -142,16 +142,17 @@ app.get('/api/stats', async (req, res) => {
 });
 
 app.post('/api/analyze-dataset', async (req, res) => {
+  console.log('🚀 Initiating dataset analysis...');
   // Fire and forget
-  runAnalysis().catch(err => console.error('Background analysis failed:', err));
+  runAnalysis()
+    .then(() => console.log('✅ Dataset analysis completed successfully.'))
+    .catch(err => console.error('❌ Background analysis failed:', err));
   res.status(202).json({ message: "Dataset analysis initiated" });
 });
 
-/*
-app.get(/.*/, (req, res) => {                                                                                                               
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));                                                                        
-});
-*/
+// app.get(/.*/, (req, res) => {
+//   res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+// });
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => app.listen(3000, () => console.log('Server running on port 3000')))

@@ -17,6 +17,7 @@ type: concept
 ### 2. Lottery Data Service (`GET /api/stats`, `POST /api/analyze-dataset`)
 - Provides a summary of historical draw data (e.g., total records, latest result) fetched from the external lottery API.
 - Initiates an asynchronous dataset analysis in the background, updating MongoDB upon completion.
+- Logs the initiation and completion of the dataset analysis process.
 
 ### 3. Server Infrastructure
 - Configures database connectivity via Mongoose.
