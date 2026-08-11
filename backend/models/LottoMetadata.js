@@ -7,6 +7,10 @@ const lottoMetadataSchema = new mongoose.Schema({
   latestResult: {
     date: String,
     numbers: [Number]
+  },
+  analysis: {
+    summary: String,
+    lastAnalyzed: Date
   }
 });
 
