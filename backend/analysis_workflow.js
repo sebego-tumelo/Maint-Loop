@@ -63,12 +63,17 @@ export async function runAnalysis() {
       if (event.type === 'agent_end') {
         // 4. Parse and Persist
         try {
-          // Attempt to extract JSON, being more lenient
-          console.debug('Raw Output to parse:', accumulatedText);
-          const jsonMatch = accumulatedText.match(/\{[\s\S]*\}/);
-          const jsonString = jsonMatch ? jsonMatch[0] : accumulatedText;
+          // The issue is likely that the agent is emitting multiple concatenated JSON objects 
+          // or corrupted streaming text. We need to find the LAST valid JSON block.
+          const matches = [...accumulatedText.matchAll(/\{[\s\S]*?\}/g)];
+          const lastMatch = matches[matches.length - 1];
           
-          console.debug('JSON String to parse (first 20 chars):', JSON.stringify(jsonString.substring(0, 20)));
+          if (!lastMatch) {
+            throw new Error('No JSON found in output');
+          }
+          
+          const jsonString = lastMatch[0];
+          console.debug('Parsing JSON:', jsonString);
           
           const parsed = JSON.parse(jsonString);
           await validateAgentResponse(parsed);
