@@ -5,7 +5,7 @@ import { generateUniqueCandidates, scoreAndFilterCandidates } from './candidateG
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const OKF_DIR = path.join(__dirname, '../okf');
+const OKF_DIR = path.join(__dirname, '../.okf');
 
 export const analysisSystemInstruction = `
 You are an advanced lottery analysis agent operating in MODE A: DATASET ANALYSIS & RULE DISCOVERY for Daily Lotto (5/36).
