@@ -24,7 +24,7 @@ The JSON must follow this exact structure:
       {
         "rule_id": "string",
         "historical_occurrence_rate": 0.0,
-        "action": "BOOST_WEIGHT",
+        "action": "BOOST_WEIGHT" | "PENALIZE_WEIGHT" | "MAINTAIN_WEIGHT",
         "justification": "string"
       }
     ]
