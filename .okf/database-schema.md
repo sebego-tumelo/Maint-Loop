@@ -22,3 +22,4 @@ Database: `MusmentorLocalDB`
     - `totalRecords`: Count of all records.
     - `yearsProcessed`: Array of years covered in the dataset.
     - `latestResult`: Object containing the most recent draw date and numbers.
+    - `analysis`: Object containing AI-generated summary and timestamp.
