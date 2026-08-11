@@ -73,7 +73,6 @@ export async function runAnalysis() {
           }
           
           const jsonString = lastMatch[0];
-          console.debug('Parsing JSON:', jsonString);
           
           let parsed = JSON.parse(jsonString);
           
