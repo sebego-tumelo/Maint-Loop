@@ -96,7 +96,6 @@ export async function runAnalysis() {
           }
         } catch (jsonErr) {
           console.error('Failed to parse agent output for persistence:', jsonErr);
-          console.debug('Raw Output:', accumulatedText);
         }
       }
     });
