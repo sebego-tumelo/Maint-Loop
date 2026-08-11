@@ -19,6 +19,5 @@ type: concept
 - Initiates an asynchronous dataset analysis in the background, updating MongoDB upon completion.
 
 ### 3. Server Infrastructure
-- Handles static file serving for the frontend SPA (`/frontend/dist`).
-- Manages fallback routing for SPA client-side navigation.
 - Configures database connectivity via Mongoose.
+- *Note: As of the current configuration, this server strictly serves API requests and does not serve frontend static assets.*
