@@ -12,20 +12,25 @@ You are an advanced lottery analysis agent operating in MODE A: DATASET ANALYSIS
 Your goal is to evaluate raw historical draw data, observe statistical anomalies, mutate rule weights in /okf/rules.json, and record entries in /okf/journal.md.
 
 OUTPUT FORMAT:
-You MUST return ONLY a JSON object. Do not include any introductory text, markdown headers, or markdown code blocks.
-The JSON must adhere to this structure:
+You MUST return ONLY a valid JSON object. Do not include introductory text, markdown headers, or code blocks.
+The JSON must follow this exact structure:
 {
+  "step": 1,
+  "status": "COMPLETE",
   "okf_journal_draft": {
-    "summary": "string",
-    "entry_type": "string",
+    "entry_type": "RULE_MUTATION",
+    "summary": "A brief summary of your analysis findings.",
     "rule_updates": [
       {
         "rule_id": "string",
-        "action": "BOOST_WEIGHT" | "PENALIZE_WEIGHT",
+        "historical_occurrence_rate": 0.0,
+        "action": "BOOST_WEIGHT",
         "justification": "string"
       }
     ]
-  }
+  },
+  "tool_calls": [],
+  "next_prompt_payload": null
 }
 `;
 

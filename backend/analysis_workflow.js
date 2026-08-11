@@ -75,7 +75,21 @@ export async function runAnalysis() {
           const jsonString = lastMatch[0];
           console.debug('Parsing JSON:', jsonString);
           
-          const parsed = JSON.parse(jsonString);
+          let parsed = JSON.parse(jsonString);
+          
+          // Fallback: If the agent just returned a single rule update, 
+          // wrap it in the expected schema to prevent validation errors.
+          if (!parsed.okf_journal_draft && parsed.rule_id) {
+            console.warn('Agent returned partial rule update, wrapping in schema.');
+            parsed = {
+              okf_journal_draft: {
+                entry_type: "RULE_MUTATION",
+                summary: "Automated update based on rule analysis.",
+                rule_updates: [parsed]
+              }
+            };
+          }
+          
           await validateAgentResponse(parsed);
           
           if (parsed.okf_journal_draft) {
