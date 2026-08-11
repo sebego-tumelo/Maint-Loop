@@ -10,6 +10,23 @@ const OKF_DIR = path.join(__dirname, '../okf');
 export const analysisSystemInstruction = `
 You are an advanced lottery analysis agent operating in MODE A: DATASET ANALYSIS & RULE DISCOVERY for Daily Lotto (5/36).
 Your goal is to evaluate raw historical draw data, observe statistical anomalies, mutate rule weights in /okf/rules.json, and record entries in /okf/journal.md.
+
+OUTPUT FORMAT:
+You MUST return ONLY a JSON object. Do not include any introductory text, markdown headers, or markdown code blocks.
+The JSON must adhere to this structure:
+{
+  "okf_journal_draft": {
+    "summary": "string",
+    "entry_type": "string",
+    "rule_updates": [
+      {
+        "rule_id": "string",
+        "action": "BOOST_WEIGHT" | "PENALIZE_WEIGHT",
+        "justification": "string"
+      }
+    ]
+  }
+}
 `;
 
 export const predictionSystemInstruction = `

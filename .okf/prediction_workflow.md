@@ -18,4 +18,4 @@ type: concept
 - **Rules (`/okf/rules.json`)**: Loads active scoring heuristics and handles weight adjustments (boosting/penalizing) based on agent analysis.
 - **Journal (`/okf/journal.md`)**: Records agent activity, analysis summaries, and rule change justifications.
 - **Candidate Generator (`/backend/candidateGenerator.js`)**: Invoked by the workflow to generate and score combinations.
-- **Schema (`/backend/models/agent-schema.json`)**: Defines the expected JSON structure for agent responses.
+- **Schema (`/backend/models/agent-schema.json`)**: Defines the expected JSON structure for agent responses. The agents are strictly instructed to output pure JSON, and the pipelines implement robust parsing to handle potential markdown wrappers.

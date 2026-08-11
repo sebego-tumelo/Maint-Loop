@@ -63,7 +63,11 @@ export async function runAnalysis() {
       if (event.type === 'agent_end') {
         // 4. Parse and Persist
         try {
-          const parsed = JSON.parse(accumulatedText);
+          // Attempt to extract JSON from potential markdown code blocks
+          const jsonMatch = accumulatedText.match(/\{[\s\S]*\}/);
+          const jsonString = jsonMatch ? jsonMatch[0] : accumulatedText;
+          
+          const parsed = JSON.parse(jsonString);
           await validateAgentResponse(parsed);
           
           if (parsed.okf_journal_draft) {
@@ -92,6 +96,7 @@ export async function runAnalysis() {
           }
         } catch (jsonErr) {
           console.error('Failed to parse agent output for persistence:', jsonErr);
+          console.debug('Raw Output:', accumulatedText);
         }
       }
     });
