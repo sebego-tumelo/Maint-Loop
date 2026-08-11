@@ -68,6 +68,8 @@ export async function runAnalysis() {
           const jsonMatch = accumulatedText.match(/\{[\s\S]*\}/);
           const jsonString = jsonMatch ? jsonMatch[0] : accumulatedText;
           
+          console.debug('JSON String to parse (first 20 chars):', JSON.stringify(jsonString.substring(0, 20)));
+          
           const parsed = JSON.parse(jsonString);
           await validateAgentResponse(parsed);
           
