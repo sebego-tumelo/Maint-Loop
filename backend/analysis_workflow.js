@@ -81,10 +81,11 @@ export async function runAnalysis() {
           // wrap it in the expected schema to prevent validation errors.
           if (!parsed.okf_journal_draft && parsed.rule_id) {
             console.warn('Agent returned partial rule update, wrapping in schema.');
+            const summary = parsed.justification || 'Automated rule update based on dataset analysis.';
             parsed = {
               okf_journal_draft: {
                 entry_type: "RULE_MUTATION",
-                summary: "Automated update based on rule analysis.",
+                summary: summary,
                 rule_updates: [parsed]
               }
             };
