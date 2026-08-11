@@ -15,6 +15,8 @@ import {
   updateRulesFile,
   getActiveRules
 } from './prediction_workflow.js';
+import { syncAndGetStats } from './utils.js';
+import { runAnalysis } from './analysis_workflow.js';
 
 dotenv.config();
 const app = express();
@@ -128,21 +130,7 @@ app.post('/run-instruction', async (req, res) => {
   }
 });
 
-import { LottoMetadata } from './models/LottoMetadata.js';
 
-async function syncAndGetStats() {
-  const apiBaseUrl = process.env.LOTTERY_API_BASE_URL || 'http://localhost:3000';
-  const response = await fetch(`${apiBaseUrl}/api/results`);
-  if (!response.ok) throw new Error('Failed to fetch results');
-  const result = await response.json();
-  const data = result.data || [];
-
-  const totalRecords = data.length;
-  const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
-  const latestResult = sortedData[0] || { date: 'N/A', numbers: [] };
-
-  return { totalRecords, latestResult };
-}
 
 app.get('/api/stats', async (req, res) => {
   try {
@@ -151,6 +139,12 @@ app.get('/api/stats', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
+});
+
+app.post('/api/analyze-dataset', async (req, res) => {
+  // Fire and forget
+  runAnalysis().catch(err => console.error('Background analysis failed:', err));
+  res.status(202).json({ message: "Dataset analysis initiated" });
 });
 
 app.get(/.*/, (req, res) => {                                                                                                               
