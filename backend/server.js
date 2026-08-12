@@ -159,6 +159,16 @@ app.post('/api/analyze-dataset', async (req, res) => {
   res.status(202).json({ message: "Dataset analysis initiated" });
 });
 
+app.post('/predict-draw', async (req, res) => {
+  try {
+    const result = await runPrediction();
+    res.json(result);
+  } catch (error) {
+    console.error('Error running prediction via /predict-draw:', error);
+    res.status(500).json({ error: 'Prediction generation failed' });
+  }
+});
+
 // app.get(/.*/, (req, res) => {
 //   res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
 // });
