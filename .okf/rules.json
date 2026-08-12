@@ -2,7 +2,7 @@
   "system_info": {
     "lottery_format": "Daily Lotto 5/36",
     "dataset_range": "2019-Present",
-    "last_updated": "2026-08-11",
+    "last_updated": "2026-08-12",
     "total_active_rules": 5
   },
   "rules": [
@@ -81,7 +81,7 @@
         "multiplier": 1.2,
         "penalty_if_violated": -0.5
       },
-      "last_journal_note": "Draw parity is 3 odd (5, 13, 35) and 2 even (4, 12), adhering perfectly to the 3:2 ratio."
+      "last_journal_note": "Parity is 2 odd (9, 25) and 3 even (6, 26, 32), fitting the 2:3 ratio specified in the rule."
     }
   ]
 }

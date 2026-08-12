@@ -7,6 +7,7 @@ import {
   appendToJournal, 
   updateRulesFile 
 } from './okf_utils.js';
+import { writeFile } from 'fs/promises';
 
 export const analysisSystemInstruction = `
 You are an advanced lottery analysis agent operating in MODE A: DATASET ANALYSIS & RULE DISCOVERY for Daily Lotto (5/36).
@@ -34,6 +35,7 @@ The JSON must follow this exact structure:
   "next_prompt_payload": null
 }
 `;
+
 import { validateAgentResponse } from './validator.js';
 
 const gemmaCloudModel = {
@@ -117,18 +119,13 @@ async function handleAgentCompletion(accumulatedText, stats) {
     
     const jsonString = lastMatch[0];
     
+    await writeFile('agent_res.txt', accumulatedText);
+    
     let parsed = JSON.parse(jsonString);
     
-    if (!parsed.okf_journal_draft && parsed.rule_id) {
-      console.warn('Agent returned partial rule update, wrapping in schema.');
-      const summary = parsed.justification || 'Automated rule update based on dataset analysis.';
-      parsed = {
-        okf_journal_draft: {
-          entry_type: "RULE_MUTATION",
-          summary: summary,
-          rule_updates: [parsed]
-        }
-      };
+    // Strict validation: Expect the full schema
+    if (!parsed.okf_journal_draft || !Array.isArray(parsed.okf_journal_draft.rule_updates)) {
+      throw new Error('Invalid JSON structure: okf_journal_draft.rule_updates must be an array.');
     }
     
     await validateAgentResponse(parsed);
