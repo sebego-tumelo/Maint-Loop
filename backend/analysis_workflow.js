@@ -25,30 +25,10 @@ const gemmaCloudModel = {
 export async function runAnalysis() {
   console.log('🚀 Starting AI-driven background analysis...');
   try {
-    // 1. Fetch data
-    const stats = await syncAndGetStats();
-    const activeRulesObj = await getActiveRules();
+    const { stats, activeRulesObj } = await fetchAnalysisData();
     
-    // 2. Prepare Agent
-    const systemPrompt = `${analysisSystemInstruction}\nACTIVE OBSERVED RULES:\n${JSON.stringify(activeRulesObj, null, 2)}`;
-    
-    const agent = new Agent({
-      initialState: {
-        model: gemmaCloudModel,
-        systemPrompt: systemPrompt,
-        messages: [],
-      }
-    });
+    const agent = setupAgent(activeRulesObj);
 
-    agent.streamFn = (model, context, options) => {
-      return streamSimple(model, context, {
-        ...options,
-        apiKey: process.env.OLLAMA_API_KEY,
-        headers: { 'Authorization': `Bearer ${process.env.OLLAMA_API_KEY}` }
-      });
-    };
-
-    // 3. Prompt Agent
     const instruction = `Analyze this dataset: ${JSON.stringify(stats)}. Perform rule discovery and propose updates.`;
     
     let accumulatedText = '';
@@ -61,64 +41,7 @@ export async function runAnalysis() {
       }
       
       if (event.type === 'agent_end') {
-        // 4. Parse and Persist
-        try {
-          // The issue is likely that the agent is emitting multiple concatenated JSON objects 
-          // or corrupted streaming text. We need to find the LAST valid JSON block.
-          const matches = [...accumulatedText.matchAll(/\{[\s\S]*?\}/g)];
-          const lastMatch = matches[matches.length - 1];
-          
-          if (!lastMatch) {
-            throw new Error('No JSON found in output');
-          }
-          
-          const jsonString = lastMatch[0];
-          
-          let parsed = JSON.parse(jsonString);
-          
-          // Fallback: If the agent just returned a single rule update, 
-          // wrap it in the expected schema to prevent validation errors.
-          if (!parsed.okf_journal_draft && parsed.rule_id) {
-            console.warn('Agent returned partial rule update, wrapping in schema.');
-            const summary = parsed.justification || 'Automated rule update based on dataset analysis.';
-            parsed = {
-              okf_journal_draft: {
-                entry_type: "RULE_MUTATION",
-                summary: summary,
-                rule_updates: [parsed]
-              }
-            };
-          }
-          
-          await validateAgentResponse(parsed);
-          
-          if (parsed.okf_journal_draft) {
-            await appendToJournal(parsed.okf_journal_draft);
-            if (parsed.okf_journal_draft.rule_updates) {
-              await updateRulesFile(parsed.okf_journal_draft.rule_updates);
-            }
-            
-            // Save analysis summary to DB
-            await LottoMetadata.findOneAndUpdate(
-              {},
-              { 
-                $set: { 
-                  lastUpdated: new Date(),
-                  totalRecords: stats.totalRecords,
-                  latestResult: stats.latestResult,
-                  analysis: {
-                    summary: parsed.okf_journal_draft.summary,
-                    lastAnalyzed: new Date()
-                  }
-                }
-              },
-              { upsert: true }
-            );
-            console.log('✅ Analysis completed and saved.');
-          }
-        } catch (jsonErr) {
-          console.error('Failed to parse agent output for persistence:', jsonErr);
-        }
+        await handleAgentCompletion(accumulatedText, stats);
       }
     });
 
@@ -126,5 +49,88 @@ export async function runAnalysis() {
 
   } catch (error) {
     console.error('❌ Error during AI analysis:', error);
+  }
+}
+
+async function fetchAnalysisData() {
+  const stats = await syncAndGetStats();
+  const activeRulesObj = await getActiveRules();
+  return { stats, activeRulesObj };
+}
+
+function setupAgent(activeRulesObj) {
+  const systemPrompt = `${analysisSystemInstruction}\nACTIVE OBSERVED RULES:\n${JSON.stringify(activeRulesObj, null, 2)}`;
+  
+  const agent = new Agent({
+    initialState: {
+      model: gemmaCloudModel,
+      systemPrompt: systemPrompt,
+      messages: [],
+    }
+  });
+
+  agent.streamFn = (model, context, options) => {
+    return streamSimple(model, context, {
+      ...options,
+      apiKey: process.env.OLLAMA_API_KEY,
+      headers: { 'Authorization': `Bearer ${process.env.OLLAMA_API_KEY}` }
+    });
+  };
+
+  return agent;
+}
+
+async function handleAgentCompletion(accumulatedText, stats) {
+  try {
+    const matches = [...accumulatedText.matchAll(/\{[\s\S]*?\}/g)];
+    const lastMatch = matches[matches.length - 1];
+    
+    if (!lastMatch) {
+      throw new Error('No JSON found in output');
+    }
+    
+    const jsonString = lastMatch[0];
+    
+    let parsed = JSON.parse(jsonString);
+    
+    if (!parsed.okf_journal_draft && parsed.rule_id) {
+      console.warn('Agent returned partial rule update, wrapping in schema.');
+      const summary = parsed.justification || 'Automated rule update based on dataset analysis.';
+      parsed = {
+        okf_journal_draft: {
+          entry_type: "RULE_MUTATION",
+          summary: summary,
+          rule_updates: [parsed]
+        }
+      };
+    }
+    
+    await validateAgentResponse(parsed);
+    
+    if (parsed.okf_journal_draft) {
+      await appendToJournal(parsed.okf_journal_draft);
+      if (parsed.okf_journal_draft.rule_updates) {
+        await updateRulesFile(parsed.okf_journal_draft.rule_updates);
+      }
+      
+      await LottoMetadata.findOneAndUpdate(
+        {},
+        { 
+          $set: { 
+            lastUpdated: new Date(),
+            totalRecords: stats.totalRecords,
+            latestResult: stats.latestResult,
+            analysis: {
+              summary: parsed.okf_journal_draft.summary,
+              lastAnalyzed: new Date()
+            }
+          }
+        },
+        { upsert: true }
+      );
+      console.log('✅ Analysis completed and saved.');
+    }
+  } catch (jsonErr) {
+    console.error('Failed to parse agent output for persistence:', jsonErr);
   }
 }

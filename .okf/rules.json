@@ -2,7 +2,7 @@
   "system_info": {
     "lottery_format": "Daily Lotto 5/36",
     "dataset_range": "2019-Present",
-    "last_updated": "2026-08-06",
+    "last_updated": "2026-08-11",
     "total_active_rules": 5
   },
   "rules": [
@@ -34,9 +34,9 @@
       "scoring": {
         "weight_type": "SOFT_SCORE",
         "multiplier": 1.25,
-        "penalty_if_violated": -0.80
+        "penalty_if_violated": -0.8
       },
-      "last_journal_note": "Extremely low sums (<50) or high sums (>130) occur in less than 5% of cases."
+      "last_journal_note": "Draw sum of 69 validates the lower bound of the 65-120 window; rule remains highly predictive."
     },
     {
       "rule_id": "RULE_PREVIOUS_DRAW_REPEAT_03",
@@ -63,7 +63,7 @@
       },
       "scoring": {
         "weight_type": "PROBABILISTIC_BOOST",
-        "multiplier": 1.10,
+        "multiplier": 1.1,
         "probability_factor": 0.38
       },
       "last_journal_note": "Clusters of 3+ consecutive numbers (e.g., 29, 30, 31) are capped at a 20% max selection probability."
@@ -78,10 +78,10 @@
       },
       "scoring": {
         "weight_type": "SOFT_SCORE",
-        "multiplier": 1.20,
-        "penalty_if_violated": -0.50
+        "multiplier": 1.2,
+        "penalty_if_violated": -0.5
       },
-      "last_journal_note": "All-even or all-odd draws represent an anomaly state (under 6% total frequency)."
+      "last_journal_note": "Draw parity is 3 odd (5, 13, 35) and 2 even (4, 12), adhering perfectly to the 3:2 ratio."
     }
   ]
 }
