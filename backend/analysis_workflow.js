@@ -59,17 +59,9 @@ export async function runAnalysis() {
 
     const instruction = `Analyze this dataset: ${JSON.stringify(stats)}. Perform rule discovery and propose updates.`;
     
-    let accumulatedText = '';
     agent.subscribe(async (event) => {
-      if (event.type === 'message_update') {
-        const content = event.message.content;
-        for (const part of content) {
-          if (part.type === 'text') accumulatedText += part.text;
-        }
-      }
-      
       if (event.type === 'agent_end') {
-        await handleAgentCompletion(accumulatedText, stats);
+        await handleAgentCompletion(agent, stats);
       }
     });
 
@@ -108,8 +100,15 @@ function setupAgent(activeRulesObj) {
   return agent;
 }
 
-async function handleAgentCompletion(accumulatedText, stats) {
+async function handleAgentCompletion(agent, stats) {
   try {
+    const messages = agent.state.messages;
+    const lastMessage = messages[messages.length - 1];
+    const accumulatedText = lastMessage.content
+      .filter(part => part.type === 'text')
+      .map(part => part.text)
+      .join('');
+      
     const matches = [...accumulatedText.matchAll(/\{[\s\S]*?\}/g)];
     const lastMatch = matches[matches.length - 1];
     
