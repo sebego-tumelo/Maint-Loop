@@ -8,8 +8,7 @@ import { Agent } from '@mariozechner/pi-agent-core';
 import { streamSimple } from '@mariozechner/pi-ai';
 
 import { 
-  predictionToolsList, 
-  predictionSystemInstruction,
+  runPrediction,
 } from './prediction_workflow.js';
 import { 
   appendToJournal,
@@ -56,6 +55,16 @@ app.post('/run-instruction', async (req, res) => {
     return res.status(400).json({ error: "Missing 'instruction' property in request body." });
   }
 
+  // Handle Mode B Prediction specifically through the module
+  if (mode === 'MODE_B_PREDICT') {
+    try {
+      const result = await runPrediction();
+      return res.json(result);
+    } catch (error) {
+      return res.status(500).json({ error: 'Prediction generation failed' });
+    }
+  }
+
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
@@ -66,13 +75,12 @@ app.post('/run-instruction', async (req, res) => {
     const activeRulesObj = await getActiveRules();
     const systemPrompt = mode === 'MODE_A_ANALYZE' 
       ? `${analysisSystemInstruction}\nACTIVE OBSERVED RULES:\n${JSON.stringify(activeRulesObj, null, 2)}`
-      : `${predictionSystemInstruction}\nACTIVE OBSERVED RULES:\n${JSON.stringify(activeRulesObj, null, 2)}`;
+      : 'Analyze instructions.'; // Fallback for other modes
 
     const agent = new Agent({
       initialState: {
         model: gemmaCloudModel,
         systemPrompt: systemPrompt,
-        tools: predictionToolsList,
         messages: [],
       }
     });
