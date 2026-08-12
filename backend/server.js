@@ -9,14 +9,15 @@ import { streamSimple } from '@mariozechner/pi-ai';
 
 import { 
   predictionToolsList, 
-  analysisSystemInstruction,
   predictionSystemInstruction,
+} from './prediction_workflow.js';
+import { 
   appendToJournal,
   updateRulesFile,
   getActiveRules
-} from './prediction_workflow.js';
+} from './okf_utils.js';
 import { syncAndGetStats } from './utils.js';
-import { runAnalysis } from './analysis_workflow.js';
+import { runAnalysis, analysisSystemInstruction } from './analysis_workflow.js';
 
 dotenv.config();
 const app = express();

@@ -3,11 +3,37 @@ import { streamSimple } from '@mariozechner/pi-ai';
 import { LottoMetadata } from './models/LottoMetadata.js';
 import { syncAndGetStats } from './utils.js';
 import { 
-  analysisSystemInstruction, 
   getActiveRules, 
   appendToJournal, 
   updateRulesFile 
-} from './prediction_workflow.js';
+} from './okf_utils.js';
+
+export const analysisSystemInstruction = `
+You are an advanced lottery analysis agent operating in MODE A: DATASET ANALYSIS & RULE DISCOVERY for Daily Lotto (5/36).
+Your goal is to evaluate raw historical draw data, observe statistical anomalies, mutate rule weights in /okf/rules.json, and record entries in /okf/journal.md.
+
+OUTPUT FORMAT:
+You MUST return ONLY a valid JSON object. Do not include introductory text, markdown headers, or code blocks.
+The JSON must follow this exact structure:
+{
+  "step": 1,
+  "status": "COMPLETE",
+  "okf_journal_draft": {
+    "entry_type": "RULE_MUTATION",
+    "summary": "A brief summary of your analysis findings.",
+    "rule_updates": [
+      {
+        "rule_id": "string",
+        "historical_occurrence_rate": 0.0,
+        "action": "BOOST_WEIGHT" | "PENALIZE_WEIGHT" | "MAINTAIN_WEIGHT",
+        "justification": "string"
+      }
+    ]
+  },
+  "tool_calls": [],
+  "next_prompt_payload": null
+}
+`;
 import { validateAgentResponse } from './validator.js';
 
 const gemmaCloudModel = {
