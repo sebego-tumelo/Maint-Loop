@@ -109,16 +109,16 @@ async function handleAgentCompletion(agent, stats) {
       .map(part => part.text)
       .join('');
       
-    const matches = [...accumulatedText.matchAll(/\{[\s\S]*?\}/g)];
-    const lastMatch = matches[matches.length - 1];
+    const firstBrace = accumulatedText.indexOf('{');
+    const lastBrace = accumulatedText.lastIndexOf('}');
     
-    if (!lastMatch) {
-      throw new Error('No JSON found in output');
+    if (firstBrace === -1 || lastBrace === -1) {
+      throw new Error('No JSON object found in output');
     }
     
-    const jsonString = lastMatch[0];
+    const jsonString = accumulatedText.substring(firstBrace, lastBrace + 1);
     
-    await writeFile('./backend/agent_res.txt', accumulatedText);
+    await writeFile('agent_res.txt', accumulatedText);
     
     let parsed = JSON.parse(jsonString);
     console.log('DEBUG: Parsed JSON:', JSON.stringify(parsed, null, 2));
