@@ -118,12 +118,17 @@ async function handleAgentCompletion(agent, stats) {
     
     const jsonString = lastMatch[0];
     
-    await writeFile('agent_res.txt', accumulatedText);
+    await writeFile('./backend/agent_res.txt', accumulatedText);
     
     let parsed = JSON.parse(jsonString);
+    console.log('DEBUG: Parsed JSON:', JSON.stringify(parsed, null, 2));
     
     // Strict validation: Expect the full schema
     if (!parsed.okf_journal_draft || !Array.isArray(parsed.okf_journal_draft.rule_updates)) {
+      console.error('DEBUG: Validation failed. Structure:', {
+          hasJournalDraft: !!parsed.okf_journal_draft,
+          ruleUpdatesArray: parsed.okf_journal_draft ? Array.isArray(parsed.okf_journal_draft.rule_updates) : 'N/A'
+      });
       throw new Error('Invalid JSON structure: okf_journal_draft.rule_updates must be an array.');
     }
     
