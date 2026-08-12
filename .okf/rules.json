@@ -20,7 +20,7 @@
         "action_on_pass": "KEEP",
         "action_on_fail": "DISCARD_CANDIDATE"
       },
-      "last_journal_note": "Rule held true across 91.2% of all historic draws since 2019."
+      "last_journal_note": "Latest draw validated the 3-decade minimum spread requirement."
     },
     {
       "rule_id": "RULE_SUM_WINDOW_02",
@@ -36,7 +36,7 @@
         "multiplier": 1.25,
         "penalty_if_violated": -0.8
       },
-      "last_journal_note": "Draw sum of 69 validates the lower bound of the 65-120 window; rule remains highly predictive."
+      "last_journal_note": "Draw sum of 98 sits near the theoretical mean (92.5), reinforcing the 65-120 window."
     },
     {
       "rule_id": "RULE_PREVIOUS_DRAW_REPEAT_03",
@@ -63,10 +63,10 @@
       },
       "scoring": {
         "weight_type": "PROBABILISTIC_BOOST",
-        "multiplier": 1.1,
+        "multiplier": 1.21,
         "probability_factor": 0.38
       },
-      "last_journal_note": "Clusters of 3+ consecutive numbers (e.g., 29, 30, 31) are capped at a 20% max selection probability."
+      "last_journal_note": "Presence of pair (25, 26) in current draw suggests a short-term clustering trend; increasing probabilistic boost."
     },
     {
       "rule_id": "RULE_EVEN_ODD_BALANCE_05",
@@ -81,7 +81,7 @@
         "multiplier": 1.2,
         "penalty_if_violated": -0.5
       },
-      "last_journal_note": "Parity is 2 odd (9, 25) and 3 even (6, 26, 32), fitting the 2:3 ratio specified in the rule."
+      "last_journal_note": "2:3 parity ratio observed, confirming rule's high predictive value."
     }
   ]
 }

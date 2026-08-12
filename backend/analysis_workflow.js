@@ -7,7 +7,6 @@ import {
   appendToJournal, 
   updateRulesFile 
 } from './okf_utils.js';
-import { writeFile } from 'fs/promises';
 
 export const analysisSystemInstruction = `
 You are an advanced lottery analysis agent operating in MODE A: DATASET ANALYSIS & RULE DISCOVERY for Daily Lotto (5/36).
@@ -117,8 +116,6 @@ async function handleAgentCompletion(agent, stats) {
     }
     
     const jsonString = accumulatedText.substring(firstBrace, lastBrace + 1);
-    
-    await writeFile('agent_res.txt', accumulatedText);
     
     let parsed = JSON.parse(jsonString);
     console.log('DEBUG: Parsed JSON:', JSON.stringify(parsed, null, 2));
