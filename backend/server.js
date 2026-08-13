@@ -159,14 +159,14 @@ app.post('/api/analyze-dataset', async (req, res) => {
   res.status(202).json({ message: "Dataset analysis initiated" });
 });
 
-app.post('/predict-draw', async (req, res) => {
-  console.log('🔮 Request received: /predict-draw');
+app.post('/api/predict-draw', async (req, res) => {
+  console.log('🔮 Request received: /api/predict-draw');
   try {
     const result = await runPrediction();
     console.log('✅ Prediction synthesis returned successfully.');
     res.json(result);
   } catch (error) {
-    console.error('❌ Error running prediction via /predict-draw:', error);
+    console.error('❌ Error running prediction via /api/predict-draw:', error);
     res.status(500).json({ error: 'Prediction generation failed' });
   }
 });
