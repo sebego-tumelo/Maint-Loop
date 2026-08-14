@@ -23,7 +23,8 @@ const PredictionSchema = new mongoose.Schema({
     winning_numbers: [{ type: Number }],
     actual_sum: { type: Number },
     evaluated: { type: Boolean, default: false },
-    evaluated_at: { type: Date }
+    evaluated_at: { type: Date },
+    evaluation_summary: { type: String } // Moved here
   },
 
   // Performance Scorecard
@@ -31,8 +32,7 @@ const PredictionSchema = new mongoose.Schema({
     best_match_count: { type: Number, default: 0 },
     matching_numbers: [{ type: Number }],
     successful_rules: [{ type: String }],
-    failed_rules: [{ type: String }],
-    evaluation_summary: { type: String } // Added field
+    failed_rules: [{ type: String }]
   }
 }, { timestamps: true });
 

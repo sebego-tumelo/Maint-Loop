@@ -126,15 +126,15 @@ async function evaluateUnevaluatedPredictions() {
       winning_numbers: winningNumbers,
       actual_sum: actualSum,
       evaluated: true,
-      evaluated_at: new Date()
+      evaluated_at: new Date(),
+      evaluation_summary: summary
     };
     
     prediction.evaluation_metrics = {
       best_match_count: bestMatch.match_count,
       matching_numbers: bestMatch.matching_numbers,
       successful_rules: [], // Could be inferred
-      failed_rules: [],
-      evaluation_summary: summary
+      failed_rules: []
     };
 
     await prediction.save();
