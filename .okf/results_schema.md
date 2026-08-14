@@ -12,5 +12,5 @@ The `rawDrawHistory` dataset consists of an array of objects, where each object 
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
-| `draw_date` | `String` | The date of the draw (YYYY-MM-DD). |
+| `date` | `String` | The date of the draw (YYYY-MM-DD). |
 | `numbers` | `Array<Number>` | The winning numbers. |
