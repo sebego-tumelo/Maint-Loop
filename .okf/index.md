@@ -10,6 +10,7 @@ This folder contains technical documentation for the project.
 - [Branching Strategy](branching-strategy.md)
 - [Agent Communication](agent-communication.md)
 - [Prediction Workflow](prediction_workflow.md)
+- [Prediction Data Model](prediction-model.md)
 - [Analysis Workflow](analysis_workflow.md)
 - [OKF Utilities](okf_utils.md)
 - [Server](server.md)
