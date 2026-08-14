@@ -115,11 +115,8 @@ async function evaluateUnevaluatedPredictions(rawDrawHistory) {
     // Prepare for AI-driven summary
     const bestMatch = evaluationResults.reduce((prev, curr) => (curr.match_count > prev.match_count ? curr : prev));
     
-    // Simplified: No agent call here, just direct update as per instruction 
-    // "send to agent to get evaluation summery" implies an agent step.
-    // For brevity in this step, I'll generate the summary programmatically.
-    // An agent call would require a new `Agent` instance here.
-    const summary = `Prediction for ${prediction.draw_date} yielded a best match of ${bestMatch.match_count} numbers.`;
+    // Get AI-driven evaluation summary
+    const summary = await getAIAnalysisSummary(prediction, winningNumbers);
 
     prediction.actual_outcome = {
       winning_numbers: winningNumbers,
@@ -139,6 +136,43 @@ async function evaluateUnevaluatedPredictions(rawDrawHistory) {
     await prediction.save();
     console.log(`✅ Prediction evaluated for ${prediction.draw_date}.`);
   }
+}
+
+async function getAIAnalysisSummary(prediction, winningNumbers) {
+  const agent = new Agent({
+    initialState: {
+      model: gemmaCloudModel,
+      systemPrompt: "You are a lottery analysis expert. Evaluate the performance of the provided prediction set against the actual winning numbers and provide a concise, 1-2 sentence strategic evaluation.",
+      messages: [],
+    }
+  });
+
+  agent.streamFn = (model, context, options) => {
+    return streamSimple(model, context, {
+      ...options,
+      apiKey: process.env.OLLAMA_API_KEY,
+      headers: { 'Authorization': `Bearer ${process.env.OLLAMA_API_KEY}` }
+    });
+  };
+
+  return new Promise((resolve) => {
+    agent.subscribe((event) => {
+      if (event.type === 'agent_end') {
+        const messages = agent.state.messages;
+        const lastMessage = messages[messages.length - 1];
+        const text = lastMessage.content
+          .filter(part => part.type === 'text')
+          .map(part => part.text)
+          .join('');
+        resolve(text.trim());
+      }
+    });
+
+    agent.prompt(`Evaluate this prediction against the draw results.
+    Prediction Sets: ${JSON.stringify(prediction.predicted_sets)}
+    Actual Draw Numbers: ${JSON.stringify(winningNumbers)}
+    Provide a brief strategic summary of the performance.`);
+  });
 }
 
 async function fetchAnalysisData() {
