@@ -53,12 +53,13 @@ const gemmaCloudModel = {
 export async function runAnalysis() {
   console.log('🚀 Starting AI-driven background analysis...');
   try {
-    // 1. Evaluate pending predictions
-    await evaluateUnevaluatedPredictions();
-
-    // 2. Perform Dataset Analysis
+    // 1. Get Data
     const { stats, activeRulesObj } = await fetchAnalysisData();
     
+    // 2. Evaluate pending predictions
+    await evaluateUnevaluatedPredictions(stats.rawDrawHistory);
+
+    // 3. Perform Dataset Analysis
     const agent = setupAgent(activeRulesObj);
 
     const instruction = `Analyze this dataset: ${JSON.stringify(stats)}. Perform rule discovery and propose updates.`;
@@ -76,7 +77,7 @@ export async function runAnalysis() {
   }
 }
 
-async function evaluateUnevaluatedPredictions() {
+async function evaluateUnevaluatedPredictions(rawDrawHistory) {
   console.log('🧐 Checking for unevaluated predictions...');
   const unevaluated = await Prediction.find({ 'actual_outcome.evaluated': { $ne: true } });
   
@@ -85,12 +86,10 @@ async function evaluateUnevaluatedPredictions() {
     return;
   }
 
-  // Fetch historical data (assuming simple structure for now)
-  const stats = await syncAndGetStats();
-  const history = stats.latestResults || []; // Hypothetical historical data source
+  const history = rawDrawHistory || [];
 
   for (const prediction of unevaluated) {
-    const historicalResult = history.find(r => r.draw_date === prediction.draw_date);
+    const historicalResult = history.find(r => r.date === prediction.draw_date);
     
     if (!historicalResult) {
       console.log(`⚠️ No historical data found for ${prediction.draw_date}, skipping.`);

@@ -15,6 +15,7 @@ This folder contains technical documentation for the project.
 - [OKF Utilities](okf_utils.md)
 - [Server](server.md)
 - [Candidate Generator](candidateGenerator.md)
+- [Results Schema](results_schema.md)
 - [Database Schema](database-schema.md)
 - [Deployment](deployment.md)
 - [Development Environment](development-environment.md)

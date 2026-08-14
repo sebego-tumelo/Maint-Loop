@@ -14,5 +14,5 @@ export async function syncAndGetStats() {
   const meta = await LottoMetadata.findOne({});
   const analysis = meta ? meta.analysis : null;
 
-  return { totalRecords, latestResult, analysis };
+  return { totalRecords, latestResult, analysis, rawDrawHistory: data };
 }
