@@ -60,9 +60,13 @@ export async function runAnalysis() {
     await evaluateUnevaluatedPredictions(stats.rawDrawHistory);
 
     // 3. Perform Dataset Analysis
+    const limitedStats = {
+      ...stats,
+      rawDrawHistory: stats.rawDrawHistory.slice(0, 100)
+    };
     const agent = setupAgent(activeRulesObj);
 
-    const instruction = `Analyze this dataset: ${JSON.stringify(stats)}. Perform rule discovery and propose updates.`;
+    const instruction = `Analyze this dataset: ${JSON.stringify(limitedStats)}. Perform rule discovery and propose updates.`;
     console.log('DEBUG: Sending prompt to agent:', instruction.substring(0, 500) + '...');
     
     agent.subscribe(async (event) => {
