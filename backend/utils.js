@@ -1,4 +1,12 @@
+import fs from 'fs/promises';
+import path from 'path';
 import { LottoMetadata } from './models/LottoMetadata.js';
+
+export async function writeToScrapbook(data) {
+  const dir = path.join(process.cwd(), 'backend', 'scrapbook');
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(path.join(dir, 'output.json'), JSON.stringify(data, null, 2));
+}
 
 export async function syncAndGetStats() {
   const apiBaseUrl = process.env.LOTTERY_API_BASE_URL || 'http://localhost:3000';
