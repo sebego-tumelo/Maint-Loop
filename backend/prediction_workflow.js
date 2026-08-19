@@ -5,6 +5,13 @@ import { getActiveRules, appendToJournal, OKF_DIR } from './okf_utils.js';
 import { Prediction } from './models/Prediction.js';
 import path from 'path';
 
+export async function getRecentEvaluatedPredictions(limit = 5) {
+  return await Prediction.find({ 'actual_outcome.evaluated': true })
+    .sort({ draw_date: -1 })
+    .limit(limit)
+    .select('draw_date predicted_sets actual_outcome evaluation_metrics');
+}
+
 // Reusing model config
 const gemmaCloudModel = {
   id: process.env.OLLAMA_MODEL || 'gemma4:31b',
@@ -20,19 +27,24 @@ const gemmaCloudModel = {
 
 export async function prepareCandidates() {
   const activeRules = await getActiveRules();
+  const recentPredictions = await getRecentEvaluatedPredictions();
   const rulesPath = path.join(OKF_DIR, 'rules.json');
   const rawCandidates = await generateUniqueCandidates(1000);
   const top20 = await scoreAndFilterCandidates(rawCandidates, rulesPath);
-  return { activeRules, top20 };
+  return { activeRules, top20, recentPredictions };
 }
 
-export async function synthesizePrediction(top20, activeRules) {
+export async function synthesizePrediction(top20, activeRules, recentPredictions) {
   const agent = new Agent({
     initialState: {
       model: gemmaCloudModel,
       systemPrompt: `You are in MODE B: CANDIDATE GENERATOR & PREDICTION SYNTHESIS.
         Select the top 3 sets from the provided top 20 candidates. 
         Draft a journal entry for /okf/journal.md explaining your selection based on: ${JSON.stringify(activeRules)}.
+        
+        Use this recent performance history to inform your selection:
+        ${JSON.stringify(recentPredictions)}
+        
         Return ONLY a JSON object with: { 
           "summary": "...",
           "rationale_narrative": "...",
@@ -94,8 +106,8 @@ export async function runPrediction() {
   console.log('🔮 Starting AI-driven prediction synthesis...');
   
   try {
-    const { activeRules, top20 } = await prepareCandidates();
-    const parsed = await synthesizePrediction(top20, activeRules);
+    const { activeRules, top20, recentPredictions } = await prepareCandidates();
+    const parsed = await synthesizePrediction(top20, activeRules, recentPredictions);
     return await persistPrediction(parsed);
   } catch (error) {
     console.error('❌ Error during AI prediction:', error);

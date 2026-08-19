@@ -87,9 +87,9 @@ async function evaluateUnevaluatedPredictions(rawDrawHistory) {
   }
 
   const history = rawDrawHistory || [];
-
+  console.log('latest historical draw data:', history[0]);
   for (const prediction of unevaluated) {
-    const historicalResult = history.find(r => r.date === prediction.draw_date);
+    const historicalResult = history.find(r => r.drawDate === prediction.draw_date);
     
     if (!historicalResult) {
       console.log(`⚠️ No historical data found for ${prediction.draw_date}, skipping.`);
@@ -99,7 +99,7 @@ async function evaluateUnevaluatedPredictions(rawDrawHistory) {
     console.log(`📊 Evaluating prediction for ${prediction.draw_date}...`);
     
     // Calculate metrics
-    const winningNumbers = historicalResult.numbers;
+    const winningNumbers = historicalResult.winningNumbers;
     const actualSum = winningNumbers.reduce((a, b) => a + b, 0);
     
     // Simple intersection count
@@ -211,7 +211,7 @@ async function handleAgentCompletion(agent, stats) {
       .filter(part => part.type === 'text')
       .map(part => part.text)
       .join('');
-      
+    console.log('DEBUG: Accumulated agent output:', accumulatedText);  
     const firstBrace = accumulatedText.indexOf('{');
     const lastBrace = accumulatedText.lastIndexOf('}');
     
