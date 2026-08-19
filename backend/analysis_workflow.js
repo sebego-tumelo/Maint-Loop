@@ -63,6 +63,7 @@ export async function runAnalysis() {
     const agent = setupAgent(activeRulesObj);
 
     const instruction = `Analyze this dataset: ${JSON.stringify(stats)}. Perform rule discovery and propose updates.`;
+    console.log('DEBUG: Sending prompt to agent:', instruction.substring(0, 500) + '...');
     
     agent.subscribe(async (event) => {
       if (event.type === 'agent_end') {
@@ -206,6 +207,10 @@ function setupAgent(activeRulesObj) {
 async function handleAgentCompletion(agent, stats) {
   try {
     const messages = agent.state.messages;
+    console.log('DEBUG: Agent messages count:', messages.length);
+    if (messages.length === 0) {
+        throw new Error('Agent messages are empty.');
+    }
     const lastMessage = messages[messages.length - 1];
     const accumulatedText = lastMessage.content
       .filter(part => part.type === 'text')
