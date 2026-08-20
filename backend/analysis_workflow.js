@@ -2,6 +2,7 @@ import { Agent } from '@mariozechner/pi-agent-core';
 import { streamSimple } from '@mariozechner/pi-ai';
 import { Prediction } from './models/Prediction.js';
 import { LottoMetadata } from './models/LottoMetadata.js';
+import { DrawResult } from './models/DrawResult.js'; // Added
 import { syncAndGetStats, writeToScrapbook } from './utils.js';
 import { 
   getActiveRules, 
@@ -82,8 +83,36 @@ export async function runAnalysis() {
   }
 }
 
+export async function evaluatePredictionFinancials(drawDate) {
+  const prediction = await Prediction.findOne({ draw_date: drawDate });
+  if (!prediction) throw new Error(`No prediction found for date: ${drawDate}`);
+
+  const drawResult = await DrawResult.findOne({ drawDate: drawDate });
+  if (!drawResult) throw new Error(`No draw result found for date: ${drawDate}`);
+
+  // Calculate payouts
+  let totalPayout = 0;
+  for (const set of prediction.predicted_sets) {
+    const winningNumbers = drawResult.winningNumbers;
+    const matchCount = set.numbers.filter(n => winningNumbers.includes(n)).length;
+    const division = drawResult.prizeDivisions.find(pd => parseInt(pd.matches) === matchCount);
+    if (division) {
+      totalPayout += division.prize.amount;
+    }
+  }
+
+  // Update financials
+  const cost = prediction.financials.total_cost_rand;
+  prediction.financials.total_payout_rand = totalPayout;
+  prediction.financials.net_profit_loss_rand = totalPayout - cost;
+  prediction.financials.roi_percentage = cost > 0 ? ((totalPayout - cost) / cost) * 100 : 0;
+
+  await prediction.save();
+  console.log(`✅ Financials updated for ${drawDate}: Profit/Loss = R${prediction.financials.net_profit_loss_rand}`);
+  return prediction.financials;
+}
+
 async function evaluateUnevaluatedPredictions(rawDrawHistory) {
-  console.log('🧐 Checking for unevaluated predictions...');
   const unevaluated = await Prediction.find({ 'actual_outcome.evaluated': { $ne: true } });
   
   if (unevaluated.length === 0) {

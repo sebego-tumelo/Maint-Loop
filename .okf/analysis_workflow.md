@@ -13,6 +13,8 @@ type: concept
    - Fetches statistical data.
    - Sets up the AI agent with specific heuristics.
    - Subscribes to agent messages to track and handle analysis completion.
-3. **Integration**:
+3. **Financial Evaluation**: 
+   - Provides `evaluatePredictionFinancials(drawDate)` to calculate and update ROI and profit/loss metrics based on `DrawResult` and `Prediction` data.
+4. **Integration**:
    - Uses `backend/okf_utils.js` to persist analysis findings and rule mutations to the Knowledge Base.
    - Updates `LottoMetadata` in the database to reflect the latest analysis state.
