@@ -2,7 +2,6 @@ import { Agent } from '@mariozechner/pi-agent-core';
 import { streamSimple } from '@mariozechner/pi-ai';
 import { Prediction } from './models/Prediction.js';
 import { LottoMetadata } from './models/LottoMetadata.js';
-import { DrawResult } from './models/DrawResult.js'; // Added
 import { syncAndGetStats, writeToScrapbook } from './utils.js';
 import { 
   getActiveRules, 
@@ -87,7 +86,10 @@ export async function evaluatePredictionFinancials(drawDate) {
   const prediction = await Prediction.findOne({ draw_date: drawDate });
   if (!prediction) throw new Error(`No prediction found for date: ${drawDate}`);
 
-  const drawResult = await DrawResult.findOne({ drawDate: drawDate });
+  // Fetch all results via API instead of DB query
+  const { rawDrawHistory } = await syncAndGetStats();
+  const drawResult = rawDrawHistory.find(r => r.drawDate === drawDate);
+  
   if (!drawResult) throw new Error(`No draw result found for date: ${drawDate}`);
 
   // Calculate payouts
