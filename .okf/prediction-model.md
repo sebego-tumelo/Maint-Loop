@@ -15,3 +15,4 @@ The `Prediction` model (`backend/models/Prediction.js`) is a Mongoose schema des
   - `parity`: Parity distribution of the numbers.
 - `actual_outcome`: Stores the results after the draw occurs (winning numbers, actual sum).
 - `evaluation_metrics`: Stores performance metrics comparing the prediction to the `actual_outcome`.
+- `financials`: Tracks financial performance of the prediction (cost, payout, profit/loss, ROI).
