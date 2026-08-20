@@ -18,6 +18,14 @@ const PredictionSchema = new mongoose.Schema({
     }
   ],
 
+  // Financial Ledger
+  financials: {
+    total_cost_rand: { type: Number, default: 9 }, // 3 sets * R3 = R9
+    total_payout_rand: { type: Number, default: 0 },
+    net_profit_loss_rand: { type: Number, default: -9 }, // (payout - cost)
+    roi_percentage: { type: Number, default: -100.0 }
+  },
+
   // Post-Draw Evaluation Outcome (Updated automatically after draw)
   actual_outcome: {
     winning_numbers: [{ type: Number }],
