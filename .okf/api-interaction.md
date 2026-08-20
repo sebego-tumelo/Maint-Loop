@@ -23,19 +23,27 @@ Retrieves all scraped lotto results from the database.
 #### Data Schema (`DrawResult`)
 The `DrawResult` model stores the parsed lottery data. See [Database Migrations](./database-migrations.md) for details on date formatting policies.
 
+The `prizeDivisions` field is an array of objects structured as follows:
+
+| Field | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `division` | `String` | - | The division name (e.g., "Division 1"). |
+| `matches` | `String` | - | The number of matches (e.g., "6"). |
+| `winners` | `Number` | - | The number of winners for this division. |
+| `prize.amount` | `Number` | - | The prize amount. |
+| `prize.currency` | `String` | 'ZAR' | The currency of the prize amount. |
+
+(Note: `_id` is disabled for prize division objects).
+
 ### Fields
 
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `drawDate` | `String` | Unique date identifier (Format: "YYYY-MM-DD"). |
-| `secondaryDrawDate` | `String` | Original human-readable format (Format: "Weekday DD Mon YYYY"). |
-| `winningNumbers` | `Array<Number>` | Parsed integer array of winning numbers. |
-| `prizeDivisions` | `Array<Object>` | Payout details including `division`, `matches`, `winners`, `prize.amount`, `prize.currency`. |
-| `updatedAt` | `Date` | Timestamp of the last record update. |
-
-### Indexing
-
-- `drawDate` is defined with `{ unique: true }` to ensure no duplicate entries per date and to optimize lookups for upsert operations.
+| Field | Type | Constraints/Default | Description |
+| :--- | :--- | :--- | :--- |
+| `drawDate` | `String` | Required, Unique | Unique date identifier (Format: "YYYY-MM-DD"). |
+| `secondaryDrawDate` | `String` | - | Original human-readable format (Format: "Weekday DD Mon YYYY"). |
+| `winningNumbers` | `Array<Number>` | Default: `[]` | Parsed integer array of winning numbers. |
+| `prizeDivisions` | `Array<Object>` | - | Payout details including `division`, `matches`, `winners`, `prize.amount`, `prize.currency`. |
+| `updatedAt` | `Date` | Default: `Date.now` | Timestamp of the last record update. |
 
 ### 2. Trigger Scrape
 Initiates an asynchronous scrape process in the background.
