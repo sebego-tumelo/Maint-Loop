@@ -17,8 +17,25 @@ Retrieves all scraped lotto results from the database.
 - **Method**: `GET`
 - **Path**: `/api/results`
 - **Response**:
-  - `200 OK`: `{ "success": true, "count": number, "data": Array<Object> }`
+  - `200 OK`: `{ "success": true, "count": number, "data": Array<DrawResult> }`
   - `500 Internal Server Error`: `{ "success": false, "error": string }`
+
+#### Data Schema (`DrawResult`)
+The `DrawResult` model stores the parsed lottery data. See [Database Migrations](./database-migrations.md) for details on date formatting policies.
+
+### Fields
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `drawDate` | `String` | Unique date identifier (Format: "YYYY-MM-DD"). |
+| `secondaryDrawDate` | `String` | Original human-readable format (Format: "Weekday DD Mon YYYY"). |
+| `winningNumbers` | `Array<Number>` | Parsed integer array of winning numbers. |
+| `prizeDivisions` | `Array<Object>` | Payout details including `division`, `matches`, `winners`, `prize.amount`, `prize.currency`. |
+| `updatedAt` | `Date` | Timestamp of the last record update. |
+
+### Indexing
+
+- `drawDate` is defined with `{ unique: true }` to ensure no duplicate entries per date and to optimize lookups for upsert operations.
 
 ### 2. Trigger Scrape
 Initiates an asynchronous scrape process in the background.
