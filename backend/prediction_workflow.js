@@ -94,7 +94,13 @@ export async function persistPrediction(parsed) {
       expected_sum: set.expected_sum,
       parity: set.parity,
       set_rationale: set.set_rationale
-    }))
+    })),
+    financials: {
+      total_cost_rand: parsed.selected_draws.length * 3,
+      total_payout_rand: 0,
+      net_profit_loss_rand: -(parsed.selected_draws.length * 3),
+      roi_percentage: -100.0
+    }
   });
   await prediction.save();
 
