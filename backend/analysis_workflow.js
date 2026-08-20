@@ -91,6 +91,11 @@ export async function evaluatePredictionFinancials(drawDate) {
   const drawResult = rawDrawHistory.find(r => r.drawDate === drawDate);
   
   if (!drawResult) throw new Error(`No draw result found for date: ${drawDate}`);
+  
+  if (!drawResult.prizeDivisions || drawResult.prizeDivisions.length === 0) {
+    console.warn(`⚠️ No prize division data available for ${drawDate}, skipping financial evaluation.`);
+    return null;
+  }
 
   // Calculate payouts
   let totalPayout = 0;
