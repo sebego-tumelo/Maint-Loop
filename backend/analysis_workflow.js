@@ -181,6 +181,9 @@ async function evaluateUnevaluatedPredictions(rawDrawHistory) {
 
     await prediction.save();
     console.log(`✅ Prediction evaluated for ${prediction.draw_date}.`);
+
+    // Call financial evaluation
+    await evaluatePredictionFinancials(prediction.draw_date);
   }
 }
 
