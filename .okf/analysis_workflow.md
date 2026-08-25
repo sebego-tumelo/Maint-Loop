@@ -27,7 +27,7 @@ The `runAnalysis` function follows these steps asynchronously:
 
 2. **Prediction Evaluation**: 
    - Identifies unevaluated predictions in the database.
-   - Fetches actual draw results, calculates performance metrics, and generates a strategic evaluation summary using an AI agent.
+   - Fetches actual draw results, calculates performance metrics, generates a strategic evaluation summary using an AI agent, and **calculates/updates financial metrics (ROI, Profit/Loss)**.
    - Updates the `Prediction` model with these outcomes.
 
 3. **Dataset Analysis & Rule Discovery**:
