@@ -87,6 +87,30 @@ export async function runAnalysis() {
   }
 }
 
+export async function checkSetUniqueness(candidateNumbers) {
+  const { rawDrawHistory } = await syncAndGetStats();
+  
+  // Sort candidate numbers
+  const sortedCandidate = [...candidateNumbers].sort((a, b) => a - b);
+  
+  let occurrenceCount = 0;
+  
+  for (const draw of rawDrawHistory) {
+    const sortedWinning = [...draw.winningNumbers].sort((a, b) => a - b);
+    
+    // Check if arrays are equal
+    if (JSON.stringify(sortedCandidate) === JSON.stringify(sortedWinning)) {
+      occurrenceCount++;
+    }
+  }
+  
+  return {
+    candidate: sortedCandidate,
+    isUnique: occurrenceCount === 0,
+    occurrenceCount
+  };
+}
+
 export async function evaluatePredictionFinancials(drawDate) {
   const prediction = await Prediction.findOne({ draw_date: drawDate });
   if (!prediction) throw new Error(`No prediction found for date: ${drawDate}`);
