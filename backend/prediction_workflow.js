@@ -5,7 +5,7 @@ import { getActiveRules, appendToJournal, OKF_DIR } from './okf_utils.js';
 import { Prediction } from './models/Prediction.js';
 import path from 'path';
 
-export async function getRecentEvaluatedPredictions(limit = 5) {
+export async function getRecentEvaluatedPredictions(limit = 10) {
   return await Prediction.find({ 'actual_outcome.evaluated': true })
     .sort({ draw_date: -1 })
     .limit(limit)

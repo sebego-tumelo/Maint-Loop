@@ -268,7 +268,7 @@ async function handleAgentCompletion(agent, stats) {
       .filter(part => part.type === 'text')
       .map(part => part.text)
       .join('');
-    console.log('DEBUG: Accumulated agent output:', accumulatedText);  
+    // console.log('DEBUG: Accumulated agent output:', accumulatedText);  
     const firstBrace = accumulatedText.indexOf('{');
     const lastBrace = accumulatedText.lastIndexOf('}');
     
@@ -279,7 +279,7 @@ async function handleAgentCompletion(agent, stats) {
     const jsonString = accumulatedText.substring(firstBrace, lastBrace + 1);
     
     let parsed = JSON.parse(jsonString);
-    console.log('DEBUG: Parsed JSON:', JSON.stringify(parsed, null, 2));
+    // console.log('DEBUG: Parsed JSON:', JSON.stringify(parsed, null, 2));
     
     // Strict validation: Expect the full schema
     if (!parsed.okf_journal_draft || !Array.isArray(parsed.okf_journal_draft.rule_updates)) {

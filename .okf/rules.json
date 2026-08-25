@@ -33,10 +33,10 @@
       },
       "scoring": {
         "weight_type": "SOFT_SCORE",
-        "multiplier": 1.13,
+        "multiplier": 1.02,
         "penalty_if_violated": -0.8
       },
-      "last_journal_note": "The latest draw sum (140) significantly exceeded the upper bound of 120. This suggests the sum window may be too restrictive during high-value number clusters."
+      "last_journal_note": "The current upper bound of 120 is too restrictive. The latest draw sum of 140 shows that high-value number clusters are appearing. Reducing penalty or expanding the window is necessary to prevent false-negative discards."
     },
     {
       "rule_id": "RULE_PREVIOUS_DRAW_REPEAT_03",
@@ -48,10 +48,10 @@
       },
       "scoring": {
         "weight_type": "PROBABILISTIC_BOOST",
-        "multiplier": 0.92,
+        "multiplier": 1.01,
         "probability_factor": 0.52
       },
-      "last_journal_note": "The carry-over rule has resumed after a short-term anomaly. Increasing weight to capture the return to mean behavior."
+      "last_journal_note": "Confirmed return to the carry-over pattern after a 3-draw drought. Increasing weight as the dataset reverts to historical mean behavior."
     },
     {
       "rule_id": "RULE_CONSECUTIVE_PAIRS_04",
@@ -66,7 +66,7 @@
         "multiplier": 1.46,
         "probability_factor": 0.38
       },
-      "last_journal_note": "Consecutive pairs (32, 33) appeared in the latest draw, reinforcing the stability of the clustering rule."
+      "last_journal_note": "Consistent occurrence of consecutive pairs (32, 33) validates current probabilistic boosting."
     },
     {
       "rule_id": "RULE_EVEN_ODD_BALANCE_05",
