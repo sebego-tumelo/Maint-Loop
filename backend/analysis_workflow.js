@@ -2,7 +2,7 @@ import { Agent } from '@mariozechner/pi-agent-core';
 import { streamSimple } from '@mariozechner/pi-ai';
 import { Prediction } from './models/Prediction.js';
 import { LottoMetadata } from './models/LottoMetadata.js';
-import { syncAndGetStats, writeToScrapbook } from './utils.js';
+import { syncAndGetStats } from './utils.js';
 import { 
   getActiveRules, 
   appendToJournal, 
@@ -283,9 +283,6 @@ async function handleAgentCompletion(agent, stats) {
     if (messages.length === 0) {
         throw new Error('Agent messages are empty.');
     }
-    
-    // Save raw messages to scrapbook for debugging
-    await writeToScrapbook(messages);
     
     const lastMessage = messages[messages.length - 1];
     const accumulatedText = lastMessage.content
