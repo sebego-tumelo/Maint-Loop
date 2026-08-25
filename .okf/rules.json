@@ -2,7 +2,7 @@
   "system_info": {
     "lottery_format": "Daily Lotto 5/36",
     "dataset_range": "2019-Present",
-    "last_updated": "2026-08-12",
+    "last_updated": "2026-08-25",
     "total_active_rules": 5
   },
   "rules": [
@@ -33,10 +33,10 @@
       },
       "scoring": {
         "weight_type": "SOFT_SCORE",
-        "multiplier": 1.25,
+        "multiplier": 1.13,
         "penalty_if_violated": -0.8
       },
-      "last_journal_note": "Draw sum of 98 sits near the theoretical mean (92.5), reinforcing the 65-120 window."
+      "last_journal_note": "The latest draw sum (140) significantly exceeded the upper bound of 120. This suggests the sum window may be too restrictive during high-value number clusters."
     },
     {
       "rule_id": "RULE_PREVIOUS_DRAW_REPEAT_03",
@@ -48,10 +48,10 @@
       },
       "scoring": {
         "weight_type": "PROBABILISTIC_BOOST",
-        "multiplier": 1.15,
+        "multiplier": 0.92,
         "probability_factor": 0.52
       },
-      "last_journal_note": "When no numbers repeat for 2 consecutive draws, probability of repeat on 3rd draw rises to 68%."
+      "last_journal_note": "The carry-over rule has resumed after a short-term anomaly. Increasing weight to capture the return to mean behavior."
     },
     {
       "rule_id": "RULE_CONSECUTIVE_PAIRS_04",
@@ -63,10 +63,10 @@
       },
       "scoring": {
         "weight_type": "PROBABILISTIC_BOOST",
-        "multiplier": 1.21,
+        "multiplier": 1.46,
         "probability_factor": 0.38
       },
-      "last_journal_note": "Presence of pair (25, 26) in current draw suggests a short-term clustering trend; increasing probabilistic boost."
+      "last_journal_note": "Consecutive pairs (32, 33) appeared in the latest draw, reinforcing the stability of the clustering rule."
     },
     {
       "rule_id": "RULE_EVEN_ODD_BALANCE_05",

@@ -23,6 +23,17 @@ Retrieves all scraped lotto results from the database.
 #### Data Schema (`DrawResult`)
 The `DrawResult` model stores the parsed lottery data. See [Database Migrations](./database-migrations.md) for details on date formatting policies.
 
+### Fields
+
+| Field | Type | Constraints/Default | Description |
+| :--- | :--- | :--- | :--- |
+| `drawDate` | `String` | Required, Unique | Unique date identifier (Format: "YYYY-MM-DD"). |
+| `secondaryDrawDate` | `String` | - | Original human-readable format (Format: "Weekday DD Mon YYYY"). |
+| `winningNumbers` | `Array<Number>` | Default: `[]` | Parsed integer array of winning numbers. |
+| `prizeDivisions` | `Array<Object>` | - | Payout details including `division`, `matches`, `winners`, `prize.amount`, `prize.currency`. |
+| `updatedAt` | `Date` | Default: `Date.now` | Timestamp of the last record update. |
+
+
 The `prizeDivisions` field is an array of objects structured as follows:
 
 | Field | Type | Default | Description |
@@ -35,15 +46,6 @@ The `prizeDivisions` field is an array of objects structured as follows:
 
 (Note: `_id` is disabled for prize division objects).
 
-### Fields
-
-| Field | Type | Constraints/Default | Description |
-| :--- | :--- | :--- | :--- |
-| `drawDate` | `String` | Required, Unique | Unique date identifier (Format: "YYYY-MM-DD"). |
-| `secondaryDrawDate` | `String` | - | Original human-readable format (Format: "Weekday DD Mon YYYY"). |
-| `winningNumbers` | `Array<Number>` | Default: `[]` | Parsed integer array of winning numbers. |
-| `prizeDivisions` | `Array<Object>` | - | Payout details including `division`, `matches`, `winners`, `prize.amount`, `prize.currency`. |
-| `updatedAt` | `Date` | Default: `Date.now` | Timestamp of the last record update. |
 
 ### 2. Trigger Scrape
 Initiates an asynchronous scrape process in the background.

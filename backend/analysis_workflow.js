@@ -53,13 +53,16 @@ const gemmaCloudModel = {
 export async function runAnalysis() {
   console.log('🚀 Starting AI-driven background analysis...');
   try {
-    // 1. Get Data
+    // 1. Data Retrieval
+    console.log('  -> 1. Data Retrieval: Fetching stats and active rules...');
     const { stats, activeRulesObj } = await fetchAnalysisData();
     
-    // 2. Evaluate pending predictions
+    // 2. Prediction Evaluation
+    console.log('  -> 2. Prediction Evaluation: Evaluating unevaluated predictions...');
     await evaluateUnevaluatedPredictions(stats.rawDrawHistory);
 
-    // 3. Perform Dataset Analysis
+    // 3. Dataset Analysis & Rule Discovery
+    console.log('  -> 3. Dataset Analysis & Rule Discovery: Initializing agent and running analysis...');
     const limitedStats = {
       ...stats,
       rawDrawHistory: stats.rawDrawHistory.slice(0, 100)
@@ -71,6 +74,8 @@ export async function runAnalysis() {
     
     agent.subscribe(async (event) => {
       if (event.type === 'agent_end') {
+        // 4. Persistence & Knowledge Update (handled within handleAgentCompletion)
+        console.log('  -> 4. Persistence & Knowledge Update: Saving findings and updating metadata...');
         await handleAgentCompletion(agent, stats);
       }
     });
