@@ -4,9 +4,7 @@ const STORAGE_KEY = 'lotto_results_cache';
 const CACHE_EXPIRY_KEY = 'lotto_results_timestamp';
 
 /**
- * Fetches all results from the backend and maps them to the expected frontend format.
- * API Schema: { success: boolean, count: number, data: Array<DrawResult> }
- * DrawResult: { drawDate: string, winningNumbers: Array<number>, ... }
+ * Fetches results with caching logic using the latest-results endpoint.
  */
 export async function fetchResults() {
   const cachedData = localStorage.getItem(STORAGE_KEY);
@@ -18,8 +16,11 @@ export async function fetchResults() {
     return JSON.parse(cachedData);
   }
 
+  const hasCache = !!cachedData;
+  const limit = hasCache ? 1 : 20;
+
   try {
-    const response = await fetch(`${API_BASE}/results`);
+    const response = await fetch(`${API_BASE}/latest-results?limit=${limit}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -30,16 +31,27 @@ export async function fetchResults() {
     }
 
     // Map API DrawResult to frontend-expected format
-    const formattedData = result.data.map(draw => ({
+    const formattedNewData = result.data.map(draw => ({
       ...draw,
       date: draw.drawDate, // Mapping drawDate to date
     }));
 
+    let finalData;
+    if (hasCache) {
+      const existing = JSON.parse(cachedData);
+      // Prepend only unique results (by date)
+      const existingDates = new Set(existing.map(d => d.date));
+      const uniqueNew = formattedNewData.filter(d => !existingDates.has(d.date));
+      finalData = [...uniqueNew, ...existing];
+    } else {
+      finalData = formattedNewData;
+    }
+
     // Cache the data
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(formattedData));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(finalData));
     localStorage.setItem(CACHE_EXPIRY_KEY, new Date().toISOString());
 
-    return formattedData;
+    return finalData;
   } catch (error) {
     console.error('Error fetching results:', error);
     // If fetch fails but we have cache, return cache as fallback
