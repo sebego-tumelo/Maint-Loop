@@ -17,7 +17,21 @@ export async function fetchResults() {
   }
 
   const hasCache = !!cachedData;
-  const limit = hasCache ? 1 : 20;
+  let limit = 20;
+
+  if (hasCache) {
+    const existing = JSON.parse(cachedData);
+    // existing is expected to be sorted newest-first
+    const lastCachedDate = new Date(existing[0].date);
+    const today = new Date();
+    
+    // Calculate difference in days (ignoring time)
+    const diffTime = today.getTime() - lastCachedDate.getTime();
+    const daysMissed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Ensure we fetch at least 1, but no more than 20
+    limit = Math.min(Math.max(daysMissed, 1), 20);
+  }
 
   try {
     const response = await fetch(`${API_BASE}/latest-results?limit=${limit}`);
