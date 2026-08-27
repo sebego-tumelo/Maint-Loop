@@ -16,6 +16,7 @@ import {
   INITIAL_PREDICTION_HISTORY,
 } from './data/mockData';
 import { computeFinancialStats } from './utils/lottoEngine';
+import { fetchResults } from './services/api';
 
 // Reactive state
 const draws = ref([]);
