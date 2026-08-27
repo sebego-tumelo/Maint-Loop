@@ -1,0 +1,6 @@
+{
+  "name": "Daily Lotto AI Studio",
+  "description": "Mobile web dashboard for Daily Lotto AI predictions, draw results, prize payouts, financial ledger tracking, and historical logs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
