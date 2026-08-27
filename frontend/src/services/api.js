@@ -1,8 +1,9 @@
 // API service to interact with the backend
+import { generateDivisions } from '../utils/lottoEngine';
 const API_BASE = '/api';
 
-const STORAGE_KEY = 'lotto_results_cache';
-const CACHE_EXPIRY_KEY = 'lotto_results_timestamp';
+const STORAGE_KEY = 'lotto_results_cache_v2';
+const CACHE_EXPIRY_KEY = 'lotto_results_timestamp_v2';
 
 const PRED_STORAGE_KEY = 'lotto_predictions_cache';
 const PRED_CACHE_EXPIRY_KEY = 'lotto_predictions_timestamp';
@@ -116,11 +117,17 @@ export async function fetchResults() {
     }
 
     // Map API DrawResult to frontend-expected format
-    const formattedNewData = result.data.map(draw => ({
-      ...draw,
-      // Ensure we have some reasonable defaults if fields are missing in API
-      prizePool: draw.prizePool || 0, 
-    }));
+    const formattedNewData = result.data.map(draw => {
+      const id = draw.drawNumber || draw.id || draw._id || `draw-${draw.date}-${Math.random().toString(36).substr(2, 9)}`;
+      console.log('DEBUG: Mapping draw:', id, draw);
+      return {
+        id,
+        ...draw,
+        // Ensure we have some reasonable defaults if fields are missing in API
+        prizePool: draw.prizePool || 0,
+        divisions: draw.divisions || generateDivisions(draw.winningNumbers, draw.prizePool || 0),
+      };
+    });
 
     let finalData;
     if (hasCache) {

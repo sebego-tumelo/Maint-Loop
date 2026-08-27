@@ -15,6 +15,8 @@ const props = defineProps({
   },
 });
 
+console.log('DEBUG: HistoricalRecordsPanel draws prop:', props.draws);
+
 const activeTab = ref('draws'); // 'draws' | 'predictions'
 const sortOrder = ref('newest'); // 'newest' | 'oldest'
 const expandedDrawId = ref(null);
@@ -124,12 +126,13 @@ const getDecadeVariant = (num) => {
         class="p-4 rounded-[24px] bg-canvas-peach/20 border border-ui-charcoal"
       >
         <div class="flex items-center justify-between gap-2 mb-3">
+          {{ console.log('DEBUG: Rendering draw item:', draw) }}
           <div class="flex items-center gap-2">
             <span class="ui-heading text-xs text-ui-charcoal">
               Draw #{{ draw.drawNumber }}
             </span>
             <span class="text-[10px] font-semibold text-ui-charcoal/70">
-              {{ draw.date }}
+              {{ draw.drawDate }}
             </span>
           </div>
 
@@ -161,7 +164,9 @@ const getDecadeVariant = (num) => {
           v-if="expandedDrawId === draw.id"
           class="mt-3 pt-3 border-t border-ui-charcoal/20 text-[10px] space-y-1.5"
         >
+          {{ console.log('DEBUG: Rendering divisions for:', draw.id, 'Divisions:', draw.divisions) }}
           <div
+            v-if="draw.divisions && draw.divisions.length > 0"
             v-for="div in draw.divisions"
             :key="div.match"
             class="flex items-center justify-between text-ui-charcoal px-1"
@@ -169,6 +174,7 @@ const getDecadeVariant = (num) => {
             <span class="ui-body">Match {{ div.match }} ({{ div.winners }} winners)</span>
             <span class="ui-heading">{{ formatZAR(div.payout) }}</span>
           </div>
+          <div v-else class="text-ui-charcoal/50 italic">No prize data available</div>
         </div>
       </div>
     </div>
