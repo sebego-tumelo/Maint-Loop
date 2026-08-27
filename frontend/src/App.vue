@@ -10,20 +10,16 @@ import PredictModal from './components/PredictModal.vue';
 import SimulateDrawModal from './components/SimulateDrawModal.vue';
 import PrizeInfoModal from './components/PrizeInfoModal.vue';
 
-import {
-  INITIAL_DRAWS,
-  INITIAL_ACTIVE_PREDICTION,
-  INITIAL_PREDICTION_HISTORY,
-} from './data/mockData';
 import { computeFinancialStats } from './utils/lottoEngine';
-import { fetchResults } from './services/api';
+import { fetchResults, fetchPredictions } from './services/api';
+import { mapBackendPredictionToFrontend } from './utils/dataMapper';
 
 // Reactive state
 const draws = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
-const predictions = ref([INITIAL_ACTIVE_PREDICTION, ...INITIAL_PREDICTION_HISTORY]);
-const currentActivePrediction = ref(INITIAL_ACTIVE_PREDICTION);
+const predictions = ref([]);
+const currentActivePrediction = ref(null);
 
 // Modal visibility state
 const isPredictModalOpen = ref(false);
@@ -60,10 +56,22 @@ const latestMatchedNumbers = computed(() => {
 // Fetch data on mount
 onMounted(async () => {
   try {
-    const data = await fetchResults();
-    draws.value = data;
+    const [drawData, predictionData] = await Promise.all([
+      fetchResults(),
+      fetchPredictions(),
+    ]);
+    draws.value = drawData;
+    
+    // Map backend data
+    const mappedPredictions = predictionData.map(mapBackendPredictionToFrontend);
+    predictions.value = mappedPredictions;
+    
+    // Set active (newest)
+    if (mappedPredictions.length > 0) {
+      currentActivePrediction.value = mappedPredictions[0];
+    }
   } catch (err) {
-    error.value = 'Failed to load draw results.';
+    error.value = 'Failed to load data.';
     console.error(err);
   } finally {
     isLoading.value = false;
