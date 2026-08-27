@@ -1,3 +1,9 @@
+// API service to interact with the backend
+const API_BASE = '/api';
+
+const STORAGE_KEY = 'lotto_results_cache';
+const CACHE_EXPIRY_KEY = 'lotto_results_timestamp';
+
 const PRED_STORAGE_KEY = 'lotto_predictions_cache';
 const PRED_CACHE_EXPIRY_KEY = 'lotto_predictions_timestamp';
 
@@ -112,7 +118,8 @@ export async function fetchResults() {
     // Map API DrawResult to frontend-expected format
     const formattedNewData = result.data.map(draw => ({
       ...draw,
-      date: draw.drawDate, // Mapping drawDate to date
+      // Ensure we have some reasonable defaults if fields are missing in API
+      prizePool: draw.prizePool || 0, 
     }));
 
     let finalData;

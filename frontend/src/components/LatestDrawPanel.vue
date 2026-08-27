@@ -29,10 +29,10 @@ const isDropdownOpen = ref(false);
         
         <div>
           <h2 class="ui-heading text-xs tracking-wider text-ui-charcoal">
-            OFFICIAL DRAW #{{ draw.drawNumber }}
+            OFFICIAL DRAW
           </h2>
           <p class="ui-body text-[10px] text-ui-charcoal/70">
-            {{ draw.date }} • {{ draw.time }}
+            {{ draw.drawDate }}
           </p>
         </div>
       </div>
@@ -65,7 +65,7 @@ const isDropdownOpen = ref(false);
       </div>
 
       <!-- Estimated Prize Pool Pill -->
-      <div class="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-ui-charcoal text-[11px] font-bold text-ui-charcoal">
+      <div v-if="draw.prizePool" class="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-ui-charcoal text-[11px] font-bold text-ui-charcoal">
         <span class="text-ui-charcoal/70">Estimated Pool:</span>
         <span class="ui-heading text-ui-charcoal">{{ formatZAR(draw.prizePool) }}</span>
       </div>
@@ -94,28 +94,28 @@ const isDropdownOpen = ref(false);
       >
         <div class="grid grid-cols-4 text-[9px] uppercase font-extrabold tracking-wider text-ui-charcoal/70 px-2 py-1 border-b border-ui-charcoal/20">
           <div>Div</div>
-          <div class="text-center">Share</div>
-          <div class="text-center">Win</div>
-          <div class="text-right">Est.</div>
+          <div class="text-center">Matches</div>
+          <div class="text-center">Winners</div>
+          <div class="text-right">Prize</div>
         </div>
 
         <div class="space-y-1.5">
           <div
-            v-for="div in draw.divisions"
-            :key="div.match"
+            v-for="div in draw.prizeDivisions"
+            :key="div.division"
             class="grid grid-cols-4 items-center text-xs px-2 py-2 rounded-[16px] bg-white border border-ui-charcoal"
           >
             <div class="ui-heading text-ui-charcoal">
-              {{ div.match }}m
+              {{ div.division.replace('Division ', '') }}
             </div>
             <div class="text-center text-[10px] font-semibold text-ui-charcoal/70">
-              {{ div.percentage }}
+              {{ div.matches.replace(' Match', '') }}
             </div>
             <div class="text-center text-[10px] font-semibold text-ui-charcoal">
               {{ div.winners.toLocaleString() }}
             </div>
             <div class="text-right ui-heading text-ui-charcoal">
-              {{ formatZAR(div.payout) }}
+              {{ formatZAR(div.prize.amount) }}
             </div>
           </div>
         </div>

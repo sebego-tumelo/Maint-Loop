@@ -6,7 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { Agent } from '@mariozechner/pi-agent-core';
 import { streamSimple } from '@mariozechner/pi-ai';
-
+import { Prediction } from './models/Prediction.js';
 import { 
   runPrediction,
 } from './prediction_workflow.js';
