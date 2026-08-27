@@ -33,7 +33,7 @@ app.use(express.json());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// app.use(express.static(path.join(__dirname, '../frontend/dist')));
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 const gemmaCloudModel = {
   id: process.env.OLLAMA_MODEL || 'gemma4:31b',
@@ -198,9 +198,9 @@ app.post('/api/predict-draw', async (req, res) => {
   }
 });
 
-// app.get(/.*/, (req, res) => {
-//   res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
-// });
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+});
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => app.listen(3000, () => console.log('Server running on port 3000')))
