@@ -31,7 +31,11 @@ const activeSection = ref('home');
 
 // Computed values
 const latestDraw = computed(() => {
-  return draws.value[0] || INITIAL_DRAWS[0];
+  return draws.value[0] || {};
+});
+
+const historicalPredictions = computed(() => {
+  return predictions.value.slice(1);
 });
 
 const financialStats = computed(() => {
@@ -170,7 +174,7 @@ const scrollToSection = (id, sectionName) => {
         <!-- 4. Historical Records & Prediction Performance Log -->
         <HistoricalRecordsPanel
           :draws="draws"
-          :predictions="predictions"
+          :predictions="historicalPredictions"
         />
       </main>
 
