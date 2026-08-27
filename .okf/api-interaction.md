@@ -58,6 +58,17 @@ Retrieves a specified number of the latest lotto draw results.
   - `200 OK`: `{ "success": true, "count": number, "data": Array<DrawResult> }`
   - `500 Internal Server Error`: `{ "success": false, "error": string }`
 
+### 1.6 Get Latest Predictions
+Retrieves a specified number of the latest prediction records.
+
+- **Method**: `GET`
+- **Path**: `/api/latest-predictions?limit=N`
+- **Parameters**:
+  - `limit`: (Optional, default: 20) Number of predictions to return.
+- **Response**:
+  - `200 OK`: `{ "success": true, "count": number, "data": Array<Prediction> }`
+  - `500 Internal Server Error`: `{ "success": false, "error": string }`
+
 ### 2. Trigger Scrape
 Initiates an asynchronous scrape process in the background.
 

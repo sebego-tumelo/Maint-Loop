@@ -141,6 +141,19 @@ app.post('/run-instruction', async (req, res) => {
 
 
 
+app.get('/api/latest-predictions', async (req, res) => {
+  const limit = parseInt(req.query.limit) || 20;
+  try {
+    const predictions = await Prediction.find()
+      .sort({ draw_date: -1 })
+      .limit(limit);
+    
+    res.json({ success: true, count: predictions.length, data: predictions });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 app.get('/api/latest-results', async (req, res) => {
   const limit = parseInt(req.query.limit) || 20;
   try {
