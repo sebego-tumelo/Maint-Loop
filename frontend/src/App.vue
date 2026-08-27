@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Trophy, Zap, Coins, History, Home, Sparkles, MapPin } from 'lucide-vue-next';
 import Header from './components/Header.vue';
 import LatestDrawPanel from './components/LatestDrawPanel.vue';
@@ -18,7 +18,9 @@ import {
 import { computeFinancialStats } from './utils/lottoEngine';
 
 // Reactive state
-const draws = ref(INITIAL_DRAWS);
+const draws = ref([]);
+const isLoading = ref(true);
+const error = ref(null);
 const predictions = ref([INITIAL_ACTIVE_PREDICTION, ...INITIAL_PREDICTION_HISTORY]);
 const currentActivePrediction = ref(INITIAL_ACTIVE_PREDICTION);
 
