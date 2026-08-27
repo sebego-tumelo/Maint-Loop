@@ -54,6 +54,19 @@ const latestMatchedNumbers = computed(() => {
   return [];
 });
 
+// Fetch data on mount
+onMounted(async () => {
+  try {
+    const data = await fetchResults();
+    draws.value = data;
+  } catch (err) {
+    error.value = 'Failed to load draw results.';
+    console.error(err);
+  } finally {
+    isLoading.value = false;
+  }
+});
+
 // Event Handlers
 const handleSavePrediction = (newPrediction) => {
   if (currentActivePrediction.value && currentActivePrediction.value.status === 'pending') {
@@ -109,12 +122,15 @@ const scrollToSection = (id, sectionName) => {
     <div class="relative z-10 w-full max-w-md mx-auto flex flex-col min-h-screen">
       <!-- App Header -->
       <Header
+        v-if="!isLoading && latestDraw"
         :draw="latestDraw"
         :matchedNumbers="latestMatchedNumbers"
         :onOpenPredictModal="() => (isPredictModalOpen = true)"
         :onOpenSimulateModal="() => (isSimulateModalOpen = true)"
         :onOpenPrizeInfoModal="() => (isPrizeInfoModalOpen = true)"
       />
+      <div v-else-if="isLoading" class="p-4 text-center">Loading results...</div>
+      <div v-else class="p-4 text-center text-red-500">{{ error }}</div>
 
       <!-- Main Body Flowing Content -->
       <main class="flex-1 px-4 py-4 space-y-4">
