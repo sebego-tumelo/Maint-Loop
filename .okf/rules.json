@@ -2,7 +2,7 @@
   "system_info": {
     "lottery_format": "Daily Lotto 5/36",
     "dataset_range": "2019-Present",
-    "last_updated": "2026-08-25",
+    "last_updated": "2026-08-27",
     "total_active_rules": 5
   },
   "rules": [
@@ -33,10 +33,10 @@
       },
       "scoring": {
         "weight_type": "SOFT_SCORE",
-        "multiplier": 1.02,
+        "multiplier": 0.75,
         "penalty_if_violated": -0.8
       },
-      "last_journal_note": "The current upper bound of 120 is too restrictive. The latest draw sum of 140 shows that high-value number clusters are appearing. Reducing penalty or expanding the window is necessary to prevent false-negative discards."
+      "last_journal_note": "Latest draw sum (107) reinforces the 65-120 window. Soft-score penalty remains appropriate to allow for occasional outliers while guiding candidates toward the mean."
     },
     {
       "rule_id": "RULE_PREVIOUS_DRAW_REPEAT_03",
@@ -48,10 +48,10 @@
       },
       "scoring": {
         "weight_type": "PROBABILISTIC_BOOST",
-        "multiplier": 1.01,
+        "multiplier": 1.11,
         "probability_factor": 0.52
       },
-      "last_journal_note": "Confirmed return to the carry-over pattern after a 3-draw drought. Increasing weight as the dataset reverts to historical mean behavior."
+      "last_journal_note": "Number 23 carried over from 2026-08-25 to 2026-08-26, sustaining the carry-over probability."
     },
     {
       "rule_id": "RULE_CONSECUTIVE_PAIRS_04",
@@ -63,10 +63,10 @@
       },
       "scoring": {
         "weight_type": "PROBABILISTIC_BOOST",
-        "multiplier": 1.46,
+        "multiplier": 1.75,
         "probability_factor": 0.38
       },
-      "last_journal_note": "Consistent occurrence of consecutive pairs (32, 33) validates current probabilistic boosting."
+      "last_journal_note": "The high-intensity clustering phase (consecutive pairs) observed between 08-23 and 08-25 has ceased in the 08-26 draw. Reducing weight to prevent over-fitting to a short-term burst."
     },
     {
       "rule_id": "RULE_EVEN_ODD_BALANCE_05",
