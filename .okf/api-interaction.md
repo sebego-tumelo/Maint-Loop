@@ -47,6 +47,17 @@ The `prizeDivisions` field is an array of objects structured as follows:
 (Note: `_id` is disabled for prize division objects).
 
 
+### 1.5 Get Latest Results
+Retrieves a specified number of the latest lotto draw results.
+
+- **Method**: `GET`
+- **Path**: `/api/latest-results?limit=N`
+- **Parameters**:
+  - `limit`: (Optional, default: 20) Number of results to return.
+- **Response**:
+  - `200 OK`: `{ "success": true, "count": number, "data": Array<DrawResult> }`
+  - `500 Internal Server Error`: `{ "success": false, "error": string }`
+
 ### 2. Trigger Scrape
 Initiates an asynchronous scrape process in the background.
 

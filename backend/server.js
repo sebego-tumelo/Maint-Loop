@@ -141,6 +141,20 @@ app.post('/run-instruction', async (req, res) => {
 
 
 
+app.get('/api/latest-results', async (req, res) => {
+  const limit = parseInt(req.query.limit) || 20;
+  try {
+    const stats = await syncAndGetStats();
+    // Assuming rawDrawHistory is sorted newest-first, otherwise sort it
+    const sortedResults = [...stats.rawDrawHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const latestResults = sortedResults.slice(0, limit);
+    
+    res.json({ success: true, count: latestResults.length, data: latestResults });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 app.get('/api/stats', async (req, res) => {
   try {
     const stats = await syncAndGetStats();
