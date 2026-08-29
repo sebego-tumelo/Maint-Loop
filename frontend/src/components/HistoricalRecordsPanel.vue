@@ -58,6 +58,11 @@ const getDecadeVariant = (num) => {
   return 'rose';
 };
 
+const getWinningNumbersForPrediction = (pred) => {
+  const draw = props.draws.find(d => d.drawDate === pred.targetDrawDate);
+  return draw ? draw.winningNumbers : null;
+};
+
 const getSetMatches = (set, winningNumbers) => {
   if (!winningNumbers || !set.numbers) return [];
   return set.numbers.filter(num => winningNumbers.includes(num));
