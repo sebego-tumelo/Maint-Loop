@@ -57,6 +57,11 @@ const getDecadeVariant = (num) => {
   if (num <= 29) return 'lavender';
   return 'rose';
 };
+
+const getWinningNumbersForPrediction = (pred) => {
+  const draw = props.draws.find(d => d.drawDate === pred.targetDrawDate);
+  return draw ? draw.winningNumbers : null;
+};
 </script>
 
 <template>
@@ -238,6 +243,18 @@ const getDecadeVariant = (num) => {
           v-if="expandedPredictionId === pred.id"
           class="mt-3 pt-3 border-t border-ui-charcoal/20 space-y-2"
         >
+          <div v-if="pred.status === 'evaluated' && getWinningNumbersForPrediction(pred)" class="mb-2 p-2 rounded-[16px] bg-metric-mint/20 border border-metric-mint">
+             <div class="text-[10px] font-bold text-ui-charcoal mb-1">Actual Winning Numbers:</div>
+             <div class="flex items-center gap-1.5">
+               <LottoBall
+                  v-for="num in getWinningNumbersForPrediction(pred)"
+                  :key="`pred-winning-${pred.id}-${num}`"
+                  :number="num"
+                  size="sm"
+                  variant="mint"
+               />
+             </div>
+          </div>
           <div
             v-for="(set, sIdx) in pred.sets"
             :key="set.id"
