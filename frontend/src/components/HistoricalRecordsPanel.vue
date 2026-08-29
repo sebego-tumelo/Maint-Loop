@@ -169,15 +169,15 @@ const getWinningNumbersForPrediction = (pred) => {
           v-if="expandedDrawId === draw.id"
           class="mt-3 pt-3 border-t border-ui-charcoal/20 text-[10px] space-y-1.5"
         >
-          {{ console.log('DEBUG: Rendering divisions for:', draw.id, 'Divisions:', draw.divisions) }}
+          {{ console.log('DEBUG: Rendering divisions for:', draw.id, 'Divisions:', draw.prizeDivisions) }}
           <div
-            v-if="draw.divisions && draw.divisions.length > 0"
-            v-for="div in draw.divisions"
-            :key="div.match"
+            v-if="draw.prizeDivisions && draw.prizeDivisions.length > 0"
+            v-for="div in draw.prizeDivisions"
+            :key="div.division"
             class="flex items-center justify-between text-ui-charcoal px-1"
           >
-            <span class="ui-body">Match {{ div.match }} ({{ div.winners }} winners)</span>
-            <span class="ui-heading">{{ formatZAR(div.payout) }}</span>
+            <span class="ui-body">{{ div.matches }} ({{ div.winners }} winners)</span>
+            <span class="ui-heading">{{ formatZAR(div.prize.amount) }}</span>
           </div>
           <div v-else class="text-ui-charcoal/50 italic">No prize data available</div>
         </div>
