@@ -1,5 +1,6 @@
 // API service to interact with the backend
 import { generateDivisions } from '../utils/lottoEngine';
+import { seedResults } from '../data/seedData';
 const API_BASE = '/api';
 
 const STORAGE_KEY = 'lotto_results_cache_v2';
@@ -116,7 +117,6 @@ export async function fetchResults() {
       throw new Error('Failed to fetch results: Invalid API response format');
     }
 
-    // Map API DrawResult to frontend-expected format
     const formattedNewData = result.data.map(draw => {
       const id = draw.drawNumber || draw.id || draw._id || `draw-${draw.date}-${Math.random().toString(36).substr(2, 9)}`;
       console.log('DEBUG: Mapping draw:', id, draw);
@@ -130,7 +130,10 @@ export async function fetchResults() {
     });
 
     let finalData;
-    if (hasCache) {
+    if (formattedNewData.length === 0) {
+        console.log('No data from API, using seed data.');
+        finalData = seedResults;
+    } else if (hasCache) {
       const existing = JSON.parse(cachedData);
       // Prepend only unique results (by date)
       const existingDates = new Set(existing.map(d => d.date));
