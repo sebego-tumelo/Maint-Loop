@@ -248,7 +248,7 @@ const getSetMatches = (set, winningNumbers) => {
           v-if="expandedPredictionId === pred.id"
           class="mt-3 pt-3 border-t border-ui-charcoal/20 space-y-2"
         >
-          <div v-if="pred.status === 'evaluated' && getWinningNumbersForPrediction(pred)" class="mb-2 p-2 rounded-[16px] bg-metric-orange border border-ui-charcoal">
+          <div v-if="pred.status === 'evaluated' && getWinningNumbersForPrediction(pred)" class="mb-2 p-2 rounded-[16px] bg-nav-sand border border-ui-charcoal">
              <div class="text-[10px] font-bold text-ui-charcoal mb-1">Actual Winning Numbers:</div>
              <div class="flex items-center gap-1.5">
                <LottoBall
