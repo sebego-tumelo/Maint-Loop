@@ -5,6 +5,11 @@ import { getActiveRules, appendToJournal, OKF_DIR } from './okf_utils.js';
 import { Prediction } from './models/Prediction.js';
 import path from 'path';
 
+export async function getTodaysPrediction() {
+  const drawDate = new Date().toISOString().split('T')[0];
+  return await Prediction.findOne({ draw_date: drawDate });
+}
+
 export async function getRecentEvaluatedPredictions(limit = 10) {
   return await Prediction.find({ 'actual_outcome.evaluated': true })
     .sort({ draw_date: -1 })
@@ -34,12 +39,17 @@ export async function prepareCandidates() {
   return { activeRules, top20, recentPredictions };
 }
 
-export async function synthesizePrediction(top20, activeRules, recentPredictions) {
+export async function synthesizePrediction(top20, activeRules, recentPredictions, count = 3, todaysPrediction = null) {
+  const existingNumbers = todaysPrediction ? todaysPrediction.predicted_sets.map(s => s.numbers) : [];
+  
   const agent = new Agent({
     initialState: {
       model: gemmaCloudModel,
       systemPrompt: `You are in MODE B: CANDIDATE GENERATOR & PREDICTION SYNTHESIS.
-        Select the top 3 sets from the provided top 20 candidates. 
+        Select the top ${count} sets from the provided top 20 candidates.
+        
+        CRITICAL: Do not select these sets as they are already predicted for today: ${JSON.stringify(existingNumbers)}.
+        
         Draft a journal entry for /okf/journal.md explaining your selection based on: ${JSON.stringify(activeRules)}.
         
         Use this recent performance history to inform your selection:
@@ -65,7 +75,7 @@ export async function synthesizePrediction(top20, activeRules, recentPredictions
     });
   };
 
-  await agent.prompt(`Analyze these candidates and select the top 3: ${JSON.stringify(top20)}`);
+  await agent.prompt(`Analyze these candidates and select the top ${count}: ${JSON.stringify(top20)}`);
   
   const lastMessage = agent.state.messages[agent.state.messages.length - 1];
   const responseText = lastMessage.content.map(p => p.text).join('');
@@ -76,7 +86,7 @@ export async function synthesizePrediction(top20, activeRules, recentPredictions
   return JSON.parse(jsonMatch[0]);
 }
 
-export async function persistPrediction(parsed) {
+export async function persistPrediction(parsed, top20, targetCount) {
   // Save to Journal
   await appendToJournal({
     entry_type: "PREDICTION_SYNTHESIS",
@@ -88,11 +98,13 @@ export async function persistPrediction(parsed) {
   // Find existing prediction for today
   let prediction = await Prediction.findOne({ draw_date: drawDate });
 
+  let selectedSets = parsed.selected_draws;
+
   if (prediction) {
     console.log('🔄 Appending to existing prediction for:', drawDate);
 
     // Filter out duplicate sets (based on numbers array equality)
-    const newSets = parsed.selected_draws.filter(
+    const newSets = selectedSets.filter(
       (newSet) =>
         !prediction.predicted_sets.some(
           (existingSet) =>
@@ -100,6 +112,31 @@ export async function persistPrediction(parsed) {
             JSON.stringify(newSet.numbers.sort((a, b) => a - b))
         )
     );
+
+    // If still not enough sets, fill from top20
+    let currentTotalCount = prediction.predicted_sets.length + newSets.length;
+    if (currentTotalCount < targetCount) {
+      console.log(`ℹ️ Need ${targetCount - currentTotalCount} more sets, filling from top20...`);
+      for (const candidate of top20) {
+        if (currentTotalCount >= targetCount) break;
+        
+        const isDuplicate = prediction.predicted_sets.some(
+          (existingSet) => JSON.stringify(existingSet.numbers.sort((a, b) => a - b)) === JSON.stringify(candidate.numbers.sort((a, b) => a - b))
+        ) || newSets.some(
+          (newSet) => JSON.stringify(newSet.numbers.sort((a, b) => a - b)) === JSON.stringify(candidate.numbers.sort((a, b) => a - b))
+        );
+
+        if (!isDuplicate) {
+          newSets.push({
+            numbers: candidate.numbers,
+            expected_sum: candidate.expected_sum || 0,
+            parity: candidate.parity || "N/A",
+            set_rationale: "Automatically generated to fill requested count.",
+          });
+          currentTotalCount++;
+        }
+      }
+    }
 
     if (newSets.length === 0) {
       console.log('ℹ️ No new unique sets to add.');
@@ -126,13 +163,32 @@ export async function persistPrediction(parsed) {
     await prediction.save();
     return { ...prediction.toObject(), _id: prediction._id };
   } else {
-    // Create new
+    // Create new (ensure we have targetCount sets)
+    let finalSets = selectedSets;
+    if (finalSets.length < targetCount) {
+       console.log(`ℹ️ Need ${targetCount - finalSets.length} more sets, filling from top20...`);
+       for (const candidate of top20) {
+        if (finalSets.length >= targetCount) break;
+        const isDuplicate = finalSets.some(
+          (s) => JSON.stringify(s.numbers.sort((a, b) => a - b)) === JSON.stringify(candidate.numbers.sort((a, b) => a - b))
+        );
+        if (!isDuplicate) {
+          finalSets.push({
+            numbers: candidate.numbers,
+            expected_sum: candidate.expected_sum || 0,
+            parity: candidate.parity || "N/A",
+            set_rationale: "Automatically generated to fill requested count.",
+          });
+        }
+       }
+    }
+
     console.log('✨ Creating new prediction for:', drawDate);
     prediction = new Prediction({
       draw_date: drawDate,
       summary: parsed.summary,
       rationale_narrative: parsed.rationale_narrative,
-      predicted_sets: parsed.selected_draws.map((set, index) => ({
+      predicted_sets: finalSets.map((set, index) => ({
         rank: index + 1,
         numbers: set.numbers,
         expected_sum: set.expected_sum,
@@ -140,9 +196,9 @@ export async function persistPrediction(parsed) {
         set_rationale: set.set_rationale,
       })),
       financials: {
-        total_cost_rand: parsed.selected_draws.length * 3,
+        total_cost_rand: finalSets.length * 3,
         total_payout_rand: 0,
-        net_profit_loss_rand: -(parsed.selected_draws.length * 3),
+        net_profit_loss_rand: -(finalSets.length * 3),
         roi_percentage: -100.0,
       },
     });
@@ -151,13 +207,14 @@ export async function persistPrediction(parsed) {
   }
 }
 
-export async function runPrediction() {
+export async function runPrediction(boardCount = 3) {
   console.log('🔮 Starting AI-driven prediction synthesis...');
   
   try {
     const { activeRules, top20, recentPredictions } = await prepareCandidates();
-    const parsed = await synthesizePrediction(top20, activeRules, recentPredictions);
-    return await persistPrediction(parsed);
+    const todaysPrediction = await getTodaysPrediction();
+    const parsed = await synthesizePrediction(top20, activeRules, recentPredictions, boardCount, todaysPrediction);
+    return await persistPrediction(parsed, top20, boardCount);
   } catch (error) {
     console.error('❌ Error during AI prediction:', error);
     throw error;

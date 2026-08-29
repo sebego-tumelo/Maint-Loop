@@ -63,23 +63,21 @@ const handleStartGeneration = async () => {
     const response = await fetch('/api/predict-draw', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // Note: Backend runPrediction doesn't currently take parameters like boardCount 
-      // in the request body, it runs its own synthesis.
+      body: JSON.stringify({ boardCount: boardCount.value })
     });
     
     if (!response.ok) throw new Error('Prediction failed');
     
     const result = await response.json();
-    props.onSavePrediction(result); // Sync App state with backend result
+    props.onSavePrediction(result);
     
     analysisProgress.value = 100;
     analysisMessage.value = 'Prediction complete!';
     
-    // Use the sets returned from the backend
     generatedSets.value = result.predicted_sets.map(set => ({
       ...set,
       numbers: set.numbers,
-      confidenceScore: 90 // Placeholder since backend doesn't explicitly return this in current model
+      confidenceScore: 90
     }));
     
     step.value = 'complete';

@@ -188,8 +188,9 @@ app.post('/api/analyze-dataset', async (req, res) => {
 
 app.post('/api/predict-draw', async (req, res) => {
   console.log('🔮 Request received: /api/predict-draw');
+  const { boardCount } = req.body;
   try {
-    const result = await runPrediction();
+    const result = await runPrediction(boardCount);
     console.log('✅ Prediction synthesis returned successfully.');
     res.json(result);
   } catch (error) {
