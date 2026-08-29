@@ -1,12 +1,16 @@
 <script setup>
 import { ref } from 'vue';
-import { Dices, Info, Sparkles, BatteryCharging, Radio, ChevronRight } from 'lucide-vue-next';
+import { Dices, Info, Sparkles, BatteryCharging, Radio, ChevronRight, Loader2 } from 'lucide-vue-next';
 import LatestDrawPanel from './LatestDrawPanel.vue';
 
 defineProps({
   draw: {
     type: Object,
     required: true,
+  },
+  isUpdating: {
+    type: Boolean,
+    default: false,
   },
   matchedNumbers: {
     type: Array,
@@ -74,7 +78,7 @@ const currentDay = ref(date.toLocaleDateString('en-US', { weekday: 'long' }).toU
 
     <!-- Latest Draw Panel -->
     <div class="mt-3">
-      <LatestDrawPanel :draw="draw" :matchedNumbers="matchedNumbers" />
+      <LatestDrawPanel :draw="draw" :isUpdating="isUpdating" :matchedNumbers="matchedNumbers" />
     </div>
   </header>
 </template>

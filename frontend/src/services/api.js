@@ -159,7 +159,7 @@ export async function fetchResults() {
 /**
  * Checks if the cached data is stale (i.e., today is a new day after 8 PM).
  */
-function isStale(timestamp) {
+export function isStale(timestamp) {
   const lastFetchDate = new Date(timestamp);
   const now = new Date();
   

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { Trophy, Zap, Coins, History, Home, Sparkles, MapPin } from 'lucide-vue-next';
+import { Trophy, Zap, Coins, History, Home, Sparkles, MapPin, Loader2 } from 'lucide-vue-next';
 import Header from './components/Header.vue';
 import LatestDrawPanel from './components/LatestDrawPanel.vue';
 import CurrentPredictionPanel from './components/CurrentPredictionPanel.vue';
@@ -11,7 +11,7 @@ import SimulateDrawModal from './components/SimulateDrawModal.vue';
 import PrizeInfoModal from './components/PrizeInfoModal.vue';
 
 import { computeFinancialStats } from './utils/lottoEngine';
-import { fetchResults, fetchPredictions } from './services/api';
+import { fetchResults, fetchPredictions, isStale } from './services/api';
 import { mapBackendPredictionToFrontend } from './utils/dataMapper';
 
 // Reactive state
@@ -28,6 +28,8 @@ const isPrizeInfoModalOpen = ref(false);
 
 // Active section for bottom nav
 const activeSection = ref('home');
+
+const isUpdating = ref(false);
 
 // Computed values
 const latestDraw = computed(() => {
@@ -59,6 +61,12 @@ const latestMatchedNumbers = computed(() => {
 
 // Fetch data on mount
 onMounted(async () => {
+  // Check if we need to update
+  const lastFetch = localStorage.getItem('lotto_results_timestamp_v2');
+  if (lastFetch && isStale(lastFetch)) {
+    isUpdating.value = true;
+  }
+  
   try {
     const [drawData, predictionData] = await Promise.all([
       fetchResults(),
@@ -79,6 +87,7 @@ onMounted(async () => {
     console.error(err);
   } finally {
     isLoading.value = false;
+    isUpdating.value = false;
   }
 });
 
@@ -126,6 +135,7 @@ const scrollToSection = (id, sectionName) => {
       <Header
         v-if="!isLoading && latestDraw"
         :draw="latestDraw"
+        :isUpdating="isUpdating"
         :matchedNumbers="latestMatchedNumbers"
         :onOpenPredictModal="() => (isPredictModalOpen = true)"
         :onOpenSimulateModal="() => (isSimulateModalOpen = true)"

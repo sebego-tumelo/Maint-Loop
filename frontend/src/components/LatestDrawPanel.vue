@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { Trophy, Calendar, ChevronDown, ChevronUp, Sparkles, Award } from 'lucide-vue-next';
+import { Trophy, Calendar, ChevronDown, ChevronUp, Sparkles, Award, Loader2 } from 'lucide-vue-next';
 import LottoBall from './LottoBall.vue';
 import { formatZAR } from '../utils/lottoEngine';
 
@@ -8,6 +8,10 @@ const props = defineProps({
   draw: {
     type: Object,
     required: true,
+  },
+  isUpdating: {
+    type: Boolean,
+    default: false,
   },
   matchedNumbers: {
     type: Array,
@@ -21,7 +25,10 @@ const isDropdownOpen = ref(false);
 <template>
   <section
     id="section-latest-draw"
-    class="w-full rounded-[24px] p-4 space-y-4 transition-all"
+    :class="[
+      'w-full rounded-[24px] p-4 space-y-4 transition-all',
+      isUpdating ? 'bg-metric-mint/20' : ''
+    ]"
   >
     <!-- Top Header mimicking the Insights section from reference image -->
     <div class="flex items-center justify-between gap-2">
@@ -29,7 +36,7 @@ const isDropdownOpen = ref(false);
         
         <div>
           <h2 class="ui-heading text-xs tracking-wider text-ui-charcoal">
-            OFFICIAL DRAW
+            {{ isUpdating ? 'UPDATING...' : 'OFFICIAL DRAW' }}
           </h2>
           <p class="ui-body text-[10px] text-ui-charcoal/70">
             {{ draw.drawDate }}
@@ -38,9 +45,15 @@ const isDropdownOpen = ref(false);
       </div>
 
       <div class="flex items-center gap-1.5">
-        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-metric-mint border border-ui-charcoal">
-          <span class="w-1.5 h-1.5 rounded-full bg-ui-charcoal"></span>
-          Latest Result
+        <span 
+          :class="[
+            'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold border border-ui-charcoal',
+            isUpdating ? 'bg-white' : 'bg-metric-mint'
+          ]"
+        >
+          <Loader2 v-if="isUpdating" class="w-3 h-3 animate-spin text-ui-charcoal" />
+          <span v-else class="w-1.5 h-1.5 rounded-full bg-ui-charcoal"></span>
+          {{ isUpdating ? 'Fetching latest...' : 'Latest Result' }}
         </span>
       </div>
     </div>
