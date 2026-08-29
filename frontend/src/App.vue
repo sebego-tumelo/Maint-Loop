@@ -83,29 +83,16 @@ onMounted(async () => {
 });
 
 // Event Handlers
-const handleSavePrediction = (newPrediction) => {
-  if (currentActivePrediction.value && currentActivePrediction.value.status === 'pending') {
-    // Appending to existing active prediction
-    const existingSets = currentActivePrediction.value.sets;
-    const newSets = newPrediction.sets.map((set, i) => ({
-      ...set,
-      setNumber: existingSets.length + i + 1,
-    }));
-
-    currentActivePrediction.value.sets = [...existingSets, ...newSets];
-
-    currentActivePrediction.value.boardsCount += newPrediction.boardsCount;
-    currentActivePrediction.value.cost += newPrediction.cost;
-    currentActivePrediction.value.netProfit = -currentActivePrediction.value.cost;
-
-    // Update predictions list
-    predictions.value = predictions.value.map((p) =>
-      p.id === currentActivePrediction.value.id ? currentActivePrediction.value : p
-    );
+const handleSavePrediction = (newPredictionData) => {
+  // Now simply update the active prediction with the merged result from the backend
+  currentActivePrediction.value = mapBackendPredictionToFrontend(newPredictionData);
+  
+  // Update predictions list, replace or prepend
+  const index = predictions.value.findIndex(p => p.id === newPredictionData._id);
+  if (index !== -1) {
+    predictions.value[index] = currentActivePrediction.value;
   } else {
-    // New prediction
-    currentActivePrediction.value = newPrediction;
-    predictions.value = [newPrediction, ...predictions.value];
+    predictions.value = [currentActivePrediction.value, ...predictions.value];
   }
 };
 

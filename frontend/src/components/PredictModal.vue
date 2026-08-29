@@ -14,8 +14,6 @@ import confetti from 'canvas-confetti';
 import LottoBall from './LottoBall.vue';
 import {
   BOARD_PRICE_ZAR,
-  generatePredictionBoards,
-  generateCandidateSet,
   formatZAR,
 } from '../utils/lottoEngine';
 
@@ -56,28 +54,34 @@ watch(
   }
 );
 
-const handleStartGeneration = () => {
+const handleStartGeneration = async () => {
   step.value = 'analyzing';
   analysisProgress.value = 10;
-  analysisMessage.value = 'Scanning 5/36 frequency matrix & hot numbers...';
+  analysisMessage.value = 'Contacting AI Engine for prediction...';
 
-  const t1 = setTimeout(() => {
-    analysisProgress.value = 45;
-    analysisMessage.value = 'Calculating combinatoric delta & odd/even balance...';
-  }, 450);
-
-  const t2 = setTimeout(() => {
-    analysisProgress.value = 80;
-    analysisMessage.value = 'Optimizing 3-board synergy to maximize coverage...';
-  }, 950);
-
-  const t3 = setTimeout(() => {
+  try {
+    const response = await fetch('/api/predict-draw', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      // Note: Backend runPrediction doesn't currently take parameters like boardCount 
+      // in the request body, it runs its own synthesis.
+    });
+    
+    if (!response.ok) throw new Error('Prediction failed');
+    
+    const result = await response.json();
+    props.onSavePrediction(result); // Sync App state with backend result
+    
     analysisProgress.value = 100;
     analysisMessage.value = 'Prediction complete!';
-
-    // Generate real candidate boards
-    const sets = generatePredictionBoards(boardCount.value);
-    generatedSets.value = sets;
+    
+    // Use the sets returned from the backend
+    generatedSets.value = result.predicted_sets.map(set => ({
+      ...set,
+      numbers: set.numbers,
+      confidenceScore: 90 // Placeholder since backend doesn't explicitly return this in current model
+    }));
+    
     step.value = 'complete';
 
     // Celebration confetti
@@ -91,7 +95,11 @@ const handleStartGeneration = () => {
     } catch {
       // Ignore if canvas unavailable
     }
-  }, 1450);
+  } catch (error) {
+    console.error('Prediction error:', error);
+    analysisMessage.value = 'Error generating prediction.';
+    step.value = 'config';
+  }
 };
 
 const handleRegenerateSingleSet = (setIdx) => {
@@ -102,20 +110,15 @@ const handleRegenerateSingleSet = (setIdx) => {
 };
 
 const handleDone = () => {
-  const newPredictionRecord = {
-    id: `pred-${Date.now()}`,
-    createdAt: new Date().toISOString(),
-    targetDrawDate: props.targetDrawDate,
-    boardsCount: boardCount.value,
-    cost: boardCount.value * BOARD_PRICE_ZAR,
-    sets: generatedSets.value,
-    status: 'pending',
-    totalWon: 0,
-    netProfit: -(boardCount.value * BOARD_PRICE_ZAR),
-    topMatchCount: 0,
-  };
-
-  props.onSavePrediction(newPredictionRecord);
+  // The prediction is already persisted by the backend in handleStartGeneration.
+  // We just need to notify the App component to update its state.
+  // We need to pass the updated prediction object, but for now we'll close the modal.
+  // Ideally, the backend should return the full updated object in handleStartGeneration,
+  // which we then pass to onSavePrediction.
+  
+  // As a quick fix for the current architecture, we'll just close it.
+  // If the App needs to know about the update, it should have been triggered by handleStartGeneration.
+  
   props.onClose();
   step.value = 'config';
 };
