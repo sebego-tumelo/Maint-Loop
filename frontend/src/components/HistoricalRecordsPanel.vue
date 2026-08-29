@@ -58,9 +58,9 @@ const getDecadeVariant = (num) => {
   return 'rose';
 };
 
-const getWinningNumbersForPrediction = (pred) => {
-  const draw = props.draws.find(d => d.drawDate === pred.targetDrawDate);
-  return draw ? draw.winningNumbers : null;
+const getSetMatches = (set, winningNumbers) => {
+  if (!winningNumbers || !set.numbers) return [];
+  return set.numbers.filter(num => winningNumbers.includes(num));
 };
 </script>
 
@@ -263,8 +263,8 @@ const getWinningNumbersForPrediction = (pred) => {
             <div class="flex items-center justify-between text-[10px]">
               <span class="ui-heading text-ui-charcoal">Set #{{ set.setNumber || sIdx + 1 }}</span>
               <span class="text-ui-charcoal font-black">
-                {{ (set.matchedNumbers?.length || 0) > 0
-                  ? `${set.matchedNumbers.length} Matched (${formatZAR(set.winAmount || 0)})`
+                {{ (getSetMatches(set, getWinningNumbersForPrediction(pred)).length) > 0
+                  ? `${getSetMatches(set, getWinningNumbersForPrediction(pred)).length} Matched`
                   : '0 Matches' }}
               </span>
             </div>
@@ -274,8 +274,8 @@ const getWinningNumbersForPrediction = (pred) => {
                 :key="`hist-set-ball-${sIdx}-${num}`"
                 :number="num"
                 size="sm"
-                :isMatched="set.matchedNumbers?.includes(num)"
-                :variant="set.matchedNumbers?.includes(num) ? 'gold' : getDecadeVariant(num)"
+                :isMatched="getSetMatches(set, getWinningNumbersForPrediction(pred)).includes(num)"
+                :variant="getSetMatches(set, getWinningNumbersForPrediction(pred)).includes(num) ? 'gold' : getDecadeVariant(num)"
               />
             </div>
           </div>
