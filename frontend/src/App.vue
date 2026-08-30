@@ -38,11 +38,13 @@ const latestDraw = computed(() => {
 
 const historicalPredictions = computed(() => {
   // If the latest prediction is evaluated, it should be part of history.
-  if (predictions.value.length > 0 && predictions.value[0].status === 'evaluated') {
-    return predictions.value;
-  }
-  // Otherwise, the latest is the active one, so history is the rest.
-  return predictions.value.slice(1);
+  // if (predictions.value.length > 0 && predictions.value[0].status === 'evaluated') {
+  //   return predictions.value;
+  // }
+  // // Otherwise, the latest is the active one, so history is the rest.
+  // return predictions.value.slice(1);
+
+  return predictions.value;
 });
 
 const financialStats = computed(() => {
