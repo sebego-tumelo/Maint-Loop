@@ -95,14 +95,18 @@ export function computeFinancialStats(predictions, currentActivePrediction, resu
 
   // Calculate actual lifetime won based on draw results
   const lifetimeWon = evaluated.reduce((acc, pred) => {
-    const draw = results.find(r => r.date === pred.targetDrawDate);
+    const draw = results.find(r => r.drawDate === pred.targetDrawDate);
     if (!draw || !draw.divisions) return acc + (pred.totalWon || 0);
 
     // Sum winnings for all boards in this prediction
     const predictionWinnings = pred.sets.reduce((sum, set) => {
       const matchCount = set.matchedNumbers?.length || 0;
       const division = draw.divisions.find(d => d.match === matchCount);
-      return sum + (division ? division.payout : 0);
+      
+      // Handle potential differences in structure between generated vs backend data
+      const payout = division ? (division.payout || (division.prize ? division.prize.amount : 0)) : 0;
+      
+      return sum + payout;
     }, 0);
 
     return acc + predictionWinnings;
