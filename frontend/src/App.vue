@@ -121,9 +121,7 @@ const scrollToSection = (id, sectionName) => {
         />
         
         <!-- 1. Financial Ledger 4-Quadrant Pastel Grid (Needs Satisfaction, Activity, Sleep, Wellness from image) -->
-        <FinancialLedgerPanel
-          :onOpenPrizeInfoModal="() => (isPrizeInfoModalOpen = true)"
-        />
+        <FinancialLedgerPanel />
 
       
 

@@ -9,10 +9,6 @@ const store = useLottoStore();
 const { financialStats: stats } = storeToRefs(store);
 
 defineProps({
-  onOpenPrizeInfoModal: {
-    type: Function,
-    required: true,
-  },
 });
 
 const isProfitable = computed(() => stats.value.netProfit >= 0);
