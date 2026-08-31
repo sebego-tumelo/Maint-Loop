@@ -12,28 +12,45 @@ const ANALYSIS_TIMESTAMP_KEY = 'analysis_timestamp';
 
 /**
  * Triggers dataset analysis if the previous analysis is stale.
+ * Polls the backend until analysis is complete.
  */
-export async function triggerAnalysisIfStale() {
+export async function ensureAnalysisComplete() {
   try {
-    // Check with backend if analysis is actually needed
-    const response = await fetch(`${API_BASE}/analysis-status`);
-    if (!response.ok) {
-      throw new Error(`Failed to check analysis status: ${response.status}`);
-    }
-    const { needsAnalysis } = await response.json();
+    // 1. Check status
+    let response = await fetch(`${API_BASE}/analysis-status`);
+    if (!response.ok) throw new Error(`Status check failed: ${response.status}`);
+    let { needsAnalysis } = await response.json();
 
-    if (needsAnalysis) {
-      const triggerResponse = await fetch(`${API_BASE}/analyze-dataset`, { method: 'POST' });
-      if (!triggerResponse.ok) {
-        throw new Error(`Failed to trigger analysis: ${triggerResponse.status}`);
-      }
-      localStorage.setItem(ANALYSIS_TIMESTAMP_KEY, new Date().toISOString());
-      console.log('✅ Dataset analysis triggered successfully.');
-    } else {
+    if (!needsAnalysis) {
       console.log('ℹ️ Dataset analysis is already up to date.');
+      return;
+    }
+
+    // 2. Trigger analysis
+    console.log('🚀 Triggering dataset analysis...');
+    const triggerResponse = await fetch(`${API_BASE}/analyze-dataset`, { method: 'POST' });
+    if (!triggerResponse.ok) throw new Error(`Trigger failed: ${triggerResponse.status}`);
+
+    // 3. Poll until complete
+    console.log('⏳ Analysis initiated, polling for completion...');
+    while (true) {
+      // Wait 3 seconds
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      response = await fetch(`${API_BASE}/analysis-status`);
+      if (!response.ok) throw new Error(`Polling status check failed: ${response.status}`);
+      
+      const status = await response.json();
+      if (!status.needsAnalysis) {
+        console.log('✅ Dataset analysis completed.');
+        localStorage.setItem(ANALYSIS_TIMESTAMP_KEY, new Date().toISOString());
+        break;
+      }
+      console.log('...still analyzing...');
     }
   } catch (e) {
-    console.error('❌ Failed to trigger analysis:', e);
+    console.error('❌ Failed to ensure analysis completion:', e);
+    throw e; // Propagate error to trigger UI error state
   }
 }
 

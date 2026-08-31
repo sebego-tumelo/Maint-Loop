@@ -14,12 +14,13 @@ import PrizeInfoModal from './components/PrizeInfoModal.vue';
 
 import { computeFinancialStats } from './utils/lottoEngine';
 import { mapBackendPredictionToFrontend } from './utils/dataMapper';
-import { isStale, triggerAnalysisIfStale } from './services/api';
+import { isStale, ensureAnalysisComplete } from './services/api';
 
 // Reactive state
 const store = useLottoStore();
 const { results: draws, loading: isLoading, error, predictions, activePrediction: currentActivePrediction } = storeToRefs(store);
 const isUpdating = ref(false);
+const isAnalyzing = ref(false);
 
 // Modal visibility state
 const isPredictModalOpen = ref(false);
@@ -40,24 +41,25 @@ const latestDraw = computed(() => {
 
 // Fetch data on mount
 onMounted(async () => {
-  // Check if we need to update
-  const lastFetch = localStorage.getItem('lotto_results_timestamp_v2');
-  if (lastFetch && isStale(lastFetch)) {
-    isUpdating.value = true;
-  }
-  
   try {
+    isLoading.value = true;
+    
+    // 1. Ensure Analysis is up-to-date
+    isAnalyzing.value = true;
+    await ensureAnalysisComplete();
+    isAnalyzing.value = false;
+
+    // 2. Fetch App Data
     await Promise.all([
       store.fetchResults(),
       store.fetchPredictions(),
-      triggerAnalysisIfStale(),
     ]);
   } catch (err) {
     error.value = 'Failed to load data.';
     console.error(err);
   } finally {
     isLoading.value = false;
-    isUpdating.value = false;
+    isAnalyzing.value = false;
   }
 });
 
@@ -109,7 +111,10 @@ const scrollToSection = (id, sectionName) => {
         :onOpenSimulateModal="() => (isSimulateModalOpen = true)"
         :onOpenPrizeInfoModal="() => (isPrizeInfoModalOpen = true)"
       />
-      <div v-else-if="isLoading" class="p-4 text-center">Loading results...</div>
+      <div v-else-if="isLoading" class="p-4 text-center">
+        <Loader2 class="animate-spin inline-block w-6 h-6" />
+        <p>{{ isAnalyzing ? 'Running background analysis...' : 'Loading results...' }}</p>
+      </div>
       <div v-else class="p-4 text-center text-red-500">{{ error }}</div>
 
       <!-- Main Body Flowing Content -->
