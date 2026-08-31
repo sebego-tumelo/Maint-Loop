@@ -7,7 +7,7 @@ import { formatZAR } from '../utils/lottoEngine';
 const props = defineProps({
   draw: {
     type: Object,
-    required: true,
+    default: null,
   },
   isUpdating: {
     type: Boolean,
@@ -24,6 +24,14 @@ const isDropdownOpen = ref(false);
 
 <template>
   <section
+    v-if="!draw"
+    id="section-latest-draw"
+    class="w-full rounded-[24px] p-4 bg-canvas-peach/20 border border-ui-charcoal text-center text-ui-charcoal/70 text-xs"
+  >
+    No draw results available.
+  </section>
+  <section
+    v-else
     id="section-latest-draw"
     :class="[
       'w-full rounded-[24px] p-4 space-y-4 transition-all',
