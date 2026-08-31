@@ -8,6 +8,28 @@ const CACHE_EXPIRY_KEY = 'lotto_results_timestamp_v2';
 
 const PRED_STORAGE_KEY = 'lotto_predictions_cache';
 const PRED_CACHE_EXPIRY_KEY = 'lotto_predictions_timestamp';
+const ANALYSIS_TIMESTAMP_KEY = 'analysis_timestamp';
+
+/**
+ * Triggers dataset analysis if the previous analysis is stale.
+ */
+export async function triggerAnalysisIfStale() {
+  const lastAnalysis = localStorage.getItem(ANALYSIS_TIMESTAMP_KEY);
+  
+  // If no analysis yet, or if it is stale, run it
+  if (!lastAnalysis || isStale(lastAnalysis)) {
+    try {
+      const response = await fetch(`${API_BASE}/analyze-dataset`, { method: 'POST' });
+      if (!response.ok) {
+        throw new Error(`Failed to trigger analysis: ${response.status}`);
+      }
+      localStorage.setItem(ANALYSIS_TIMESTAMP_KEY, new Date().toISOString());
+      console.log('✅ Dataset analysis triggered successfully.');
+    } catch (e) {
+      console.error('❌ Failed to trigger analysis:', e);
+    }
+  }
+}
 
 /**
  * Fetches predictions with caching logic using the latest-predictions endpoint.

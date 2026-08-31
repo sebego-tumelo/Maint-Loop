@@ -14,7 +14,7 @@ import PrizeInfoModal from './components/PrizeInfoModal.vue';
 
 import { computeFinancialStats } from './utils/lottoEngine';
 import { mapBackendPredictionToFrontend } from './utils/dataMapper';
-import { isStale } from './services/api';
+import { isStale, triggerAnalysisIfStale } from './services/api';
 
 // Reactive state
 const store = useLottoStore();
@@ -50,6 +50,7 @@ onMounted(async () => {
     await Promise.all([
       store.fetchResults(),
       store.fetchPredictions(),
+      triggerAnalysisIfStale(),
     ]);
   } catch (err) {
     error.value = 'Failed to load data.';
