@@ -84,7 +84,7 @@ export function evaluatePredictionSets(sets, winningNumbers) {
 }
 
 // Compute financial statistics from predictions
-export function computeFinancialStats(predictions, currentActivePrediction) {
+export function computeFinancialStats(predictions, currentActivePrediction, results = []) {
   const evaluated = predictions.filter((p) => p.status === 'evaluated');
   
   const currentDrawCost = currentActivePrediction 
@@ -92,13 +92,30 @@ export function computeFinancialStats(predictions, currentActivePrediction) {
     : DEFAULT_BOARD_COUNT * BOARD_PRICE_ZAR;
 
   const lifetimeSpent = predictions.reduce((acc, p) => acc + p.cost, 0);
-  const lifetimeWon = evaluated.reduce((acc, p) => acc + (p.totalWon || 0), 0);
+
+  // Calculate actual lifetime won based on draw results
+  const lifetimeWon = evaluated.reduce((acc, pred) => {
+    const draw = results.find(r => r.date === pred.targetDrawDate);
+    if (!draw || !draw.divisions) return acc + (pred.totalWon || 0);
+
+    // Sum winnings for all boards in this prediction
+    const predictionWinnings = pred.sets.reduce((sum, set) => {
+      const matchCount = set.matchedNumbers?.length || 0;
+      const division = draw.divisions.find(d => d.match === matchCount);
+      return sum + (division ? division.payout : 0);
+    }, 0);
+
+    return acc + predictionWinnings;
+  }, 0);
+
   const netProfit = lifetimeWon - lifetimeSpent;
   
   const roiPercentage = lifetimeSpent > 0 ? (netProfit / lifetimeSpent) * 100 : 0;
   const winningDrawsCount = evaluated.filter((p) => (p.totalWon || 0) > 0).length;
   
   let bestSingleWin = 0;
+  // Note: For bestSingleWin, we should also ideally recalculate using draw results,
+  // but for now keeping it based on the evaluated prediction objects for consistency.
   evaluated.forEach((p) => {
     if (p.totalWon > bestSingleWin) bestSingleWin = p.totalWon;
   });

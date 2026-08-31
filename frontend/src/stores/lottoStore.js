@@ -48,7 +48,7 @@ export const useLottoStore = defineStore('lotto', () => {
   });
 
   const financialStats = computed(() => {
-    return computeFinancialStats(predictions.value, activePrediction.value);
+    return computeFinancialStats(predictions.value, activePrediction.value, results.value);
   });
 
   const latestMatchedNumbers = computed(() => {
