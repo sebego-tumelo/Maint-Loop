@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { fetchResults as fetchResultsApi, fetchPredictions as fetchPredictionsApi } from '../services/api';
 import { mapBackendPredictionToFrontend } from '../utils/dataMapper';
+import { computeFinancialStats } from '../utils/lottoEngine';
 
 export const useLottoStore = defineStore('lotto', () => {
   // State
@@ -46,6 +47,25 @@ export const useLottoStore = defineStore('lotto', () => {
     return predictions.value[0];
   });
 
+  const financialStats = computed(() => {
+    return computeFinancialStats(predictions.value, activePrediction.value);
+  });
+
+  const latestMatchedNumbers = computed(() => {
+    if (activePrediction.value && activePrediction.value.status === 'evaluated') {
+      const matched = [];
+      activePrediction.value.sets.forEach((set) => {
+        if (set.matchedNumbers) {
+          set.matchedNumbers.forEach((num) => {
+            if (!matched.includes(num)) matched.push(num);
+          });
+        }
+      });
+      return matched;
+    }
+    return [];
+  });
+
   return {
     results,
     predictions,
@@ -54,6 +74,8 @@ export const useLottoStore = defineStore('lotto', () => {
     fetchResults,
     fetchPredictions,
     latestResult,
-    activePrediction
+    activePrediction,
+    financialStats,
+    latestMatchedNumbers
   };
 });

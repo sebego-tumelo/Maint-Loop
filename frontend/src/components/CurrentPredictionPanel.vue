@@ -1,14 +1,15 @@
 <script setup>
 import { computed } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useLottoStore } from '../stores/lottoStore';
 import { Zap, CheckCircle2, Clock, RotateCcw, Activity } from 'lucide-vue-next';
 import LottoBall from './LottoBall.vue';
 import { formatZAR, formatSignedZAR } from '../utils/lottoEngine';
 
+const store = useLottoStore();
+const { activePrediction: currentPrediction } = storeToRefs(store);
+
 const props = defineProps({
-  currentPrediction: {
-    type: Object,
-    default: null,
-  },
   latestWinningNumbers: {
     type: Array,
     default: () => [],
@@ -19,7 +20,7 @@ const props = defineProps({
   },
 });
 
-const isEvaluated = computed(() => props.currentPrediction?.status === 'evaluated');
+const isEvaluated = computed(() => currentPrediction.value?.status === 'evaluated');
 
 // Color mapping based on decade
 const getDecadeVariant = (num) => {
@@ -30,7 +31,7 @@ const getDecadeVariant = (num) => {
 };
 
 // Prediction count
-const predictionCount = computed(() => props.currentPrediction?.sets?.length || 0);
+const predictionCount = computed(() => currentPrediction.value?.sets?.length || 0);
 </script>
 
 <template>

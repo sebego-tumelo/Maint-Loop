@@ -34,35 +34,9 @@ const latestDraw = computed(() => {
   return draws.value[0] || {};
 });
 
-const historicalPredictions = computed(() => {
-  // If the latest prediction is evaluated, it should be part of history.
-  // if (predictions.value.length > 0 && predictions.value[0].status === 'evaluated') {
-  //   return predictions.value;
-  // }
-  // // Otherwise, the latest is the active one, so history is the rest.
-  // return predictions.value.slice(1);
-
-  return predictions.value;
-});
-
-const financialStats = computed(() => {
-  return computeFinancialStats(predictions.value, currentActivePrediction.value);
-});
-
-const latestMatchedNumbers = computed(() => {
-  if (currentActivePrediction.value && currentActivePrediction.value.status === 'evaluated') {
-    const matched = [];
-    currentActivePrediction.value.sets.forEach((set) => {
-      if (set.matchedNumbers) {
-        set.matchedNumbers.forEach((num) => {
-          if (!matched.includes(num)) matched.push(num);
-        });
-      }
-    });
-    return matched;
-  }
-  return [];
-});
+// Removed historicalPredictions computed - will update components to use store.predictions directly
+// Removed financialStats computed - will update components to use store.financialStats directly
+// Removed latestMatchedNumbers computed - will update components to use store.latestMatchedNumbers directly
 
 // Fetch data on mount
 onMounted(async () => {
@@ -129,9 +103,7 @@ const scrollToSection = (id, sectionName) => {
       <!-- App Header -->
       <Header
         v-if="!isLoading && latestDraw"
-        :draw="latestDraw"
         :isUpdating="isUpdating"
-        :matchedNumbers="latestMatchedNumbers"
         :onOpenPredictModal="() => (isPredictModalOpen = true)"
         :onOpenSimulateModal="() => (isSimulateModalOpen = true)"
         :onOpenPrizeInfoModal="() => (isPrizeInfoModalOpen = true)"
@@ -144,14 +116,12 @@ const scrollToSection = (id, sectionName) => {
 
           <!-- 2. Current Prediction Card with Goal progress bar & Tripartite sliders -->
         <CurrentPredictionPanel
-          :currentPrediction="currentActivePrediction"
           :latestWinningNumbers="latestDraw.winningNumbers"
           :onOpenPredictModal="() => (isPredictModalOpen = true)"
         />
         
         <!-- 1. Financial Ledger 4-Quadrant Pastel Grid (Needs Satisfaction, Activity, Sleep, Wellness from image) -->
         <FinancialLedgerPanel
-          :stats="financialStats"
           :onOpenPrizeInfoModal="() => (isPrizeInfoModalOpen = true)"
         />
 
@@ -164,10 +134,7 @@ const scrollToSection = (id, sectionName) => {
         /> -->
 
         <!-- 4. Historical Records & Prediction Performance Log -->
-        <HistoricalRecordsPanel
-          :draws="draws"
-          :predictions="historicalPredictions"
-        />
+        <HistoricalRecordsPanel />
       </main>
 
       <!-- Floating Bottom Navigation Pill Bar -->

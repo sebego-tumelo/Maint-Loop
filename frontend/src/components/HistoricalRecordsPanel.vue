@@ -1,21 +1,13 @@
 <script setup>
 import { ref, computed } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useLottoStore } from '../stores/lottoStore';
 import { History, ArrowUpDown, ChevronDown, ChevronUp, Trophy } from 'lucide-vue-next';
 import LottoBall from './LottoBall.vue';
 import { formatZAR, formatSignedZAR } from '../utils/lottoEngine';
 
-const props = defineProps({
-  draws: {
-    type: Array,
-    required: true,
-  },
-  predictions: {
-    type: Array,
-    required: true,
-  },
-});
-
-console.log('DEBUG: HistoricalRecordsPanel draws prop:', props.draws);
+const store = useLottoStore();
+const { results: draws, predictions } = storeToRefs(store);
 
 const activeTab = ref('draws'); // 'draws' | 'predictions'
 const sortOrder = ref('newest'); // 'newest' | 'oldest'
@@ -27,7 +19,7 @@ const toggleSort = () => {
 };
 
 const sortedDraws = computed(() => {
-  return [...props.draws].sort((a, b) => {
+  return [...draws.value].sort((a, b) => {
     return sortOrder.value === 'newest'
       ? b.drawNumber - a.drawNumber
       : a.drawNumber - b.drawNumber;
@@ -35,7 +27,7 @@ const sortedDraws = computed(() => {
 });
 
 const sortedPredictions = computed(() => {
-  return [...props.predictions].sort((a, b) => {
+  return [...predictions.value].sort((a, b) => {
     const dateA = new Date(a.createdAt).getTime();
     const dateB = new Date(b.createdAt).getTime();
     return sortOrder.value === 'newest' ? dateB - dateA : dateA - dateB;
@@ -59,7 +51,7 @@ const getDecadeVariant = (num) => {
 };
 
 const getWinningNumbersForPrediction = (pred) => {
-  const draw = props.draws.find(d => d.drawDate === pred.targetDrawDate);
+  const draw = draws.value.find(d => d.drawDate === pred.targetDrawDate);
   return draw ? draw.winningNumbers : null;
 };
 

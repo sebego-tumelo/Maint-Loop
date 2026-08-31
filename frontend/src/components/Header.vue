@@ -1,20 +1,17 @@
 <script setup>
 import { ref } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useLottoStore } from '../stores/lottoStore';
 import { Dices, Info, Sparkles, BatteryCharging, Radio, ChevronRight, Loader2 } from 'lucide-vue-next';
 import LatestDrawPanel from './LatestDrawPanel.vue';
 
+const store = useLottoStore();
+const { latestResult: draw, latestMatchedNumbers: matchedNumbers } = storeToRefs(store);
+
 defineProps({
-  draw: {
-    type: Object,
-    required: true,
-  },
   isUpdating: {
     type: Boolean,
     default: false,
-  },
-  matchedNumbers: {
-    type: Array,
-    default: () => [],
   },
   onOpenPredictModal: {
     type: Function,
@@ -37,6 +34,7 @@ const currentDay = ref(date.toLocaleDateString('en-US', { weekday: 'long' }).toU
 
 <template>
   <header id="section-home" class="w-full bg-nav-sand text-ui-charcoal pt-2.5 pb-4 px-4 rounded-b-[24px] border-b border-ui-charcoal relative z-20">
+    <!-- ... (rest of template remains largely same but draws from local 'draw' and 'matchedNumbers') -->
     <!-- Empty placeholder to maintain status bar vertical space -->
     <div class="h-[16px] mb-2"></div>
 

@@ -1,20 +1,21 @@
 <script setup>
 import { computed } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useLottoStore } from '../stores/lottoStore';
 import { Info, Sparkles, TrendingUp, TrendingDown, Coins } from 'lucide-vue-next';
 import { formatZAR, formatSignedZAR } from '../utils/lottoEngine';
 
-const props = defineProps({
-  stats: {
-    type: Object,
-    required: true,
-  },
+const store = useLottoStore();
+const { financialStats: stats } = storeToRefs(store);
+
+defineProps({
   onOpenPrizeInfoModal: {
     type: Function,
     required: true,
   },
 });
 
-const isProfitable = computed(() => props.stats.netProfit >= 0);
+const isProfitable = computed(() => stats.value.netProfit >= 0);
 </script>
 
 <template>
