@@ -177,6 +177,39 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
+app.get('/api/analysis-status', async (req, res) => {
+  try {
+    const meta = await LottoMetadata.findOne({});
+    const lastAnalyzed = meta?.analysis?.lastAnalyzed;
+    
+    // Determine if analysis is needed:
+    // It's needed if there's no previous analysis OR if it's stale (last analyzed before 8 PM today)
+    const needsAnalysis = !lastAnalyzed || isStale(lastAnalyzed);
+    
+    res.json({ success: true, needsAnalysis });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Helper function to check if timestamp is stale
+function isStale(timestamp) {
+  const lastDate = new Date(timestamp);
+  const now = new Date();
+  
+  // If last analysis was a different day, it's stale
+  if (lastDate.toDateString() !== now.toDateString()) {
+    return true;
+  }
+  
+  // If last analysis was today but before 8 PM, and now it's after 8 PM, it's stale
+  if (lastDate.getHours() < 20 && now.getHours() >= 20) {
+    return true;
+  }
+  
+  return false;
+}
+
 app.post('/api/analyze-dataset', async (req, res) => {
   console.log('🚀 Initiating dataset analysis...');
   // Fire and forget

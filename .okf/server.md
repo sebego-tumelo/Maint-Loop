@@ -14,8 +14,9 @@ type: concept
 - **Streaming Response**: Streams the agent's reasoning process via Server-Sent Events (SSE) to the frontend.
 - **Knowledge Base Maintenance**: Automatically parses the agent's output for `okf_journal_draft`. If present, it persists entries to `/okf/journal.md` and triggers updates to rule weights in `/okf/rules.json`.
 
-### 2. Lottery Data Service (`GET /api/stats`, `POST /api/analyze-dataset`, `POST /api/predict-draw`)
+### 2. Lottery Data Service (`GET /api/stats`, `GET /api/analysis-status`, `POST /api/analyze-dataset`, `POST /api/predict-draw`)
 - Provides a summary of historical draw data (e.g., total records, latest result) fetched from the external lottery API.
+- Checks the freshness of dataset analysis status (`GET /api/analysis-status`).
 - Initiates an asynchronous dataset analysis in the background, updating MongoDB upon completion.
 - Triggers AI-driven prediction synthesis, returning the top 3 predicted draws and recording the selection in the knowledge base.
 - Logs the initiation and completion of the dataset analysis process.

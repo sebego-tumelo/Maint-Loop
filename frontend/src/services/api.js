@@ -14,20 +14,26 @@ const ANALYSIS_TIMESTAMP_KEY = 'analysis_timestamp';
  * Triggers dataset analysis if the previous analysis is stale.
  */
 export async function triggerAnalysisIfStale() {
-  const lastAnalysis = localStorage.getItem(ANALYSIS_TIMESTAMP_KEY);
-  
-  // If no analysis yet, or if it is stale, run it
-  if (!lastAnalysis || isStale(lastAnalysis)) {
-    try {
-      const response = await fetch(`${API_BASE}/analyze-dataset`, { method: 'POST' });
-      if (!response.ok) {
-        throw new Error(`Failed to trigger analysis: ${response.status}`);
+  try {
+    // Check with backend if analysis is actually needed
+    const response = await fetch(`${API_BASE}/analysis-status`);
+    if (!response.ok) {
+      throw new Error(`Failed to check analysis status: ${response.status}`);
+    }
+    const { needsAnalysis } = await response.json();
+
+    if (needsAnalysis) {
+      const triggerResponse = await fetch(`${API_BASE}/analyze-dataset`, { method: 'POST' });
+      if (!triggerResponse.ok) {
+        throw new Error(`Failed to trigger analysis: ${triggerResponse.status}`);
       }
       localStorage.setItem(ANALYSIS_TIMESTAMP_KEY, new Date().toISOString());
       console.log('✅ Dataset analysis triggered successfully.');
-    } catch (e) {
-      console.error('❌ Failed to trigger analysis:', e);
+    } else {
+      console.log('ℹ️ Dataset analysis is already up to date.');
     }
+  } catch (e) {
+    console.error('❌ Failed to trigger analysis:', e);
   }
 }
 
