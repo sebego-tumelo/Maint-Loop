@@ -131,7 +131,10 @@ export async function evaluatePredictionFinancials(drawDate) {
   for (const set of prediction.predicted_sets) {
     const winningNumbers = drawResult.winningNumbers;
     const matchCount = set.numbers.filter(n => winningNumbers.includes(n)).length;
-    const division = drawResult.prizeDivisions.find(pd => parseInt(pd.matches) === matchCount);
+    const division = drawResult.prizeDivisions.find(pd => {
+      const pdMatches = parseInt(pd.matches.replace('Match ', ''));
+      return pdMatches === matchCount;
+    });
     if (division) {
       totalPayout += division.prize.amount;
     }
