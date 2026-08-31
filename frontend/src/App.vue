@@ -1,5 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useLottoStore } from './stores/lottoStore';
 import { Trophy, Zap, Coins, History, Home, Sparkles, MapPin, Loader2 } from 'lucide-vue-next';
 import Header from './components/Header.vue';
 import LatestDrawPanel from './components/LatestDrawPanel.vue';
@@ -11,15 +13,13 @@ import SimulateDrawModal from './components/SimulateDrawModal.vue';
 import PrizeInfoModal from './components/PrizeInfoModal.vue';
 
 import { computeFinancialStats } from './utils/lottoEngine';
-import { fetchResults, fetchPredictions, isStale } from './services/api';
 import { mapBackendPredictionToFrontend } from './utils/dataMapper';
+import { isStale } from './services/api';
 
 // Reactive state
-const draws = ref([]);
-const isLoading = ref(true);
-const error = ref(null);
-const predictions = ref([]);
-const currentActivePrediction = ref(null);
+const store = useLottoStore();
+const { results: draws, loading: isLoading, error, predictions, activePrediction: currentActivePrediction } = storeToRefs(store);
+const isUpdating = ref(false);
 
 // Modal visibility state
 const isPredictModalOpen = ref(false);
@@ -28,8 +28,6 @@ const isPrizeInfoModalOpen = ref(false);
 
 // Active section for bottom nav
 const activeSection = ref('home');
-
-const isUpdating = ref(false);
 
 // Computed values
 const latestDraw = computed(() => {
@@ -75,20 +73,10 @@ onMounted(async () => {
   }
   
   try {
-    const [drawData, predictionData] = await Promise.all([
-      fetchResults(),
-      fetchPredictions(),
+    await Promise.all([
+      store.fetchResults(),
+      store.fetchPredictions(),
     ]);
-    draws.value = drawData;
-    
-    // Map backend data
-    const mappedPredictions = predictionData.map(mapBackendPredictionToFrontend);
-    predictions.value = mappedPredictions;
-    
-    // Set active (newest)
-    if (mappedPredictions.length > 0) {
-      currentActivePrediction.value = mappedPredictions[0];
-    }
   } catch (err) {
     error.value = 'Failed to load data.';
     console.error(err);
