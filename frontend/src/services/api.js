@@ -119,7 +119,7 @@ export async function fetchResults() {
 
     const formattedNewData = result.data.map(draw => {
       const id = draw.drawNumber || draw.id || draw._id || `draw-${draw.date}-${Math.random().toString(36).substr(2, 9)}`;
-      console.log('DEBUG: Mapping draw:', id, draw);
+
       return {
         id,
         ...draw,
