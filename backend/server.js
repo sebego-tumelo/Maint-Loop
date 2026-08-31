@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { Agent } from '@mariozechner/pi-agent-core';
 import { streamSimple } from '@mariozechner/pi-ai';
 import { Prediction } from './models/Prediction.js';
+import { LottoMetadata } from './models/LottoMetadata.js';
 import { 
   runPrediction,
 } from './prediction_workflow.js';
