@@ -66,6 +66,12 @@ export async function fetchPredictions() {
   if (cachedData && lastFetch && !isStale(lastFetch)) {
     return JSON.parse(cachedData);
   }
+  
+  if (!cachedData) {
+    console.log('ℹ️ No cached predictions found, fetching fresh data.');
+  } else if (isStale(lastFetch)) {
+    console.log('⚠️ Cached predictions are stale, fetching fresh data.');
+  }
 
   const hasCache = !!cachedData;
   let limit = 20;
@@ -132,6 +138,12 @@ export async function fetchResults() {
   // We only refetch if we have no data or if it's a new day (after 8 PM).
   if (cachedData && lastFetch && !isStale(lastFetch)) {
     return JSON.parse(cachedData);
+  }
+
+  if (!cachedData) {
+    console.log('ℹ️ No cached results found, fetching fresh data.');
+  } else if (isStale(lastFetch)) {
+    console.log('⚠️ Cached results are stale, fetching fresh data.');
   }
 
   const hasCache = !!cachedData;
