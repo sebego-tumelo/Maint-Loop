@@ -128,7 +128,6 @@ const getSetMatches = (set, winningNumbers) => {
         class="p-4 rounded-[24px] bg-canvas-peach/20 border border-ui-charcoal"
       >
         <div class="flex items-center justify-between gap-2 mb-3">
-          {{ console.log('DEBUG: Rendering draw item:', draw) }}
           <div class="flex items-center gap-2">
             <span class="ui-heading text-xs text-ui-charcoal">
               Draw #{{ draw.drawNumber }}
@@ -166,7 +165,6 @@ const getSetMatches = (set, winningNumbers) => {
           v-if="expandedDrawId === draw.id"
           class="mt-3 pt-3 border-t border-ui-charcoal/20 text-[10px] space-y-1.5"
         >
-          {{ console.log('DEBUG: Rendering divisions for:', draw.id, 'Divisions:', draw.prizeDivisions) }}
           <div
             v-if="draw.prizeDivisions && draw.prizeDivisions.length > 0"
             v-for="div in draw.prizeDivisions"
