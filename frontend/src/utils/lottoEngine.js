@@ -84,7 +84,7 @@ export function evaluatePredictionSets(sets, winningNumbers) {
 }
 
 // Compute financial statistics from predictions
-export function computeFinancialStats(predictions, currentActivePrediction, results = []) {
+export function computeFinancialStats(predictions, currentActivePrediction) {
   const evaluated = predictions.filter((p) => p.status === 'evaluated');
   
   const currentDrawCost = currentActivePrediction 
@@ -93,24 +93,8 @@ export function computeFinancialStats(predictions, currentActivePrediction, resu
 
   const lifetimeSpent = predictions.reduce((acc, p) => acc + p.cost, 0);
 
-  // Calculate actual lifetime won based on draw results
-  const lifetimeWon = evaluated.reduce((acc, pred) => {
-    const draw = results.find(r => r.drawDate === pred.targetDrawDate);
-    if (!draw || !draw.divisions) return acc + (pred.totalWon || 0);
-
-    // Sum winnings for all boards in this prediction
-    const predictionWinnings = pred.sets.reduce((sum, set) => {
-      const matchCount = set.matchedNumbers?.length || 0;
-      const division = draw.divisions.find(d => d.match === matchCount);
-      
-      // Handle potential differences in structure between generated vs backend data
-      const payout = division ? (division.payout || (division.prize ? division.prize.amount : 0)) : 0;
-      
-      return sum + payout;
-    }, 0);
-
-    return acc + predictionWinnings;
-  }, 0);
+  // Use the pre-calculated totalWon from the prediction object
+  const lifetimeWon = evaluated.reduce((acc, pred) => acc + (pred.totalWon || 0), 0);
 
   const netProfit = lifetimeWon - lifetimeSpent;
   
@@ -118,8 +102,6 @@ export function computeFinancialStats(predictions, currentActivePrediction, resu
   const winningDrawsCount = evaluated.filter((p) => (p.totalWon || 0) > 0).length;
   
   let bestSingleWin = 0;
-  // Note: For bestSingleWin, we should also ideally recalculate using draw results,
-  // but for now keeping it based on the evaluated prediction objects for consistency.
   evaluated.forEach((p) => {
     if (p.totalWon > bestSingleWin) bestSingleWin = p.totalWon;
   });
