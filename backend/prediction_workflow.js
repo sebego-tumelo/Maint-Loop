@@ -32,12 +32,13 @@ const gemmaCloudModel = {
 export async function prepareCandidates() {
   const activeRules = await getActiveRules();
   const recentPredictions = await getRecentEvaluatedPredictions();
+  const recentJournal = await getRecentJournalEntries(5);
   const rawCandidates = await generateUniqueCandidates(1000);
   const top20 = scoreAndFilterCandidates(rawCandidates, activeRules.rules);
-  return { activeRules, top20, recentPredictions };
+  return { activeRules, top20, recentPredictions, recentJournal };
 }
 
-export async function synthesizePrediction(top20, activeRules, recentPredictions, count = 3, todaysPrediction = null) {
+export async function synthesizePrediction(top20, activeRules, recentPredictions, recentJournal, count = 3, todaysPrediction = null) {
   const existingNumbers = todaysPrediction ? todaysPrediction.predicted_sets.map(s => s.numbers) : [];
   
   const agent = new Agent({
@@ -48,7 +49,11 @@ export async function synthesizePrediction(top20, activeRules, recentPredictions
         
         CRITICAL: Do not select these sets as they are already predicted for today: ${JSON.stringify(existingNumbers)}.
         
-        Draft a journal entry for /okf/journal.md explaining your selection based on: ${JSON.stringify(activeRules)}.
+        Use these previous strategic findings to inform your selection:
+        ${JSON.stringify(recentJournal)}
+
+        Explain your selection based on these active rules: 
+        ${JSON.stringify(activeRules)}.
         
         Use this recent performance history to inform your selection:
         ${JSON.stringify(recentPredictions)}
@@ -209,9 +214,9 @@ export async function runPrediction(boardCount = 3) {
   console.log('🔮 Starting AI-driven prediction synthesis...');
   
   try {
-    const { activeRules, top20, recentPredictions } = await prepareCandidates();
+    const { activeRules, top20, recentPredictions, recentJournal } = await prepareCandidates();
     const todaysPrediction = await getTodaysPrediction();
-    const parsed = await synthesizePrediction(top20, activeRules, recentPredictions, boardCount, todaysPrediction);
+    const parsed = await synthesizePrediction(top20, activeRules, recentPredictions, recentJournal, boardCount, todaysPrediction);
     return await persistPrediction(parsed, top20, boardCount);
   } catch (error) {
     console.error('❌ Error during AI prediction:', error);

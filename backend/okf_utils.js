@@ -16,6 +16,17 @@ export async function getActiveRules() {
   }
 }
 
+export async function getRecentJournalEntries(limit = 5) {
+  try {
+    return await JournalEntry.find({})
+      .sort({ date: -1 })
+      .limit(limit);
+  } catch (err) {
+    console.error('❌ [Database Journal Error]: Failed to fetch entries', err.message);
+    return [];
+  }
+}
+
 export async function appendToJournal(journalDraft) {
   if (!journalDraft || !journalDraft.summary) return;
   
