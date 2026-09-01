@@ -42,7 +42,7 @@ const latestDraw = computed(() => {
 // Fetch data on mount
 onMounted(async () => {
   try {
-    console.log('App mounted, fetching data...');
+    
     isLoading.value = true;
     
     // 1. Ensure Analysis is up-to-date
@@ -105,7 +105,9 @@ const scrollToSection = (id, sectionName) => {
     <!-- Loading Overlay -->
     <transition name="loading-overlay">
       <div v-if="isLoading" class="fixed inset-0 z-50 bg-nav-sand flex flex-col items-center justify-center">
-        <Loader2 class="animate-spin w-12 h-12 text-ui-charcoal mb-4" />
+        <div class="bg-ui-charcoal p-4 rounded-full mb-6">
+          <Zap class="w-12 h-12 text-nav-sand" />
+        </div>
         <p class="text-ui-charcoal font-semibold text-lg">{{ isAnalyzing ? 'Running background analysis...' : 'Loading results...' }}</p>
       </div>
     </transition>
