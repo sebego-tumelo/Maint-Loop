@@ -242,7 +242,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Enhanced helper function to wake up external server (fire-and-forget)
 async function wakeUpExternalServer() {
-  const url = `${process.env.LOTTERY_API_BASE_URL}/wakeup`;
+  const url = `${process.env.LOTTERY_API_BASE_URL}/api/wakeup`;
   const maxRetries = 3;
   
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
