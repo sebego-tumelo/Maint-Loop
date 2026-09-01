@@ -233,10 +233,32 @@ app.post('/api/predict-draw', async (req, res) => {
   }
 });
 
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
-});
+// ... existing code ...
 
+// Helper function to wake up external server (fire-and-forget)
+async function wakeUpExternalServer() {
+  const url = `${process.env.LOTTERY_API_BASE_URL}/wakeup`;
+  console.log(`📡 Attempting to wake up external server at ${url}...`);
+  try {
+    const response = await fetch(url);
+    if (response.ok) {
+      console.log('✅ External server responded: awake.');
+    } else {
+      console.warn(`⚠️ External server wakeup returned status: ${response.status}`);
+    }
+  } catch (err) {
+    // We log the error, but the main backend continues running.
+    console.error('❌ Background wakeup request failed (this is non-blocking):', err.message);
+  }
+}
+
+app.get(/.*/, (req, res) => {
+// ... existing code ...
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => app.listen(3000, () => console.log('Server running on port 3000')))
+  .then(() => {
+    // Trigger asynchronously without 'await' to avoid blocking startup
+    wakeUpExternalServer();
+    
+    app.listen(3000, () => console.log('Server running on port 3000'));
+  })
   .catch(err => console.error(err));
