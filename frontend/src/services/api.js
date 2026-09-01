@@ -135,15 +135,35 @@ export async function fetchResults() {
   const lastFetch = localStorage.getItem(CACHE_EXPIRY_KEY);
 
   // If we have data, we assume it's valid for the current day.
-  // We only refetch if we have no data or if it's a new day (after 8 PM).
-  if (cachedData && lastFetch && !isStale(lastFetch)) {
+  // We only refetch if we have no data, if it's a new day, or if the latest data is not from today.
+  let isDataCurrent = false;
+  if (cachedData) {
+    const cachedRecords = JSON.parse(cachedData);
+    if (cachedRecords.length > 0) {
+      // Robustly get the date, handling potential variations in key names
+      const record = cachedRecords[0];
+      const dateValue = record.date || record.drawDate; 
+      
+      const latestRecordDate = new Date(dateValue);
+      
+      if (!isNaN(latestRecordDate.getTime())) { // Check for Invalid Date
+        const today = new Date();
+        // If the latest record date is today, it's current.
+        isDataCurrent = latestRecordDate.toDateString() === today.toDateString();
+      }
+    }
+  }
+
+  if (cachedData && lastFetch && !isStale(lastFetch) && isDataCurrent) {
     return JSON.parse(cachedData);
   }
 
   if (!cachedData) {
     console.log('ℹ️ No cached results found, fetching fresh data.');
   } else if (isStale(lastFetch)) {
-    console.log('⚠️ Cached results are stale, fetching fresh data.');
+    console.log('⚠️ Cached results are stale (by time), fetching fresh data.');
+  } else if (!isDataCurrent) {
+    console.log('⚠️ Cached results are outdated (by date), fetching fresh data.');
   }
 
   const hasCache = !!cachedData;
