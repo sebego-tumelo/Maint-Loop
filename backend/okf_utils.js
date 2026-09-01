@@ -1,63 +1,57 @@
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-export const OKF_DIR = path.join(__dirname, '../.okf');
+import { JournalEntry } from './models/JournalEntry.js';
+import { Rule } from './models/Rule.js';
+import { RuleMetadata } from './models/RuleMetadata.js';
 
 export async function getActiveRules() {
-  const rulesPath = path.join(OKF_DIR, 'rules.json');
   try {
-    const data = await fs.readFile(rulesPath, 'utf-8');
-    return JSON.parse(data);
+    const rules = await Rule.find({});
+    const metadata = await RuleMetadata.findOne({});
+    return {
+      rules: rules,
+      system_info: metadata
+    };
   } catch (err) {
+    console.error('❌ [Database Rules Error]: Failed to fetch rules', err.message);
     return { rules: [] };
   }
 }
 
 export async function appendToJournal(journalDraft) {
   if (!journalDraft || !journalDraft.summary) return;
-  const journalPath = path.join(OKF_DIR, 'journal.md');
-  const timestamp = new Date().toISOString().split('T')[0];
   
-  const entry = `\n\n### [${timestamp}] - ${journalDraft.entry_type || 'AGENT_ENTRY'}\n` +
-                `**Summary:** ${journalDraft.summary}\n`;
-                
   try {
-    await fs.appendFile(journalPath, entry, 'utf-8');
-    console.log(`📝 [OKF Journal]: Appended entry to journal.md`);
+    await JournalEntry.create({
+      entry_type: journalDraft.entry_type || 'AGENT_ENTRY',
+      summary: journalDraft.summary
+    });
+    console.log(`📝 [Database Journal]: Saved entry.`);
   } catch (err) {
-    console.error(`❌ [OKF Journal Error]: Failed to write to journal.md`, err.message);
+    console.error(`❌ [Database Journal Error]: Failed to save entry`, err.message);
   }
 }
 
 export async function updateRulesFile(ruleUpdates) {
   if (!ruleUpdates || !Array.isArray(ruleUpdates) || ruleUpdates.length === 0) return;
-  const rulesPath = path.join(OKF_DIR, 'rules.json');
 
   try {
-    const rawData = await fs.readFile(rulesPath, 'utf-8');
-    const rulesObj = JSON.parse(rawData);
-
     for (const update of ruleUpdates) {
-      const existingRule = rulesObj.rules.find(r => r.rule_id === update.rule_id);
-      if (existingRule) {
+      const rule = await Rule.findOne({ rule_id: update.rule_id });
+      if (rule) {
         if (update.action === "BOOST_WEIGHT") {
-          existingRule.scoring.multiplier = parseFloat(((existingRule.scoring.multiplier || 1.0) * 1.1).toFixed(2));
+          rule.scoring.multiplier = parseFloat(((rule.scoring.multiplier || 1.0) * 1.1).toFixed(2));
         } else if (update.action === "PENALIZE_WEIGHT") {
-          existingRule.scoring.multiplier = parseFloat(((existingRule.scoring.multiplier || 1.0) * 0.9).toFixed(2));
+          rule.scoring.multiplier = parseFloat(((rule.scoring.multiplier || 1.0) * 0.9).toFixed(2));
         }
         if (update.justification) {
-          existingRule.last_journal_note = update.justification;
+          rule.last_journal_note = update.justification;
         }
+        await rule.save();
       }
     }
 
-    rulesObj.system_info.last_updated = new Date().toISOString().split('T')[0];
-    await fs.writeFile(rulesPath, JSON.stringify(rulesObj, null, 2), 'utf-8');
-    console.log(`⚙️ [OKF Rules]: Updated /okf/rules.json`);
+    await RuleMetadata.findOneAndUpdate({}, { last_updated: new Date() });
+    console.log(`⚙️ [Database Rules]: Updated rules in MongoDB`);
   } catch (err) {
-    console.error(`❌ [OKF Rules Error]: Failed to update rules.json`, err.message);
+    console.error(`❌ [Database Rules Error]: Failed to update rules`, err.message);
   }
 }

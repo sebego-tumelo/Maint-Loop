@@ -1,9 +1,8 @@
 import { Agent } from '@mariozechner/pi-agent-core';
 import { streamSimple } from '@mariozechner/pi-ai';
 import { generateUniqueCandidates, scoreAndFilterCandidates } from './candidateGenerator.js';
-import { getActiveRules, appendToJournal, OKF_DIR } from './okf_utils.js';
+import { getActiveRules } from './okf_utils.js';
 import { Prediction } from './models/Prediction.js';
-import path from 'path';
 
 export async function getTodaysPrediction() {
   const drawDate = new Date().toISOString().split('T')[0];
@@ -33,9 +32,8 @@ const gemmaCloudModel = {
 export async function prepareCandidates() {
   const activeRules = await getActiveRules();
   const recentPredictions = await getRecentEvaluatedPredictions();
-  const rulesPath = path.join(OKF_DIR, 'rules.json');
   const rawCandidates = await generateUniqueCandidates(1000);
-  const top20 = await scoreAndFilterCandidates(rawCandidates, rulesPath);
+  const top20 = scoreAndFilterCandidates(rawCandidates, activeRules.rules);
   return { activeRules, top20, recentPredictions };
 }
 

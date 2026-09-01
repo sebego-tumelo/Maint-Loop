@@ -1,6 +1,3 @@
-import fs from 'fs/promises';
-import path from 'path';
-
 /**
  * Loads raw historical draws and builds a Set for O(1) duplicate checks
  */
@@ -56,17 +53,9 @@ export async function generateUniqueCandidates(count = 1000) {
 }
 
 /**
- * Scores candidates purely against observed rules loaded from /okf/rules.json
+ * Scores candidates purely against observed rules
  */
-export async function scoreAndFilterCandidates(candidates, rulesFilePath) {
-  let activeRules = [];
-  try {
-    const rulesData = JSON.parse(await fs.readFile(rulesFilePath, 'utf-8'));
-    activeRules = rulesData.rules || [];
-  } catch (err) {
-    console.warn('⚠️ [Candidate Scorer] /okf/rules.json missing, using base score.');
-  }
-
+export function scoreAndFilterCandidates(candidates, activeRules = []) {
   const scoredCandidates = candidates.map(candidate => {
     let compositeScore = 1.0;
     const sorted = [...candidate].sort((a, b) => a - b);
@@ -75,7 +64,7 @@ export async function scoreAndFilterCandidates(candidates, rulesFilePath) {
     const oddCount = sorted.filter(n => n % 2 !== 0).length;
     const decades = new Set(sorted.map(n => Math.floor(n / 10))).size;
 
-    // Apply active observed rules dynamically from /okf/rules.json
+    // Apply active observed rules dynamically
     for (const rule of activeRules) {
       if (rule.rule_id === "RULE_DECADE_SPREAD_01") {
         if (decades < 3 && rule.scoring?.penalty_if_violated) {

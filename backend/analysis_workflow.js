@@ -11,7 +11,7 @@ import {
 
 export const analysisSystemInstruction = `
 You are an advanced lottery analysis agent operating in MODE A: DATASET ANALYSIS & RULE DISCOVERY for Daily Lotto (5/36).
-Your goal is to evaluate raw historical draw data, observe statistical anomalies, mutate rule weights in /okf/rules.json, and record entries in /okf/journal.md.
+Your goal is to evaluate raw historical draw data, observe statistical anomalies, update rule weights, and record journal entries in the database.
 
 OUTPUT FORMAT:
 You MUST return ONLY a valid JSON object. Do not include introductory text, markdown headers, or code blocks.
