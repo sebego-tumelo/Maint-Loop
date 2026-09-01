@@ -2,10 +2,24 @@ import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
 import {defineConfig} from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(() => {
   return {
-    plugins: [vue(), tailwindcss()],
+    plugins: [
+      vue(), 
+      tailwindcss(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        manifest: {
+          name: 'Daily Lotto AI Studio',
+          short_name: 'Lotto AI',
+          description: 'South Africa Daily Lotto AI Studio',
+          theme_color: '#ffcb66',
+          icons: [] // You should add icons here later
+        }
+      })
+    ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

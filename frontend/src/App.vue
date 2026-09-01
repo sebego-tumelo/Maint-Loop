@@ -65,6 +65,26 @@ onMounted(async () => {
 });
 
 // Event Handlers
+const deferredPrompt = ref(null);
+const showInstallButton = ref(false);
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt.value = e;
+  showInstallButton.value = true;
+});
+
+const installApp = async () => {
+  if (!deferredPrompt.value) return;
+  deferredPrompt.value.prompt();
+  const { outcome } = await deferredPrompt.value.userChoice;
+  if (outcome === 'accepted') {
+    console.log('User accepted the install prompt');
+  }
+  deferredPrompt.value = null;
+  showInstallButton.value = false;
+};
+
 const handleSavePrediction = (newPredictionData) => {
   // Now simply update the active prediction with the merged result from the backend
   currentActivePrediction.value = mapBackendPredictionToFrontend(newPredictionData);
@@ -130,8 +150,16 @@ const scrollToSection = (id, sectionName) => {
 
       <!-- Main Body Flowing Content -->
       <main class="flex-1 px-4 py-4 space-y-4">
+        <!-- Install Button -->
+        <button 
+          v-if="showInstallButton"
+          @click="installApp"
+          class="w-full bg-nav-sand text-ui-charcoal font-bold py-3 rounded-xl border border-ui-charcoal shadow-[2px_2px_0_0_#111111] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+        >
+          Install App
+        </button>
 
-          <!-- 2. Current Prediction Card with Goal progress bar & Tripartite sliders -->
+        <!-- 2. Current Prediction Card with Goal progress bar & Tripartite sliders -->
         <CurrentPredictionPanel
           :latestWinningNumbers="latestDraw.winningNumbers"
           :onOpenPredictModal="() => (isPredictModalOpen = true)"
