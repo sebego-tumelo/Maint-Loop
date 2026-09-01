@@ -237,21 +237,36 @@ app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
 });
 
-// Helper function to wake up external server (fire-and-forget)
+// Helper function to pause execution
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Enhanced helper function to wake up external server (fire-and-forget)
 async function wakeUpExternalServer() {
   const url = `${process.env.LOTTERY_API_BASE_URL}/wakeup`;
-  console.log(`📡 Attempting to wake up external server at ${url}...`);
-  try {
-    const response = await fetch(url);
-    if (response.ok) {
-      console.log('✅ External server responded: awake.');
-    } else {
-      console.warn(`⚠️ External server wakeup returned status: ${response.status}`);
+  const maxRetries = 3;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    console.log(`📡 Waking up external server (Attempt ${attempt + 1}/${maxRetries + 1}) at ${url}...`);
+    
+    try {
+      const response = await fetch(url);
+      if (response.ok) {
+        console.log('✅ External server successfully responded: awake.');
+        return; // Exit function on success
+      } else {
+        console.warn(`⚠️ Attempt ${attempt + 1} failed with status: ${response.status}`);
+      }
+    } catch (err) {
+      console.error(`❌ Attempt ${attempt + 1} failed: ${err.message}`);
     }
-  } catch (err) {
-    // We log the error, but the main backend continues running.
-    console.error('❌ Background wakeup request failed (this is non-blocking):', err.message);
+
+    if (attempt < maxRetries) {
+      console.log(`⏳ Waiting 15 seconds before next attempt...`);
+      await sleep(15000);
+    }
   }
+  
+  console.error('❌ Failed to wake up external server after maximum attempts.');
 }
 
 mongoose.connect(process.env.MONGODB_URI)
