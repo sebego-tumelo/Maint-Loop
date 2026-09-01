@@ -261,8 +261,8 @@ async function wakeUpExternalServer() {
     }
 
     if (attempt < maxRetries) {
-      console.log(`⏳ Waiting 15 seconds before next attempt...`);
-      await sleep(15000);
+      console.log(`⏳ Waiting 30 seconds before next attempt...`);
+      await sleep(30000);
     }
   }
   
