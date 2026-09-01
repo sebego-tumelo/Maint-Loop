@@ -154,7 +154,9 @@ export async function fetchResults() {
   if (!cachedData) {
     console.log('ℹ️ No cached results found, fetching fresh data.');
   } else if (isStale(lastFetch)) {
-    console.log('⚠️ Cached results are stale, fetching fresh data.');
+    console.log('⚠️ Cached results are stale (by time), fetching fresh data.');
+  } else if (!isDataCurrent) {
+    console.log('⚠️ Cached results are outdated (by date), fetching fresh data.');
   }
 
   const hasCache = !!cachedData;
