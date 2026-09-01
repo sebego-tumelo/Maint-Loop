@@ -233,7 +233,9 @@ app.post('/api/predict-draw', async (req, res) => {
   }
 });
 
-// ... existing code ...
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+});
 
 // Helper function to wake up external server (fire-and-forget)
 async function wakeUpExternalServer() {
@@ -252,8 +254,6 @@ async function wakeUpExternalServer() {
   }
 }
 
-app.get(/.*/, (req, res) => {
-// ... existing code ...
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     // Trigger asynchronously without 'await' to avoid blocking startup
