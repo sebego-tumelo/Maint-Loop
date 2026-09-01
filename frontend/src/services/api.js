@@ -121,8 +121,8 @@ export async function fetchPredictions() {
     return finalData;
   } catch (error) {
     console.error('Error fetching predictions:', error);
-    // If fetch fails but we have cache, return cache as fallback
-    if (cachedData) return JSON.parse(cachedData);
+    // If fetch fails, clear stale cache to force fresh fetch next time
+    localStorage.removeItem(PRED_STORAGE_KEY);
     throw error;
   }
 }
@@ -135,8 +135,19 @@ export async function fetchResults() {
   const lastFetch = localStorage.getItem(CACHE_EXPIRY_KEY);
 
   // If we have data, we assume it's valid for the current day.
-  // We only refetch if we have no data or if it's a new day (after 8 PM).
-  if (cachedData && lastFetch && !isStale(lastFetch)) {
+  // We only refetch if we have no data, if it's a new day, or if the latest data is not from today.
+  let isDataCurrent = false;
+  if (cachedData) {
+    const cachedRecords = JSON.parse(cachedData);
+    if (cachedRecords.length > 0) {
+      const latestRecordDate = new Date(cachedRecords[0].date);
+      const today = new Date();
+      // If the latest record date is today, it's current.
+      isDataCurrent = latestRecordDate.toDateString() === today.toDateString();
+    }
+  }
+
+  if (cachedData && lastFetch && !isStale(lastFetch) && isDataCurrent) {
     return JSON.parse(cachedData);
   }
 
@@ -207,8 +218,8 @@ export async function fetchResults() {
     return finalData;
   } catch (error) {
     console.error('Error fetching results:', error);
-    // If fetch fails but we have cache, return cache as fallback
-    if (cachedData) return JSON.parse(cachedData);
+    // If fetch fails, clear stale cache to force fresh fetch next time
+    localStorage.removeItem(STORAGE_KEY);
     throw error;
   }
 }
