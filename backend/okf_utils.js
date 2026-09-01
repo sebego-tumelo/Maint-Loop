@@ -33,7 +33,8 @@ export async function appendToJournal(journalDraft) {
   try {
     await JournalEntry.create({
       entry_type: journalDraft.entry_type || 'AGENT_ENTRY',
-      summary: journalDraft.summary
+      summary: journalDraft.summary,
+      learned_lesson: journalDraft.learned_lesson
     });
     console.log(`📝 [Database Journal]: Saved entry.`);
   } catch (err) {

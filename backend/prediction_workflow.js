@@ -210,11 +210,63 @@ export async function persistPrediction(parsed, top20, targetCount) {
   }
 }
 
+export async function runReflection(recentPredictions, recentJournal) {
+  if (recentPredictions.length === 0) return "No recent performance to reflect on.";
+
+  const lastPrediction = recentPredictions[0];
+  const lastJournal = recentJournal.length > 0 ? recentJournal[0] : "No recent journal context.";
+
+  const agent = new Agent({
+    initialState: {
+      model: gemmaCloudModel,
+      systemPrompt: `You are an expert lottery strategist. Reflect on the past performance of the prediction set against actual results and your previous journaled logic.
+      
+      Predictive Analysis Context:
+      Previous Prediction: ${JSON.stringify(lastPrediction.predicted_sets)}
+      Actual Result: ${JSON.stringify(lastPrediction.actual_outcome.winning_numbers)}
+      Previous Journal Strategy: ${JSON.stringify(lastJournal)}
+
+      Return ONLY a JSON object with: { "learned_lesson": "A concise strategic lesson learned based on this outcome." }`,
+      messages: [],
+    }
+  });
+
+  agent.streamFn = (model, context, options) => {
+    return streamSimple(model, context, {
+      ...options,
+      apiKey: process.env.OLLAMA_API_KEY,
+      headers: { 'Authorization': `Bearer ${process.env.OLLAMA_API_KEY}` }
+    });
+  };
+
+  await agent.prompt("Perform reflection.");
+  const lastMessage = agent.state.messages[agent.state.messages.length - 1];
+  const responseText = lastMessage.content.map(p => p.text).join('');
+  const jsonMatch = responseText.match(/\{.*\}/s);
+  if (!jsonMatch) return "Reflection failed.";
+  
+  return JSON.parse(jsonMatch[0]).learned_lesson;
+}
+
 export async function runPrediction(boardCount = 3) {
   console.log('🔮 Starting AI-driven prediction synthesis...');
   
   try {
     const { activeRules, top20, recentPredictions, recentJournal } = await prepareCandidates();
+    
+    // 1. Run Reflection
+    console.log('🧠 Running reflection on recent performance...');
+    const learnedLesson = await runReflection(recentPredictions, recentJournal);
+    
+    // 2. Persist Reflection to Journal
+    await appendToJournal({
+      entry_type: "REFLECTION",
+      summary: "Strategic reflection based on previous performance.",
+      learned_lesson: learnedLesson
+    });
+    console.log('✅ Reflection persisted.');
+
+    // 3. Synthesis
     const todaysPrediction = await getTodaysPrediction();
     const parsed = await synthesizePrediction(top20, activeRules, recentPredictions, recentJournal, boardCount, todaysPrediction);
     return await persistPrediction(parsed, top20, boardCount);
