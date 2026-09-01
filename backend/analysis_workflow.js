@@ -50,6 +50,14 @@ const gemmaCloudModel = {
   maxTokens: 8192,
 };
 
+// Add this helper function
+async function getLatestEvaluationSummary() {
+  const lastEvaluated = await Prediction.findOne({ 'actual_outcome.evaluated': true })
+    .sort({ draw_date: -1 });
+  
+  return lastEvaluated?.actual_outcome?.evaluation_summary || "No recent evaluations.";
+}
+
 export async function runAnalysis() {
   console.log('🚀 Starting AI-driven background analysis...');
   try {
@@ -61,6 +69,9 @@ export async function runAnalysis() {
     console.log('  -> 2. Prediction Evaluation: Evaluating unevaluated predictions...');
     await evaluateUnevaluatedPredictions(stats.rawDrawHistory);
 
+    // NEW: Fetch reflection data
+    const reflectionSummary = await getLatestEvaluationSummary();
+
     // 3. Dataset Analysis & Rule Discovery
     console.log('  -> 3. Dataset Analysis & Rule Discovery: Initializing agent and running analysis...');
     const limitedStats = {
@@ -69,7 +80,16 @@ export async function runAnalysis() {
     };
     const agent = setupAgent(activeRulesObj);
 
-    const instruction = `Analyze this dataset: ${JSON.stringify(limitedStats)}. Perform rule discovery and propose updates.`;
+    // UPDATED: Include reflection in the prompt
+    const instruction = `
+      Analyze this dataset: ${JSON.stringify(limitedStats)}. 
+      
+      PERFORMANCE REVIEW: 
+      Based on the last prediction made, here is the evaluation: 
+      "${reflectionSummary}"
+      
+      Based on this performance review and the dataset, perform rule discovery and propose updates to rule weights.`;
+      
     console.log('DEBUG: Sending prompt to agent:', instruction.substring(0, 500) + '...');
     
     agent.subscribe(async (event) => {
