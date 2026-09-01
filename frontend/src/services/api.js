@@ -140,10 +140,17 @@ export async function fetchResults() {
   if (cachedData) {
     const cachedRecords = JSON.parse(cachedData);
     if (cachedRecords.length > 0) {
-      const latestRecordDate = new Date(cachedRecords[0].date);
-      const today = new Date();
-      // If the latest record date is today, it's current.
-      isDataCurrent = latestRecordDate.toDateString() === today.toDateString();
+      // Robustly get the date, handling potential variations in key names
+      const record = cachedRecords[0];
+      const dateValue = record.date || record.drawDate; 
+      
+      const latestRecordDate = new Date(dateValue);
+      
+      if (!isNaN(latestRecordDate.getTime())) { // Check for Invalid Date
+        const today = new Date();
+        // If the latest record date is today, it's current.
+        isDataCurrent = latestRecordDate.toDateString() === today.toDateString();
+      }
     }
   }
 
@@ -165,15 +172,19 @@ export async function fetchResults() {
   if (hasCache) {
     const existing = JSON.parse(cachedData);
     // existing is expected to be sorted newest-first
-    const lastCachedDate = new Date(existing[0].date);
+    // Robustly get the date here too
+    const lastCachedDate = new Date(existing[0].date || existing[0].drawDate);
     const today = new Date();
     
-    // Calculate difference in days (ignoring time)
-    const diffTime = today.getTime() - lastCachedDate.getTime();
-    const daysMissed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    // Ensure we fetch at least 1, but no more than 20
-    limit = Math.min(Math.max(daysMissed, 1), 20);
+    // Check if the date is valid before doing math
+    if (!isNaN(lastCachedDate.getTime())) {
+        const diffTime = today.getTime() - lastCachedDate.getTime();
+        const daysMissed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        // Ensure we fetch at least 1, but no more than 20
+        limit = Math.min(Math.max(daysMissed, 1), 20);
+    } else {
+        console.warn('⚠️ Could not parse latest cached date, defaulting to limit 20.');
+    }
   }
 
   try {
