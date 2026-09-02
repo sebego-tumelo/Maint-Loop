@@ -22,11 +22,11 @@ import { runAnalysis, analysisSystemInstruction } from './analysis_workflow.js';
 dotenv.config();
 const app = express();
 
+app.use(cors());
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  const userAgent = req.headers['user-agent'];
+  console.log(`🌐 [Request] ${req.method} ${req.originalUrl} | IP: ${ip} | User-Agent: ${userAgent}`);
   next();
 });
 app.use(express.json());
