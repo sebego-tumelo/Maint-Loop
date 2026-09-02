@@ -244,16 +244,17 @@ export async function fetchResults() {
       
       // Create a map to handle merging, prioritizing new data
       const dataMap = new Map();
+      const getDate = (d) => d.date || d.drawDate;
       
       // 1. Add existing data first
-      existing.forEach(d => dataMap.set(d.date, d));
+      existing.forEach(d => dataMap.set(getDate(d), d));
       
       // 2. Add new data (this will overwrite existing if date matches)
-      formattedNewData.forEach(d => dataMap.set(d.date, d));
+      formattedNewData.forEach(d => dataMap.set(getDate(d), d));
       
       // 3. Convert back to array and sort by date descending
       finalData = Array.from(dataMap.values()).sort((a, b) => 
-        new Date(b.date) - new Date(a.date)
+        new Date(getDate(b)) - new Date(getDate(a))
       );
     } else {
       finalData = formattedNewData;
