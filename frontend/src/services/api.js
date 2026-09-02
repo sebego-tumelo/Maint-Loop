@@ -62,15 +62,30 @@ export async function fetchPredictions() {
   const lastFetch = localStorage.getItem(PRED_CACHE_EXPIRY_KEY);
 
   // If we have data, we assume it's valid for the current day.
-  // We only refetch if we have no data or if it's a new day (after 8 PM).
-  if (cachedData && lastFetch && !isStale(lastFetch)) {
+  // We only refetch if we have no data, if it's a new day, or if the latest data is not from today.
+  let isDataCurrent = false;
+  if (cachedData) {
+    const cachedRecords = JSON.parse(cachedData);
+    if (cachedRecords.length > 0) {
+      const latestRecordDate = new Date(cachedRecords[0].draw_date);
+      if (!isNaN(latestRecordDate.getTime())) {
+        const today = new Date();
+        isDataCurrent = latestRecordDate.toDateString() === today.toDateString();
+      }
+    }
+  }
+
+  // Refetch if stale OR if data is not current for today
+  if (cachedData && lastFetch && !isStale(lastFetch) && isDataCurrent) {
     return JSON.parse(cachedData);
   }
   
   if (!cachedData) {
     console.log('ℹ️ No cached predictions found, fetching fresh data.');
   } else if (isStale(lastFetch)) {
-    console.log('⚠️ Cached predictions are stale, fetching fresh data.');
+    console.log('⚠️ Cached predictions are stale (by time), fetching fresh data.');
+  } else if (!isDataCurrent) {
+    console.log('⚠️ Cached predictions are outdated (by date), fetching fresh data.');
   }
 
   const hasCache = !!cachedData;
