@@ -1,7 +1,7 @@
 import { Agent } from '@mariozechner/pi-agent-core';
 import { streamSimple } from '@mariozechner/pi-ai';
 import { generateUniqueCandidates, scoreAndFilterCandidates } from './candidateGenerator.js';
-import { getActiveRules } from './okf_utils.js';
+import { getActiveRules, getRecentJournalEntries } from './okf_utils.js';
 import { Prediction } from './models/Prediction.js';
 
 export async function getTodaysPrediction() {
