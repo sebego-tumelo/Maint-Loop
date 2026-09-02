@@ -271,9 +271,11 @@ async function wakeUpExternalServer() {
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
-    // Trigger asynchronously without 'await' to avoid blocking startup
-    wakeUpExternalServer();
+    
     
     app.listen(3000, () => console.log('Server running on port 3000'));
+
+    // Trigger asynchronously without 'await' to avoid blocking startup
+    wakeUpExternalServer();
   })
   .catch(err => console.error(err));
