@@ -241,10 +241,20 @@ export async function fetchResults() {
         finalData = seedResults;
     } else if (hasCache) {
       const existing = JSON.parse(cachedData);
-      // Prepend only unique results (by date)
-      const existingDates = new Set(existing.map(d => d.date));
-      const uniqueNew = formattedNewData.filter(d => !existingDates.has(d.date));
-      finalData = [...uniqueNew, ...existing];
+      
+      // Create a map to handle merging, prioritizing new data
+      const dataMap = new Map();
+      
+      // 1. Add existing data first
+      existing.forEach(d => dataMap.set(d.date, d));
+      
+      // 2. Add new data (this will overwrite existing if date matches)
+      formattedNewData.forEach(d => dataMap.set(d.date, d));
+      
+      // 3. Convert back to array and sort by date descending
+      finalData = Array.from(dataMap.values()).sort((a, b) => 
+        new Date(b.date) - new Date(a.date)
+      );
     } else {
       finalData = formattedNewData;
     }
