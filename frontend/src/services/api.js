@@ -69,8 +69,7 @@ export async function fetchPredictions() {
     if (cachedRecords.length > 0) {
       const latestRecordDate = new Date(cachedRecords[0].draw_date);
       if (!isNaN(latestRecordDate.getTime())) {
-        const today = new Date();
-        isDataCurrent = latestRecordDate.toDateString() === today.toDateString();
+        isDataCurrent = isDataCurrentEnough(latestRecordDate);
       }
     }
   }
@@ -160,7 +159,7 @@ export async function fetchResults() {
   const lastFetch = localStorage.getItem(CACHE_EXPIRY_KEY);
 
   // If we have data, we assume it's valid for the current day.
-  // We only refetch if we have no data, if it's a new day, or if the latest data is not from today.
+  // We only refetch if we have no data, if it's a new day, or if the latest data is not from today (or yesterday before 9pm).
   let isDataCurrent = false;
   if (cachedData) {
     const cachedRecords = JSON.parse(cachedData);
@@ -172,9 +171,7 @@ export async function fetchResults() {
       const latestRecordDate = new Date(dateValue);
       
       if (!isNaN(latestRecordDate.getTime())) { // Check for Invalid Date
-        const today = new Date();
-        // If the latest record date is today, it's current.
-        isDataCurrent = latestRecordDate.toDateString() === today.toDateString();
+        isDataCurrent = isDataCurrentEnough(latestRecordDate);
       }
     }
   }
@@ -274,7 +271,28 @@ export async function fetchResults() {
 }
 
 /**
- * Checks if the cached data is stale (i.e., today is a new day after 8 PM).
+ * Checks if the cached data is current (either for today, or yesterday before 9 PM).
+ */
+export function isDataCurrentEnough(latestRecordDate) {
+  const now = new Date();
+  const latestDate = new Date(latestRecordDate);
+
+  // If we have today's record, it's definitely current
+  if (latestDate.toDateString() === now.toDateString()) return true;
+
+  // If we have yesterday's record, it's current enough if it's before 9 PM
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+
+  if (latestDate.toDateString() === yesterday.toDateString() && now.getHours() < 21) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Checks if the cached data is stale (i.e., today is a new day after 9 PM).
  */
 export function isStale(timestamp) {
   const lastFetchDate = new Date(timestamp);
@@ -285,8 +303,8 @@ export function isStale(timestamp) {
     return true;
   }
   
-  // If last fetch was today but before 8 PM, and now it's after 8 PM, it's stale
-  if (lastFetchDate.getHours() < 20 && now.getHours() >= 20) {
+  // If last fetch was today but before 9 PM, and now it's after 9 PM, it's stale
+  if (lastFetchDate.getHours() < 21 && now.getHours() >= 21) {
     return true;
   }
   
