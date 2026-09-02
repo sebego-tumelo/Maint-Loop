@@ -121,10 +121,20 @@ export async function fetchPredictions() {
     let finalData;
     if (hasCache) {
       const existing = JSON.parse(cachedData);
-      // Prepend only unique results (by draw_date)
-      const existingDates = new Set(existing.map(d => d.draw_date));
-      const uniqueNew = formattedNewData.filter(d => !existingDates.has(d.draw_date));
-      finalData = [...uniqueNew, ...existing];
+      
+      // Create a map to handle merging, prioritizing new data
+      const dataMap = new Map();
+      
+      // 1. Add existing data first
+      existing.forEach(d => dataMap.set(d.draw_date, d));
+      
+      // 2. Add new data (this will overwrite existing if draw_date matches)
+      formattedNewData.forEach(d => dataMap.set(d.draw_date, d));
+      
+      // 3. Convert back to array and sort by draw_date descending
+      finalData = Array.from(dataMap.values()).sort((a, b) => 
+        new Date(b.draw_date) - new Date(a.draw_date)
+      );
     } else {
       finalData = formattedNewData;
     }
