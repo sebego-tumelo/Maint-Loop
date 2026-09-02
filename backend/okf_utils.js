@@ -3,6 +3,7 @@ import { Rule } from './models/Rule.js';
 import { RuleMetadata } from './models/RuleMetadata.js';
 
 export async function getActiveRules() {
+  console.log('📖 [OKF] Fetching active rules from database...');
   try {
     const rules = await Rule.find({});
     const metadata = await RuleMetadata.findOne({});
@@ -36,7 +37,7 @@ export async function appendToJournal(journalDraft) {
       summary: journalDraft.summary,
       learned_lesson: journalDraft.learned_lesson
     });
-    console.log(`📝 [Database Journal]: Saved entry.`);
+    console.log(`📝 [OKF] Journal entry appended: ${journalDraft.entry_type || 'AGENT_ENTRY'}`);
   } catch (err) {
     console.error(`❌ [Database Journal Error]: Failed to save entry`, err.message);
   }
@@ -62,7 +63,7 @@ export async function updateRulesFile(ruleUpdates) {
     }
 
     await RuleMetadata.findOneAndUpdate({}, { last_updated: new Date() });
-    console.log(`⚙️ [Database Rules]: Updated rules in MongoDB`);
+    console.log(`⚙️ [OKF] Successfully applied ${ruleUpdates.length} rule updates.`);
   } catch (err) {
     console.error(`❌ [Database Rules Error]: Failed to update rules`, err.message);
   }
