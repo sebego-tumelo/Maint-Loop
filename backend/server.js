@@ -18,6 +18,7 @@ import {
 } from './okf_utils.js';
 import { syncAndGetStats } from './utils.js';
 import { runAnalysis, analysisSystemInstruction } from './analysis_workflow.js';
+import { fetchAndSaveLatestDraw } from './services/lotteryScraper.js';
 
 dotenv.config();
 const app = express();
@@ -237,45 +238,16 @@ app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
 });
 
-// Helper function to pause execution
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Enhanced helper function to wake up external server (fire-and-forget)
-async function wakeUpExternalServer() {
-  const url = `${process.env.LOTTERY_API_BASE_URL}/api/wakeup`;
-  const maxRetries = 3;
-  
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    console.log(`📡 Waking up external server (Attempt ${attempt + 1}/${maxRetries + 1}) at ${url}...`);
-    
-    try {
-      const response = await fetch(url);
-      if (response.ok) {
-        console.log('✅ External server successfully responded: awake.');
-        return; // Exit function on success
-      } else {
-        console.warn(`⚠️ Attempt ${attempt + 1} failed with status: ${response.status}`);
-      }
-    } catch (err) {
-      console.error(`❌ Attempt ${attempt + 1} failed: ${err.message}`);
-    }
-
-    if (attempt < maxRetries) {
-      console.log(`⏳ Waiting 30 seconds before next attempt...`);
-      await sleep(30000);
-    }
-  }
-  
-  console.error('❌ Failed to wake up external server after maximum attempts.');
-}
+// Replace wakeUpExternalServer with a scraper interval
+// Run every hour
+setInterval(fetchAndSaveLatestDraw, 60 * 60 * 1000);
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     
-    
     app.listen(3000, () => console.log('Server running on port 3000'));
 
-    // Trigger asynchronously without 'await' to avoid blocking startup
-    wakeUpExternalServer();
+    // Initial run on startup
+    fetchAndSaveLatestDraw();
   })
   .catch(err => console.error(err));

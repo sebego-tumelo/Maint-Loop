@@ -1,18 +1,22 @@
 import { LottoMetadata } from './models/LottoMetadata.js';
+import { DrawResult } from './models/DrawResult.js';
 
 export async function syncAndGetStats() {
-  const apiBaseUrl = process.env.LOTTERY_API_BASE_URL || 'http://localhost:3000';
-  const response = await fetch(`${apiBaseUrl}/api/results`);
-  if (!response.ok) throw new Error('Failed to fetch results');
-  const result = await response.json();
-  const data = result.data || [];
+  // Fetch from DB instead of external API
+  const data = await DrawResult.find().sort({ 'issue': -1 });
 
-  const totalRecords = data.length;
-  const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
-  const latestResult = sortedData[0] || { date: 'N/A', numbers: [] };
+  // Map to the format expected by the frontend/analysis workflow
+  const mappedData = data.map(doc => ({
+    date: doc.drawTime.toISOString().split('T')[0],
+    numbers: doc.winNums.map(n => parseInt(n.winNum)),
+    issue: doc.issue
+  }));
+
+  const totalRecords = mappedData.length;
+  const latestResult = mappedData[0] || { date: 'N/A', numbers: [] };
 
   const meta = await LottoMetadata.findOne({});
   const analysis = meta ? meta.analysis : null;
 
-  return { totalRecords, latestResult, analysis, rawDrawHistory: data };
+  return { totalRecords, latestResult, analysis, rawDrawHistory: mappedData };
 }
