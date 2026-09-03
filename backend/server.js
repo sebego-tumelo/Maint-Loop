@@ -17,7 +17,7 @@ import {
   getActiveRules
 } from './okf_utils.js';
 import { syncAndGetStats } from './utils.js';
-import { runAnalysis, analysisSystemInstruction } from './analysis_workflow.js';
+import cron from 'node-cron';
 import { fetchAndSaveLatestDraw } from './services/lotteryScraper.js';
 
 dotenv.config();
@@ -238,9 +238,9 @@ app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
 });
 
-// Replace wakeUpExternalServer with a scraper interval
-// Run every hour
-setInterval(fetchAndSaveLatestDraw, 60 * 60 * 1000);
+// Replace wakeUpExternalServer with a daily scraper task
+// Run every day at 22:00
+cron.schedule('0 22 * * *', fetchAndSaveLatestDraw);
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
