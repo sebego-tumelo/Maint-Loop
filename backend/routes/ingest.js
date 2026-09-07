@@ -10,6 +10,7 @@ const authMiddleware = (req, res, next) => {
       return res.status(500).json({ error: 'Manual ingestion key not configured on server' });
   }
   if (apiKey !== process.env.MANUAL_INGEST_KEY) {
+    console.warn('⚠️ Unauthorized ingestion attempt detected.');
     return res.status(403).json({ error: 'Unauthorized' });
   }
   next();
@@ -18,6 +19,7 @@ const authMiddleware = (req, res, next) => {
 router.post('/manual-ingest', authMiddleware, async (req, res) => {
   try {
     const { data } = req.body; // The array from the POST response
+    console.log(`📥 Received ingestion request with ${Array.isArray(data) ? data.length : 0} items.`);
     
     if (!Array.isArray(data)) {
         return res.status(400).json({ error: 'Invalid format: Expected "data" property to be an array' });
@@ -25,6 +27,8 @@ router.post('/manual-ingest', authMiddleware, async (req, res) => {
 
     let savedCount = 0;
     for (const draw of data) {
+      console.log(`🔍 Processing Draw Issue: ${draw.wagerIssue} for Game: ${draw.gameId}...`);
+      
       // Map the external JSON to your internal model structure
       const drawData = {
         gameId: draw.gameId,
@@ -42,12 +46,17 @@ router.post('/manual-ingest', authMiddleware, async (req, res) => {
         rawResponse: draw
       };
 
-      await DrawResult.findOneAndUpdate(
-        { gameId: drawData.gameId, issue: drawData.issue },
-        drawData,
-        { upsert: true, new: true }
-      );
-      savedCount++;
+      try {
+        const result = await DrawResult.findOneAndUpdate(
+          { gameId: drawData.gameId, issue: drawData.issue },
+          drawData,
+          { upsert: true, new: true }
+        );
+        console.log(`✅ Successfully upserted Draw Issue: ${draw.wagerIssue}. (DB ID: ${result._id})`);
+        savedCount++;
+      } catch (itemErr) {
+        console.error(`❌ Failed to upsert Draw Issue ${draw.wagerIssue}:`, itemErr);
+      }
     }
 
     console.log(`✅ Manually ingested ${savedCount} draw records.`);
