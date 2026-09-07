@@ -17,10 +17,6 @@ defineProps({
     type: Function,
     required: true,
   },
-  onOpenSimulateModal: {
-    type: Function,
-    required: true,
-  },
   onOpenPrizeInfoModal: {
     type: Function,
     required: true,
@@ -57,16 +53,6 @@ const currentDay = ref(date.toLocaleDateString('en-US', { weekday: 'long' }).toU
 
       <!-- Header actions (Test Draw & Rules) -->
       <div class="flex items-center gap-1.5">
-        <button
-          id="btn-simulate-draw-quick"
-          @click="onOpenSimulateModal"
-          title="Simulate Draw"
-          class="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-white hover:bg-white/90 text-ui-charcoal border border-ui-charcoal transition-all active:scale-95"
-        >
-          <Dices class="w-3.5 h-3.5 text-ui-charcoal" />
-          <span>Simulate</span>
-        </button>
-
         <button
           id="btn-open-ingest-modal"
           @click="onOpenIngestModal"

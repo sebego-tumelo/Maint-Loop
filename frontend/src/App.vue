@@ -25,7 +25,6 @@ const isAnalyzing = ref(false);
 
 // Modal visibility state
 const isPredictModalOpen = ref(false);
-const isSimulateModalOpen = ref(false);
 const isPrizeInfoModalOpen = ref(false);
 const isIngestModalOpen = ref(false);
 
@@ -100,18 +99,7 @@ const handleSavePrediction = (newPredictionData) => {
   }
 };
 
-const handleSimulateAndApplyDraw = (newDraw, evaluatedPrediction) => {
-  // Prepend new official draw
-  draws.value = [newDraw, ...draws.value];
-
-  // If we had an active prediction evaluated with this draw
-  if (evaluatedPrediction) {
-    currentActivePrediction.value = evaluatedPrediction;
-    predictions.value = predictions.value.map((p) =>
-      p.id === evaluatedPrediction.id ? evaluatedPrediction : p
-    );
-  }
-};
+// Removed handleSimulateAndApplyDraw
 
 const scrollToSection = (id, sectionName) => {
   activeSection.value = sectionName;
@@ -141,7 +129,6 @@ const scrollToSection = (id, sectionName) => {
         v-if="!isLoading && latestDraw"
         :isUpdating="isUpdating"
         :onOpenPredictModal="() => (isPredictModalOpen = true)"
-        :onOpenSimulateModal="() => (isSimulateModalOpen = true)"
         :onOpenPrizeInfoModal="() => (isPrizeInfoModalOpen = true)"
         :onOpenIngestModal="() => (isIngestModalOpen = true)"
       />
@@ -250,13 +237,6 @@ const scrollToSection = (id, sectionName) => {
       :targetDrawDate="currentActivePrediction?.targetDrawDate || latestDraw.date"
       :onClose="() => (isPredictModalOpen = false)"
       :onSavePrediction="handleSavePrediction"
-    />
-
-    <SimulateDrawModal
-      :isOpen="isSimulateModalOpen"
-      :currentPrediction="currentActivePrediction"
-      :onClose="() => (isSimulateModalOpen = false)"
-      :onSimulateAndApplyDraw="handleSimulateAndApplyDraw"
     />
 
     <PrizeInfoModal
