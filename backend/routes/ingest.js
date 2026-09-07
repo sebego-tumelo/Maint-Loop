@@ -34,7 +34,7 @@ router.post('/manual-ingest', authMiddleware, async (req, res) => {
         gameId: draw.gameId,
         issue: draw.wagerIssue,
         drawTime: new Date(draw.drawTime),
-        winNums: draw.winNumList,
+        winNums: draw.winNumList.map(num => ({ winNum: num })),
         winPoolInfo: {
             nextJackpot: draw.nextJackpot,
             saleMoney: draw.saleMoney,
