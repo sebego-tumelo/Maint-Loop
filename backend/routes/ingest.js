@@ -18,51 +18,45 @@ const authMiddleware = (req, res, next) => {
 
 router.post('/manual-ingest', authMiddleware, async (req, res) => {
   try {
-    const { data } = req.body; // The array from the POST response
-    console.log(`📥 Received ingestion request with ${Array.isArray(data) ? data.length : 0} items.`);
+    const { data } = req.body;
+    console.log(`📥 Received ingestion request for single record.`);
     
-    if (!Array.isArray(data)) {
-        return res.status(400).json({ error: 'Invalid format: Expected "data" property to be an array' });
+    if (!data || !data.winNotice) {
+        return res.status(400).json({ error: 'Invalid format: Expected "data" property with "winNotice"' });
     }
 
-    let savedCount = 0;
-    for (const draw of data) {
-      console.log(`🔍 Processing Draw Issue: ${draw.wagerIssue} for Game: ${draw.gameId}...`);
-      
-      // Map the external JSON to your internal model structure
-      const drawData = {
-        gameId: draw.gameId,
-        issue: draw.wagerIssue,
-        drawTime: new Date(draw.drawTime),
-        winNums: draw.winNumList.map(num => ({ winNum: num })),
-        winPoolInfo: {
-            nextJackpot: draw.nextJackpot,
-            saleMoney: draw.saleMoney,
-            jackpot: draw.jackpot,
-            winPoolName: draw.winPoolName,
-            winPoolId: draw.winPoolId
-        },
-        isLatestIssue: draw.isLatestIssue,
-        rawResponse: draw
-      };
+    const { winNotice, winPoolInfoVo, isLatestIssue } = data;
 
-      try {
-        const result = await DrawResult.findOneAndUpdate(
-          { gameId: drawData.gameId, issue: drawData.issue },
-          drawData,
-          { upsert: true, new: true }
-        );
-        console.log(`✅ Successfully upserted Draw Issue: ${draw.wagerIssue}. (DB ID: ${result._id})`);
-        savedCount++;
-      } catch (itemErr) {
-        console.error(`❌ Failed to upsert Draw Issue ${draw.wagerIssue}:`, itemErr);
-      }
-    }
+    const drawData = {
+      gameId: winNotice.gameId,
+      issue: winNotice.issue,
+      drawTime: new Date(winNotice.drawTime),
+      winLevels: winNotice.winLevels,
+      winNums: winNotice.winNums,
+      winPoolInfo: {
+        nextJackpot: winPoolInfoVo.nextJackpot,
+        saleMoney: winPoolInfoVo.saleMoney,
+        salesIncome: winPoolInfoVo.salesIncome,
+        drawMachineId: winPoolInfoVo.drawMachineId,
+        rolloverAmount: winPoolInfoVo.rolloverAmount,
+        winPoolName: winPoolInfoVo.winPoolName,
+        nextDrawTime: new Date(winPoolInfoVo.nextDrawTime),
+        winPoolId: winPoolInfoVo.winPoolId
+      },
+      isLatestIssue: isLatestIssue,
+      rawResponse: data
+    };
 
-    console.log(`✅ Manually ingested ${savedCount} draw records.`);
-    res.json({ message: `Successfully processed ${savedCount} records.` });
+    const result = await DrawResult.findOneAndUpdate(
+      { gameId: drawData.gameId, issue: drawData.issue },
+      drawData,
+      { upsert: true, new: true }
+    );
+
+    console.log(`✅ Successfully upserted Draw Issue: ${drawData.issue}. (DB ID: ${result._id})`);
+    res.json({ message: `Successfully processed draw ${drawData.issue}.` });
   } catch (error) {
-    console.error('❌ Manual ingestion failed:', error);
+    console.error('❌ Ingestion failed:', error);
     res.status(500).json({ error: error.message });
   }
 });
