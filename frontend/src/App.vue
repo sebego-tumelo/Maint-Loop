@@ -9,7 +9,6 @@ import CurrentPredictionPanel from './components/CurrentPredictionPanel.vue';
 import FinancialLedgerPanel from './components/FinancialLedgerPanel.vue';
 import HistoricalRecordsPanel from './components/HistoricalRecordsPanel.vue';
 import PredictModal from './components/PredictModal.vue';
-import SimulateDrawModal from './components/SimulateDrawModal.vue';
 import PrizeInfoModal from './components/PrizeInfoModal.vue';
 import ManualIngestModal from './components/ManualIngestModal.vue';
 
