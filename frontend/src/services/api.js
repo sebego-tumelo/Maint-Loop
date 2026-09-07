@@ -221,14 +221,19 @@ export async function fetchResults() {
     }
 
     const formattedNewData = result.data.map(draw => {
+      console.log('DEBUG: Mapping draw:', draw);
       const id = draw.drawNumber || draw.id || draw._id || `draw-${draw.date}-${Math.random().toString(36).substr(2, 9)}`;
+
+      // Normalize: Ensure winningNumbers exists
+      const winningNumbers = draw.winningNumbers || draw.numbers || [];
 
       return {
         id,
         ...draw,
+        winningNumbers,
         // Ensure we have some reasonable defaults if fields are missing in API
         prizePool: draw.prizePool || 0,
-        divisions: draw.divisions || generateDivisions(draw.winningNumbers, draw.prizePool || 0),
+        divisions: draw.divisions || generateDivisions(winningNumbers, draw.prizePool || 0),
       };
     });
 

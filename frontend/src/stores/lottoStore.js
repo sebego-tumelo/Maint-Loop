@@ -37,8 +37,11 @@ export const useLottoStore = defineStore('lotto', () => {
 
   // Getters
   const latestResult = computed(() => {
+    console.log('DEBUG: latestResult computed, results length:', results.value.length);
     if (results.value.length === 0) return null;
-    return results.value.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+    const latest = results.value.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+    console.log('DEBUG: latestResult:', latest);
+    return latest;
   });
 
   const activePrediction = computed(() => {
