@@ -47,7 +47,7 @@ const isDropdownOpen = ref(false);
             {{ isUpdating ? 'UPDATING...' : 'OFFICIAL DRAW' }}
           </h2>
           <p class="ui-body text-[10px] text-ui-charcoal/70">
-            {{ draw.drawDate }}
+            {{ draw.date }}
           </p>
         </div>
       </div>
@@ -75,7 +75,7 @@ const isDropdownOpen = ref(false);
       
       <div class="flex items-center justify-center gap-2 flex-wrap">
         <LottoBall
-          v-for="num in draw.winningNumbers"
+          v-for="num in draw.numbers"
           :key="`win-ball-${num}`"
           :id="`ball-win-${num}`"
           :number="num"
@@ -122,21 +122,21 @@ const isDropdownOpen = ref(false);
 
         <div class="space-y-1.5">
           <div
-            v-for="div in draw.prizeDivisions"
+            v-for="div in draw.divisions"
             :key="div.division"
             class="grid grid-cols-4 items-center text-xs px-2 py-2 rounded-[16px] bg-white border border-ui-charcoal"
           >
             <div class="ui-heading text-ui-charcoal">
-              {{ div.division.replace('Division ', '') }}
+              {{ div.label }}
             </div>
             <div class="text-center text-[10px] font-semibold text-ui-charcoal/70">
-              {{ div.matches.replace(' Match', '') }}
+              {{ div.match }}
             </div>
             <div class="text-center text-[10px] font-semibold text-ui-charcoal">
               {{ div.winners.toLocaleString() }}
             </div>
             <div class="text-right ui-heading text-ui-charcoal">
-              {{ formatZAR(div.prize.amount) }}
+              {{ formatZAR(div.payout) }}
             </div>
           </div>
         </div>
