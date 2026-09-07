@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useLottoStore } from '../stores/lottoStore';
-import { Dices, Info, Sparkles, BatteryCharging, Radio, ChevronRight, Loader2 } from 'lucide-vue-next';
+import { Dices, Info, Sparkles, BatteryCharging, Radio, ChevronRight, Loader2, Database } from 'lucide-vue-next';
 import LatestDrawPanel from './LatestDrawPanel.vue';
 
 const store = useLottoStore();
@@ -22,6 +22,10 @@ defineProps({
     required: true,
   },
   onOpenPrizeInfoModal: {
+    type: Function,
+    required: true,
+  },
+  onOpenIngestModal: {
     type: Function,
     required: true,
   },
@@ -61,6 +65,15 @@ const currentDay = ref(date.toLocaleDateString('en-US', { weekday: 'long' }).toU
         >
           <Dices class="w-3.5 h-3.5 text-ui-charcoal" />
           <span>Simulate</span>
+        </button>
+
+        <button
+          id="btn-open-ingest-modal"
+          @click="onOpenIngestModal"
+          title="Manual Data Ingestion"
+          class="p-1.5 rounded-full bg-white hover:bg-white/90 text-ui-charcoal border border-ui-charcoal transition-all active:scale-95"
+        >
+          <Database class="w-4 h-4" />
         </button>
 
         <button

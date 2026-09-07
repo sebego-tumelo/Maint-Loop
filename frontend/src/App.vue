@@ -11,6 +11,7 @@ import HistoricalRecordsPanel from './components/HistoricalRecordsPanel.vue';
 import PredictModal from './components/PredictModal.vue';
 import SimulateDrawModal from './components/SimulateDrawModal.vue';
 import PrizeInfoModal from './components/PrizeInfoModal.vue';
+import ManualIngestModal from './components/ManualIngestModal.vue';
 
 import { computeFinancialStats } from './utils/lottoEngine';
 import { mapBackendPredictionToFrontend } from './utils/dataMapper';
@@ -26,6 +27,7 @@ const isAnalyzing = ref(false);
 const isPredictModalOpen = ref(false);
 const isSimulateModalOpen = ref(false);
 const isPrizeInfoModalOpen = ref(false);
+const isIngestModalOpen = ref(false);
 
 // Active section for bottom nav
 const activeSection = ref('home');
@@ -141,6 +143,7 @@ const scrollToSection = (id, sectionName) => {
         :onOpenPredictModal="() => (isPredictModalOpen = true)"
         :onOpenSimulateModal="() => (isSimulateModalOpen = true)"
         :onOpenPrizeInfoModal="() => (isPrizeInfoModalOpen = true)"
+        :onOpenIngestModal="() => (isIngestModalOpen = true)"
       />
       <div v-else-if="isLoading" class="p-4 text-center">
         <Loader2 class="animate-spin inline-block w-6 h-6" />
@@ -259,6 +262,11 @@ const scrollToSection = (id, sectionName) => {
     <PrizeInfoModal
       :isOpen="isPrizeInfoModalOpen"
       :onClose="() => (isPrizeInfoModalOpen = false)"
+    />
+
+    <ManualIngestModal
+      :isOpen="isIngestModalOpen"
+      :onClose="() => (isIngestModalOpen = false)"
     />
   </div>
 </template>
