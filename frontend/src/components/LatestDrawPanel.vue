@@ -127,7 +127,7 @@ const isDropdownOpen = ref(false);
             class="grid grid-cols-4 items-center text-xs px-2 py-2 rounded-[16px] bg-white border border-ui-charcoal"
           >
             <div class="ui-heading text-ui-charcoal">
-              DIV {{ div.label.split('(')[1].replace('Div ', '').replace(')', '') }}
+              {{ div.label }}
             </div>
             <div class="text-center text-[10px] font-semibold text-ui-charcoal/70">
               {{ div.match }}

@@ -5,11 +5,22 @@ export async function syncAndGetStats() {
   // Fetch from DB instead of external API
   const data = await DrawResult.find().sort({ 'issue': -1 });
 
-  // Map to the format expected by the frontend/analysis workflow
+  // Map to the format expected by the frontend
   const mappedData = data.map(doc => ({
+    id: doc._id,
+    drawNumber: doc.issue,
     date: doc.drawTime.toISOString().split('T')[0],
-    numbers: doc.winNums.map(n => parseInt(n.winNum)),
-    issue: doc.issue
+    winningNumbers: doc.winNums.map(n => parseInt(n.winNum)),
+    prizePool: doc.winPoolInfo?.nextJackpot || 0,
+    prizeDivisions: (doc.winLevels || []).map(level => ({
+      division: level.winLevelId,
+      label: level.winLevelName,
+      match: level.matches,
+      matches: level.matches,
+      winners: level.winCount,
+      payout: level.winAmount,
+      prize: { amount: level.winAmount }
+    }))
   }));
 
   const totalRecords = mappedData.length;

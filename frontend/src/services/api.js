@@ -1,5 +1,4 @@
 // API service to interact with the backend
-import { generateDivisions } from '../utils/lottoEngine';
 import { seedResults } from '../data/seedData';
 const API_BASE = '/api';
 
@@ -220,22 +219,7 @@ export async function fetchResults() {
       throw new Error('Failed to fetch results: Invalid API response format');
     }
 
-    const formattedNewData = result.data.map(draw => {
-      console.log('DEBUG: Mapping draw:', draw);
-      const id = draw.drawNumber || draw.id || draw._id || `draw-${draw.date}-${Math.random().toString(36).substr(2, 9)}`;
-
-      // Normalize: Ensure winningNumbers exists
-      const winningNumbers = draw.winningNumbers || draw.numbers || [];
-
-      return {
-        id,
-        ...draw,
-        winningNumbers,
-        // Ensure we have some reasonable defaults if fields are missing in API
-        prizePool: draw.prizePool || 0,
-        divisions: draw.divisions || generateDivisions(winningNumbers, draw.prizePool || 0),
-      };
-    });
+    const formattedNewData = result.data;
 
     let finalData;
     if (formattedNewData.length === 0) {
