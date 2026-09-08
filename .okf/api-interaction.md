@@ -48,7 +48,7 @@ The `prizeDivisions` field is an array of objects structured as follows:
 
 
 ### 1.5 Get Latest Results
-Retrieves a specified number of the latest lotto draw results.
+Retrieves a specified number of the latest lotto draw results. The backend handles all data normalization, formatting, and financial scaling (converting cents to Rand).
 
 - **Method**: `GET`
 - **Path**: `/api/latest-results?limit=N`
@@ -57,6 +57,20 @@ Retrieves a specified number of the latest lotto draw results.
 - **Response**:
   - `200 OK`: `{ "success": true, "count": number, "data": Array<DrawResult> }`
   - `500 Internal Server Error`: `{ "success": false, "error": string }`
+
+#### Data Schema (`DrawResult`)
+The schema for results is now standardized by the backend:
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `String` | MongoDB document ID. |
+| `drawNumber` | `Number` | Official draw issue number. |
+| `date` | `String` | Date of the draw (YYYY-MM-DD). |
+| `winningNumbers` | `Array<Number>` | Parsed integer array of winning numbers. |
+| `prizePool` | `Number` | Estimated prize pool, scaled to Rand. |
+| `prizeDivisions` | `Array<Object>` | Payout details (division, winners, payout, etc.). |
+
+Each object in `prizeDivisions` includes `division`, `label`, `match`, `winners`, and `payout` (scaled to Rand).
 
 ### 1.6 Get Latest Predictions
 Retrieves a specified number of the latest prediction records.
