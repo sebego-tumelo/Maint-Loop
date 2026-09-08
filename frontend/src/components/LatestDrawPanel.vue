@@ -75,7 +75,7 @@ const isDropdownOpen = ref(false);
       
       <div class="flex items-center justify-center gap-2 flex-wrap">
         <LottoBall
-          v-for="num in draw.numbers"
+          v-for="num in draw.winningNumbers"
           :key="`win-ball-${num}`"
           :id="`ball-win-${num}`"
           :number="num"
@@ -122,7 +122,7 @@ const isDropdownOpen = ref(false);
 
         <div class="space-y-1.5">
           <div
-            v-for="div in draw.divisions"
+            v-for="div in draw.prizeDivisions"
             :key="div.division"
             class="grid grid-cols-4 items-center text-xs px-2 py-2 rounded-[16px] bg-white border border-ui-charcoal"
           >
