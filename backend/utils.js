@@ -11,15 +11,15 @@ export async function syncAndGetStats() {
     drawNumber: doc.issue,
     date: doc.drawTime.toISOString().split('T')[0],
     winningNumbers: doc.winNums.map(n => parseInt(n.winNum)),
-    prizePool: doc.winPoolInfo?.nextJackpot || 0,
+    prizePool: (doc.winPoolInfo?.nextJackpot || 0) / 100,
     prizeDivisions: (doc.winLevels || []).map(level => ({
       division: level.winLevelId,
       label: level.winLevelName,
       match: level.matches,
       matches: level.matches,
       winners: level.winCount,
-      payout: level.winAmount,
-      prize: { amount: level.winAmount }
+      payout: (level.winAmount || 0) / 100,
+      prize: { amount: (level.winAmount || 0) / 100 }
     }))
   }));
 

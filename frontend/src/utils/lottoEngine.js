@@ -121,8 +121,8 @@ export function computeFinancialStats(predictions, currentActivePrediction) {
 // Format ZAR currency
 export function formatZAR(amount) {
   const formatted = Math.abs(amount).toLocaleString('en-ZA', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   });
   return amount < 0 ? `-R${formatted}` : `R${formatted}`;
 }
@@ -130,10 +130,10 @@ export function formatZAR(amount) {
 // Format sign prefixed ZAR
 export function formatSignedZAR(amount) {
   const formatted = Math.abs(amount).toLocaleString('en-ZA', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   });
   if (amount > 0) return `+R${formatted}`;
   if (amount < 0) return `-R${formatted}`;
-  return `R0`;
+  return `R0.00`;
 }
