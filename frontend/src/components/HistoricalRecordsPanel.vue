@@ -23,9 +23,19 @@ const sortedDraws = computed(() => {
     const dateA = new Date(a.date);
     const dateB = new Date(b.date);
     
+    // Sort by date first
+    if (dateA.getTime() !== dateB.getTime()) {
+      return sortOrder.value === 'newest'
+        ? dateB - dateA
+        : dateA - dateB;
+    }
+    
+    // Fallback to drawNumber if dates are equal
+    const numA = parseInt(a.drawNumber || 0);
+    const numB = parseInt(b.drawNumber || 0);
     return sortOrder.value === 'newest'
-      ? dateB - dateA
-      : dateA - dateB;
+      ? numB - numA
+      : numA - numB;
   });
 });
 
