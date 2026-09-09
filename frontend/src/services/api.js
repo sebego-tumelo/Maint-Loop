@@ -194,6 +194,7 @@ export async function fetchResults() {
     const existing = JSON.parse(cachedData);
     // existing is expected to be sorted newest-first
     // Robustly get the date here too
+    console.log('one existing record:', existing[0]);
     const lastCachedDate = new Date(existing[0].date || existing[0].drawDate);
     const today = new Date();
     

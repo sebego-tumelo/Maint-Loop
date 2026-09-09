@@ -137,7 +137,7 @@ export async function evaluatePredictionFinancials(drawDate) {
 
   // Fetch all results via API instead of DB query
   const { rawDrawHistory } = await syncAndGetStats();
-  const drawResult = rawDrawHistory.find(r => r.drawDate === drawDate);
+  const drawResult = rawDrawHistory.find(r => r.date === drawDate);
   
   if (!drawResult) throw new Error(`No draw result found for date: ${drawDate}`);
   
@@ -182,7 +182,7 @@ async function evaluateUnevaluatedPredictions(rawDrawHistory) {
   const history = rawDrawHistory || [];
   console.log('latest historical draw data:', history[0]);
   for (const prediction of unevaluated) {
-    const historicalResult = history.find(r => r.drawDate === prediction.draw_date);
+    const historicalResult = history.find(r => r.date === prediction.draw_date);
     
     if (!historicalResult) {
       console.log(`⚠️ No historical data found for ${prediction.draw_date}, skipping.`);
