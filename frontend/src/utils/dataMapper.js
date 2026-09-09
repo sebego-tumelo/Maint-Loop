@@ -1,13 +1,25 @@
 export function mapBackendResultToFrontend(result) {
-  const rawDate = result.date || result.drawDate || result.drawTime;
-  // If it's an ISO string like "2026-09-08T19:00:00.000Z", just taking the first 10 chars is safer.
+  const rawDate = result.drawTime || result.date;
   const formattedDate = rawDate ? rawDate.split('T')[0] : null;
 
-  const { date, drawDate, drawTime, ...rest } = result;
   return {
-    ...rest,
+    id: result.id || result._id || result.issue?.toString(),
     date: formattedDate,
     drawNumber: result.issue,
+    // Extract numbers from {number: '01', color: '...'} structure
+    winningNumbers: (result.winNums || []).map(item => parseInt(item.number, 10)),
+    prizePool: result.winPoolInfo?.saleMoney || 0,
+    prizeDivisions: (result.winLevels || []).map((level, index) => ({
+      division: index + 1,
+      label: `Div ${index + 1}`,
+      match: level.winLevelName || 'N/A',
+      matches: level.winLevelName || 'N/A',
+      winners: level.winNum || 0,
+      payout: level.winAmount || 0,
+      prize: {
+         amount: level.winAmount || 0
+      }
+    })),
   };
 }
 
