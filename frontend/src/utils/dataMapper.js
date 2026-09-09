@@ -1,8 +1,13 @@
 export function mapBackendResultToFrontend(result) {
-  const { drawTime, ...rest } = result;
+  const rawDate = result.date || result.drawDate || result.drawTime;
+  // If it's an ISO string like "2026-09-08T19:00:00.000Z", just taking the first 10 chars is safer.
+  const formattedDate = rawDate ? rawDate.split('T')[0] : null;
+
+  const { date, drawDate, drawTime, ...rest } = result;
   return {
     ...rest,
-    date: result.date || drawTime,
+    date: formattedDate,
+    drawNumber: result.issue,
   };
 }
 
