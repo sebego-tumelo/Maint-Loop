@@ -12,11 +12,15 @@ import {
   runPrediction,
 } from './prediction_workflow.js';
 import { 
+  runAnalysis,
+} from './analysis_workflow.js';
+import { 
   appendToJournal,
   updateRulesFile,
   getActiveRules
 } from './okf_utils.js';
 import { syncAndGetStats } from './utils.js';
+import { getMergedDrawResults } from './services/lottoService.js';
 import ingestRoutes from './routes/ingest.js';
 
 dotenv.config();
@@ -158,13 +162,11 @@ app.get('/api/latest-predictions', async (req, res) => {
 app.get('/api/latest-results', async (req, res) => {
   const limit = parseInt(req.query.limit) || 20;
   try {
-    const stats = await syncAndGetStats();
-    // Assuming rawDrawHistory is sorted newest-first, otherwise sort it
-    const sortedResults = [...stats.rawDrawHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
-    const latestResults = sortedResults.slice(0, limit);
+    const data = await getMergedDrawResults(limit);
     
-    res.json({ success: true, count: latestResults.length, data: latestResults });
+    res.json({ success: true, count: data.length, data });
   } catch (error) {
+    console.error('❌ Error fetching merged results:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
