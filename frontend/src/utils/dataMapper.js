@@ -1,8 +1,8 @@
 export function mapBackendResultToFrontend(result) {
-  const { drawDate, ...rest } = result;
+  const { drawTime, ...rest } = result;
   return {
     ...rest,
-    date: result.date || drawDate,
+    date: result.date || drawTime,
   };
 }
 

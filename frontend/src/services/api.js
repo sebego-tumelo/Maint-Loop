@@ -166,7 +166,7 @@ export async function fetchResults() {
     if (cachedRecords.length > 0) {
       // Robustly get the date, handling potential variations in key names
       const record = cachedRecords[0];
-      const dateValue = record.date; 
+      const dateValue = record.date || record.drawDate; 
       
       const latestRecordDate = new Date(dateValue);
       
@@ -196,7 +196,7 @@ export async function fetchResults() {
     // existing is expected to be sorted newest-first
     // Robustly get the date here too
     console.log('one existing record:', existing[0]);
-    const lastCachedDate = new Date(existing[0].date);
+    const lastCachedDate = new Date(existing[0].date || existing[0].drawDate);
     const today = new Date();
     
     // Check if the date is valid before doing math
@@ -220,7 +220,7 @@ export async function fetchResults() {
     if (!result.success || !Array.isArray(result.data)) {
       throw new Error('Failed to fetch results: Invalid API response format');
     }
-
+    console.log("fetched one result:", result.data[0]);
     const formattedNewData = result.data.map(mapBackendResultToFrontend);
 
     // Transform seed data as well if needed, or assume it's okay?
@@ -234,7 +234,7 @@ export async function fetchResults() {
       
       // Create a map to handle merging, prioritizing new data
       const dataMap = new Map();
-      const getDate = (d) => d.date;
+      const getDate = (d) => d.date || d.drawDate;
       
       // 1. Add existing data first
       existing.forEach(d => dataMap.set(getDate(d), d));
