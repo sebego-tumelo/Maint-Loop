@@ -54,7 +54,7 @@ const getDecadeVariant = (num) => {
 };
 
 const getWinningNumbersForPrediction = (pred) => {
-  const draw = draws.value.find(d => d.drawDate === pred.targetDrawDate);
+  const draw = draws.value.find(d => (d.drawDate || d.date) === pred.targetDrawDate);
   return draw ? draw.winningNumbers : null;
 };
 
