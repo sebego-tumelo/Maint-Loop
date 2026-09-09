@@ -1,15 +1,20 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { DrawResult } from '../models/DrawResult.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load env vars. The file is in backend/scripts/migrateDrawResults.js,
 // so ../.env refers to backend/.env
-dotenv.config({ path: '../.env' });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 // --- CONFIGURATION ---
 const SOURCE_DB = 'daily-lotto-scraper-api'; // Replace with DB A name
 const GAME_ID = 11001; 
-const START_ISSUE = 2731;
+const START_ISSUE = 2730;
 // ----------------------
 
 const SourceDrawResultSchema = new mongoose.Schema({}, { strict: false });
@@ -34,13 +39,25 @@ async function migrate() {
     console.log(`Found ${records.length} records to migrate.`);
 
     let currentIssue = START_ISSUE;
+    let processedCount = 0;
 
     // 2. Transform and Upsert
     for (const doc of records) {
+      processedCount++;
       const drawTime = new Date(doc.drawDate);
+      
+      // Construct a range query for the same day to be robust against time discrepancies
+      const startOfDay = new Date(drawTime);
+      startOfDay.setUTCHours(0, 0, 0, 0);
+      const endOfDay = new Date(drawTime);
+      endOfDay.setUTCHours(23, 59, 59, 999);
 
       // Check if this record already exists in the target DB to avoid re-issuing
-      const existing = await DrawResult.findOne({ gameId: GAME_ID, drawTime });
+      const existing = await DrawResult.findOne({ 
+        gameId: GAME_ID, 
+        drawTime: { $gte: startOfDay, $lte: endOfDay } 
+      });
+      
       if (existing) {
         console.log(`Skipping record for ${doc.drawDate} (already exists)`);
         continue;
@@ -72,17 +89,21 @@ async function migrate() {
       };
 
       // 3. Upsert to Target
-      // await DrawResult.updateOne(
-      //   { gameId: GAME_ID, drawTime: transformed.drawTime },
-      //   { $set: transformed },
-      //   { upsert: true }
-      // );
+      await DrawResult.updateOne(
+        { 
+          gameId: GAME_ID, 
+          drawTime: { $gte: startOfDay, $lte: endOfDay } 
+        },
+        { $set: transformed },
+        { upsert: true }
+      );
       
-      console.log(`Migrated Issue ${currentIssue}: ${doc.drawDate}`);
+      process.stdout.write(`\rMigrated count: ${processedCount}`);
+      
       currentIssue--; // Move to next issue
     }
 
-    console.log('Migration completed successfully.');
+    console.log('\nMigration completed successfully.');
     process.exit();
   } catch (err) {
     console.error('Migration failed:', err);
