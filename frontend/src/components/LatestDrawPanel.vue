@@ -75,7 +75,7 @@ const isDropdownOpen = ref(false);
       
       <div class="flex items-center justify-center gap-2 flex-wrap">
         <LottoBall
-          v-for="num in draw.winningNumbers"
+          v-for="num in [...draw.winningNumbers].sort((a, b) => a - b)"
           :key="`win-ball-${num}`"
           :id="`ball-win-${num}`"
           :number="num"
