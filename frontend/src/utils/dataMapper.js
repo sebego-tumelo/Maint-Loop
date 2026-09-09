@@ -3,7 +3,7 @@ export function mapBackendResultToFrontend(result) {
   const formattedDate = rawDate ? rawDate.split('T')[0] : null;
 
   return {
-    id: result.id || result._id || result.issue?.toString(),
+    id: result.id || result._id || (result.issue ? `draw-${result.issue}` : Math.random().toString(36).substr(2, 9)),
     date: formattedDate,
     drawNumber: result.issue,
     // Extract numbers from {winNum: '34'} structure
