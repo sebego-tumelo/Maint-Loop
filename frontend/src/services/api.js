@@ -230,11 +230,11 @@ export async function fetchResults() {
         console.log('No data from API, using seed data.');
         finalData = seedResults.map(mapBackendResultToFrontend);
     } else if (hasCache) {
-      const existing = JSON.parse(cachedData);
+      const existing = JSON.parse(cachedData).map(mapBackendResultToFrontend);
       
       // Create a map to handle merging, prioritizing new data
       const dataMap = new Map();
-      const getDate = (d) => d.date || d.drawDate;
+      const getDate = (d) => d.date;
       
       // 1. Add existing data first
       existing.forEach(d => dataMap.set(getDate(d), d));
