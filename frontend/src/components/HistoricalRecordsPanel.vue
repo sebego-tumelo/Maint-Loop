@@ -128,12 +128,12 @@ const getSetMatches = (set, winningNumbers) => {
         class="p-4 rounded-[24px] bg-canvas-peach/20 border border-ui-charcoal"
       >
         <div class="flex items-center justify-between gap-2 mb-3">
-          <div class="flex items-center gap-2">
+          <div class="flex flex-col">
             <span class="ui-heading text-xs text-ui-charcoal">
-              Draw #{{ draw.drawNumber }}
+              {{ draw.drawDate }}
             </span>
             <span class="text-[10px] font-semibold text-ui-charcoal/70">
-              {{ draw.drawDate }}
+              Draw #{{ draw.drawNumber }}
             </span>
           </div>
 
