@@ -20,9 +20,12 @@ const toggleSort = () => {
 
 const sortedDraws = computed(() => {
   return [...draws.value].sort((a, b) => {
+    const dateA = new Date(a.drawDate || a.date);
+    const dateB = new Date(b.drawDate || b.date);
+    
     return sortOrder.value === 'newest'
-      ? b.drawNumber - a.drawNumber
-      : a.drawNumber - b.drawNumber;
+      ? dateB - dateA
+      : dateA - dateB;
   });
 });
 
@@ -130,10 +133,10 @@ const getSetMatches = (set, winningNumbers) => {
         <div class="flex items-center justify-between gap-2 mb-3">
           <div class="flex flex-col">
             <span class="ui-heading text-xs text-ui-charcoal">
-              {{ draw.drawDate }}
+              {{ draw.drawDate || draw.date }}
             </span>
             <span class="text-[10px] font-semibold text-ui-charcoal/70">
-              Draw #{{ draw.drawNumber }}
+              Draw #{{ draw.drawNumber || 'N/A' }}
             </span>
           </div>
 
