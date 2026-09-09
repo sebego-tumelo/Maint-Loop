@@ -6,8 +6,8 @@ export function mapBackendResultToFrontend(result) {
     id: result.id || result._id || (result.issue ? `draw-${result.issue}` : Math.random().toString(36).substr(2, 9)),
     date: formattedDate,
     drawNumber: result.issue,
-    // Extract numbers from {winNum: '34'} structure
-    winningNumbers: (result.winNums || []).map(item => parseInt(item.winNum, 10)),
+    // Extract numbers from {winNum: '34'} structure and sort them numerically
+    winningNumbers: (result.winNums || []).map(item => parseInt(item.winNum, 10)).sort((a, b) => a - b),
     prizePool: result.winPoolInfo?.saleMoney || 0,
     prizeDivisions: (result.winLevels || []).map((level, index) => ({
       division: index + 1,
