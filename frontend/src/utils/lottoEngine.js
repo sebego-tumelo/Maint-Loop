@@ -124,6 +124,11 @@ export function formatZAR(amount) {
   return amount < 0 ? `-R${Math.abs(rounded)}` : `R${rounded}`;
 }
 
+// Normalize financial values from cents to Rand
+export function normalizeFinancials(amount) {
+  return amount / 100;
+}
+
 // Format sign prefixed ZAR (rounded to nearest Rand)
 export function formatSignedZAR(amount) {
   const rounded = Math.round(amount);

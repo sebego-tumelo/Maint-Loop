@@ -1,3 +1,5 @@
+import { normalizeFinancials } from './lottoEngine';
+
 export function mapBackendResultToFrontend(result) {
   const rawDate = result.drawTime || result.date;
   const formattedDate = rawDate ? rawDate.split('T')[0] : null;
@@ -8,16 +10,16 @@ export function mapBackendResultToFrontend(result) {
     drawNumber: result.issue,
     // Extract numbers from {winNum: '34'} structure and sort them numerically
     winningNumbers: (result.winNums || []).map(item => parseInt(item.winNum, 10)).sort((a, b) => a - b),
-    prizePool: result.winPoolInfo?.saleMoney || 0,
+    prizePool: normalizeFinancials(result.winPoolInfo?.saleMoney || 0),
     prizeDivisions: (result.winLevels || []).map((level, index) => ({
       division: index + 1,
       label: `Div ${index + 1}`,
       match: level.winLevelName || 'N/A',
       matches: level.winLevelName || 'N/A',
       winners: level.winNum || 0,
-      payout: level.winAmount || 0,
+      payout: normalizeFinancials(level.winAmount || 0),
       prize: {
-         amount: level.winAmount || 0
+         amount: normalizeFinancials(level.winAmount || 0)
       }
     })),
   };
