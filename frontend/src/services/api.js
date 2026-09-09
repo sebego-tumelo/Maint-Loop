@@ -1,5 +1,6 @@
 // API service to interact with the backend
 import { seedResults } from '../data/seedData';
+import { mapBackendResultToFrontend } from '../utils/dataMapper';
 const API_BASE = '/api';
 
 const STORAGE_KEY = 'lotto_results_cache_v2';
@@ -165,7 +166,7 @@ export async function fetchResults() {
     if (cachedRecords.length > 0) {
       // Robustly get the date, handling potential variations in key names
       const record = cachedRecords[0];
-      const dateValue = record.date || record.drawDate; 
+      const dateValue = record.date; 
       
       const latestRecordDate = new Date(dateValue);
       
@@ -195,7 +196,7 @@ export async function fetchResults() {
     // existing is expected to be sorted newest-first
     // Robustly get the date here too
     console.log('one existing record:', existing[0]);
-    const lastCachedDate = new Date(existing[0].date || existing[0].drawDate);
+    const lastCachedDate = new Date(existing[0].date);
     const today = new Date();
     
     // Check if the date is valid before doing math
@@ -220,18 +221,20 @@ export async function fetchResults() {
       throw new Error('Failed to fetch results: Invalid API response format');
     }
 
-    const formattedNewData = result.data;
+    const formattedNewData = result.data.map(mapBackendResultToFrontend);
 
+    // Transform seed data as well if needed, or assume it's okay?
+    // Let's assume it's better to transform seed data too.
     let finalData;
     if (formattedNewData.length === 0) {
         console.log('No data from API, using seed data.');
-        finalData = seedResults;
+        finalData = seedResults.map(mapBackendResultToFrontend);
     } else if (hasCache) {
       const existing = JSON.parse(cachedData);
       
       // Create a map to handle merging, prioritizing new data
       const dataMap = new Map();
-      const getDate = (d) => d.date || d.drawDate;
+      const getDate = (d) => d.date;
       
       // 1. Add existing data first
       existing.forEach(d => dataMap.set(getDate(d), d));

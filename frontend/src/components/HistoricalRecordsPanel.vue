@@ -20,8 +20,8 @@ const toggleSort = () => {
 
 const sortedDraws = computed(() => {
   return [...draws.value].sort((a, b) => {
-    const dateA = new Date(a.drawDate || a.date);
-    const dateB = new Date(b.drawDate || b.date);
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
     
     return sortOrder.value === 'newest'
       ? dateB - dateA
@@ -54,7 +54,7 @@ const getDecadeVariant = (num) => {
 };
 
 const getWinningNumbersForPrediction = (pred) => {
-  const draw = draws.value.find(d => (d.drawDate || d.date) === pred.targetDrawDate);
+  const draw = draws.value.find(d => d.date === pred.targetDrawDate);
   return draw ? draw.winningNumbers : null;
 };
 
@@ -133,7 +133,7 @@ const getSetMatches = (set, winningNumbers) => {
         <div class="flex items-center justify-between gap-2 mb-3">
           <div class="flex flex-col">
             <span class="ui-heading text-xs text-ui-charcoal">
-              {{ draw.drawDate || draw.date }}
+              {{ draw.date }}
             </span>
             <span class="text-[10px] font-semibold text-ui-charcoal/70">
               Draw #{{ draw.drawNumber || 'N/A' }}

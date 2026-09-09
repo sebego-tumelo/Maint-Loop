@@ -1,3 +1,11 @@
+export function mapBackendResultToFrontend(result) {
+  const { drawDate, ...rest } = result;
+  return {
+    ...rest,
+    date: result.date || drawDate,
+  };
+}
+
 export function mapBackendPredictionToFrontend(pred) {
   return {
     id: pred._id,
