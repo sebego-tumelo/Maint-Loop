@@ -13,6 +13,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isAnalyzing: {
+    type: Boolean,
+    default: false,
+  },
   matchedNumbers: {
     type: Array,
     default: () => [],
@@ -24,11 +28,12 @@ const isDropdownOpen = ref(false);
 
 <template>
   <section
-    v-if="!draw"
+    v-if="!draw || !draw.winningNumbers"
     id="section-latest-draw"
     class="w-full rounded-[24px] p-4 bg-canvas-peach/20 border border-ui-charcoal text-center text-ui-charcoal/70 text-xs"
   >
-    No draw results available.
+    {{ isAnalyzing ? 'Data Analysis in Progress...' : 'No draw results available.' }}
+    {{ console.log('No draw results available.') }}
   </section>
   <section
     v-else
@@ -56,12 +61,12 @@ const isDropdownOpen = ref(false);
         <span 
           :class="[
             'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold border border-ui-charcoal',
-            isUpdating ? 'bg-white' : 'bg-metric-mint'
+            isAnalyzing ? 'bg-metric-orange' : (isUpdating ? 'bg-white' : 'bg-metric-mint')
           ]"
         >
-          <Loader2 v-if="isUpdating" class="w-3 h-3 animate-spin text-ui-charcoal" />
+          <Loader2 v-if="isAnalyzing || isUpdating" class="w-3 h-3 animate-spin text-ui-charcoal" />
           <span v-else class="w-1.5 h-1.5 rounded-full bg-ui-charcoal"></span>
-          {{ isUpdating ? 'Fetching latest...' : 'Latest Result' }}
+          {{ isAnalyzing ? 'Data Analysis in Progress' : (isUpdating ? 'Fetching latest...' : 'Latest Result') }}
         </span>
       </div>
     </div>

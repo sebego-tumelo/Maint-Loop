@@ -18,7 +18,7 @@ import { isStale, ensureAnalysisComplete } from './services/api';
 
 // Reactive state
 const store = useLottoStore();
-const { results: draws, loading: isLoading, error, predictions, activePrediction: currentActivePrediction } = storeToRefs(store);
+const { results: draws, loading: isLoading, error, predictions, activePrediction: currentActivePrediction, latestMatchedNumbers } = storeToRefs(store);
 const isUpdating = ref(false);
 const isAnalyzing = ref(false);
 
@@ -45,10 +45,15 @@ onMounted(async () => {
     
     isLoading.value = true;
     
-    // 1. Ensure Analysis is up-to-date
+    // 1. Ensure Analysis is up-to-date (in background)
     isAnalyzing.value = true;
-    await ensureAnalysisComplete();
-    isAnalyzing.value = false;
+    ensureAnalysisComplete().then(() => {
+        isAnalyzing.value = false;
+        store.fetchResults();
+    }).catch(err => {
+        isAnalyzing.value = false;
+        console.error("Background analysis failed", err);
+    });
 
     // 2. Fetch App Data
     await Promise.all([
@@ -156,14 +161,6 @@ const scrollToSection = (id, sectionName) => {
         
         <!-- 1. Financial Ledger 4-Quadrant Pastel Grid (Needs Satisfaction, Activity, Sleep, Wellness from image) -->
         <FinancialLedgerPanel />
-
-      
-
-        <!-- 3. Latest Official Draw Results Banner -->
-        <!-- <LatestDrawPanel
-          :draw="latestDraw"
-          :matchedNumbers="latestMatchedNumbers"
-        /> -->
 
         <!-- 4. Historical Records & Prediction Performance Log -->
         <HistoricalRecordsPanel />
