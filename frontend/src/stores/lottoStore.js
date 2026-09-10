@@ -46,8 +46,10 @@ export const useLottoStore = defineStore('lotto', () => {
 
   const activePrediction = computed(() => {
     if (predictions.value.length === 0) return null;
-    // Assuming predictions are already sorted by draw_date, newest first
-    return predictions.value[0];
+    // Find the first prediction that is not 'evaluated',
+    // otherwise fallback to the most recent prediction.
+    const unevaluated = predictions.value.find(p => p.status !== 'evaluated');
+    return unevaluated || predictions.value[0];
   });
 
   const financialStats = computed(() => {

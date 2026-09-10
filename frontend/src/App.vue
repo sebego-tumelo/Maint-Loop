@@ -18,7 +18,8 @@ import { isStale, ensureAnalysisComplete } from './services/api';
 
 // Reactive state
 const store = useLottoStore();
-const { results: draws, loading: isLoading, error, predictions, activePrediction: currentActivePrediction, latestMatchedNumbers } = storeToRefs(store);
+const { results: draws, loading: isLoading, error, predictions, latestMatchedNumbers } = storeToRefs(store);
+const activePrediction = computed(() => store.activePrediction);
 const isUpdating = ref(false);
 const isAnalyzing = ref(false);
 
@@ -91,15 +92,14 @@ const installApp = async () => {
 };
 
 const handleSavePrediction = (newPredictionData) => {
-  // Now simply update the active prediction with the merged result from the backend
-  currentActivePrediction.value = mapBackendPredictionToFrontend(newPredictionData);
+  const newPredictionFrontend = mapBackendPredictionToFrontend(newPredictionData);
   
-  // Update predictions list, replace or prepend
-  const index = predictions.value.findIndex(p => p.id === newPredictionData._id);
+  // Update predictions list in store
+  const index = store.predictions.findIndex(p => p.id === newPredictionFrontend.id);
   if (index !== -1) {
-    predictions.value[index] = currentActivePrediction.value;
+    store.predictions[index] = newPredictionFrontend;
   } else {
-    predictions.value = [currentActivePrediction.value, ...predictions.value];
+    store.predictions = [newPredictionFrontend, ...store.predictions];
   }
 };
 
@@ -230,7 +230,7 @@ const scrollToSection = (id, sectionName) => {
     <!-- Modals -->
     <PredictModal
       :isOpen="isPredictModalOpen"
-      :targetDrawDate="currentActivePrediction?.targetDrawDate || latestDraw.date"
+      :targetDrawDate="activePrediction?.targetDrawDate || latestDraw.date"
       :onClose="() => (isPredictModalOpen = false)"
       :onSavePrediction="handleSavePrediction"
     />
