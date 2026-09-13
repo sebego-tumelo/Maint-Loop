@@ -204,12 +204,20 @@ async function evaluateUnevaluatedPredictions(rawDrawHistory) {
       matching_numbers: getMatches(set.numbers),
       match_count: getMatches(set.numbers).length
     }));
+
+    // Audit the Candidate Pool
+    const poolEvaluationResults = (prediction.candidate_pool || []).map(cand => ({
+        combination: cand.combination,
+        matching_numbers: getMatches(cand.combination),
+        match_count: getMatches(cand.combination).length
+    }));
     
     // Prepare for AI-driven summary
     const bestMatch = evaluationResults.reduce((prev, curr) => (curr.match_count > prev.match_count ? curr : prev));
+    const bestPoolMatch = poolEvaluationResults.reduce((prev, curr) => (curr.match_count > prev.match_count ? curr : prev), {match_count: 0});
     
     // Get AI-driven evaluation summary
-    const summary = await getAIAnalysisSummary(prediction, winningNumbers);
+    const summary = await getAIAnalysisSummary(prediction, winningNumbers, bestPoolMatch);
 
     prediction.actual_outcome = {
       winning_numbers: winningNumbers,
@@ -234,11 +242,15 @@ async function evaluateUnevaluatedPredictions(rawDrawHistory) {
   }
 }
 
-async function getAIAnalysisSummary(prediction, winningNumbers) {
+async function getAIAnalysisSummary(prediction, winningNumbers, bestPoolMatch) {
   const agent = new Agent({
     initialState: {
       model: gemmaCloudModel,
-      systemPrompt: "You are a lottery analysis expert. Evaluate the performance of the provided prediction set against the actual winning numbers and provide a concise, 1-2 sentence strategic evaluation.",
+      systemPrompt: `You are a lottery analysis expert. Evaluate the performance of the provided prediction set against the actual winning numbers.
+      
+      CRITICAL: You generated a pool of 20 candidates. You must also analyze if any of the candidates in your unselected pool performed better than the 3 sets you finally selected. Identify 'missed opportunities'.
+      
+      Provide a concise, 1-2 sentence strategic evaluation.`,
       messages: [],
     }
   });
@@ -265,9 +277,11 @@ async function getAIAnalysisSummary(prediction, winningNumbers) {
     });
 
     agent.prompt(`Evaluate this prediction against the draw results.
-    Prediction Sets: ${JSON.stringify(prediction.predicted_sets)}
+    Selected Sets Performance: ${JSON.stringify(prediction.predicted_sets.map(s => s.numbers))}
+    Best Set from Generated Candidate Pool (Missed Opportunity Analysis): ${JSON.stringify(bestPoolMatch)}
     Actual Draw Numbers: ${JSON.stringify(winningNumbers)}
-    Provide a brief strategic summary of the performance.`);
+    
+    If the best set in the candidate pool performed better than your selected sets, explain why you missed it in your rationale.`);
   });
 }
 
