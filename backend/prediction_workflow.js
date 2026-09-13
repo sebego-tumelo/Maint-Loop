@@ -198,6 +198,11 @@ export async function persistPrediction(parsed, top20, targetCount) {
         parity: set.parity,
         set_rationale: set.set_rationale,
       })),
+      candidate_pool: top20.map((candidate) => ({
+        combination: candidate.combination,
+        metrics: candidate.metrics,
+        composite_score: candidate.composite_score,
+      })),
       financials: {
         total_cost_rand: finalSets.length * 3,
         total_payout_rand: 0,

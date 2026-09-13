@@ -18,6 +18,19 @@ const PredictionSchema = new mongoose.Schema({
     }
   ],
 
+  // The Top 20 Candidates before AI selection
+  candidate_pool: [
+    {
+        combination: [{ type: Number, required: true }],
+        metrics: {
+            sum: { type: Number },
+            parity: { type: String },
+            decade_spread: { type: Number }
+        },
+        composite_score: { type: Number }
+    }
+  ],
+
   // Financial Ledger
   financials: {
     total_cost_rand: { type: Number, default: 9 }, // 3 sets * R3 = R9
