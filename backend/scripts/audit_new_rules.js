@@ -1,8 +1,7 @@
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { DrawResult } from '../models/DrawResult.js';
+import { getUnifiedDrawHistory } from '../utils/unifiedData.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,9 +9,7 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 async function auditNewRules() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    
-    const draws = await DrawResult.find({}).lean();
+    const draws = await getUnifiedDrawHistory();
     console.log(`\n--- RULE DISCOVERY AUDIT: Analyzing ${draws.length} historical draws ---\n`);
 
     const stats = {
@@ -26,7 +23,7 @@ async function auditNewRules() {
     };
 
     draws.forEach(draw => {
-      const nums = draw.winNums.map(n => parseInt(n.winNum)).sort((a, b) => a - b);
+      const nums = draw.winningNumbers;
       
       // 1. Consecutive Pairs
       let hasConsecutive = false;
@@ -64,8 +61,6 @@ async function auditNewRules() {
 
   } catch (err) {
     console.error('Audit failed:', err);
-  } finally {
-    await mongoose.disconnect();
   }
 }
 
