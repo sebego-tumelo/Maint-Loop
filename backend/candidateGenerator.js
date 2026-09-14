@@ -72,9 +72,9 @@ export function scoreAndFilterCandidates(candidates, activeRules = []) {
         }
       }
 
-      if (rule.rule_id === "RULE_SUM_WINDOW_02") {
-        if (sum >= 65 && sum <= 120) {
-          compositeScore *= (rule.scoring?.multiplier || 1.25);
+      if (rule.rule_id === "RULE_SUM_WINDOW_TIGHTENED_02") {
+        if (sum >= 71 && sum <= 110) {
+          compositeScore *= (rule.scoring?.multiplier || 1.5);
         } else if (rule.scoring?.penalty_if_violated) {
           compositeScore += rule.scoring.penalty_if_violated;
         }
@@ -83,6 +83,24 @@ export function scoreAndFilterCandidates(candidates, activeRules = []) {
       if (rule.rule_id === "RULE_EVEN_ODD_BALANCE_05") {
         if (oddCount === 2 || oddCount === 3) {
           compositeScore *= (rule.scoring?.multiplier || 1.20);
+        }
+      }
+
+      if (rule.rule_id === "RULE_CONSECUTIVE_PAIRS_04") {
+        const hasConsecutive = sorted.some((n, i) => i > 0 && n === sorted[i-1] + 1);
+        if (hasConsecutive) {
+          compositeScore *= (rule.scoring?.multiplier || 1.3);
+        } else if (rule.scoring?.penalty_if_violated) {
+          compositeScore += rule.scoring.penalty_if_violated;
+        }
+      }
+
+      if (rule.rule_id === "RULE_LOW_NUMBERS_07") {
+        const lowCount = sorted.filter(n => n <= 18).length;
+        if (lowCount === 2 || lowCount === 3) {
+          compositeScore *= (rule.scoring?.multiplier || 1.4);
+        } else if (rule.scoring?.penalty_if_violated) {
+          compositeScore += rule.scoring.penalty_if_violated;
         }
       }
     }
