@@ -59,6 +59,8 @@ export async function synthesizePrediction(topCandidates, activeRules, recentPre
         Use this recent performance history to inform your selection:
         ${JSON.stringify(recentPredictions)}
         
+        CRITICAL RANKING INSTRUCTION: Each candidate has a 'composite_score'. This score represents a weighted measure of historical winning patterns, where a higher score indicates a higher statistical probability of winning. You MUST prioritize candidates with the highest 'composite_score' as the primary anchor for your selections, only deviating for compelling strategic reasons.
+
         Return ONLY a JSON object with: { 
           "summary": "...",
           "rationale_narrative": "...",

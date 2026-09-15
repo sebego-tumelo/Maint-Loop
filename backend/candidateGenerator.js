@@ -74,7 +74,7 @@ export function scoreAndFilterCandidates(candidates, activeRules = [], limit = 2
 
       if (rule.rule_id === "RULE_SUM_WINDOW_TIGHTENED_02") {
         if (sum >= 71 && sum <= 110) {
-          compositeScore *= (rule.scoring?.multiplier || 1.5);
+          compositeScore += (rule.scoring?.multiplier || 1.5);
         } else if (rule.scoring?.penalty_if_violated) {
           compositeScore += rule.scoring.penalty_if_violated;
         }
@@ -82,14 +82,14 @@ export function scoreAndFilterCandidates(candidates, activeRules = [], limit = 2
 
       if (rule.rule_id === "RULE_EVEN_ODD_BALANCE_05") {
         if (oddCount === 2 || oddCount === 3) {
-          compositeScore *= (rule.scoring?.multiplier || 1.20);
+          compositeScore += (rule.scoring?.multiplier || 0.5);
         }
       }
 
       if (rule.rule_id === "RULE_CONSECUTIVE_PAIRS_04") {
         const hasConsecutive = sorted.some((n, i) => i > 0 && n === sorted[i-1] + 1);
         if (hasConsecutive) {
-          compositeScore *= (rule.scoring?.multiplier || 1.3);
+          compositeScore += (rule.scoring?.multiplier || 1.0);
         } else if (rule.scoring?.penalty_if_violated) {
           compositeScore += rule.scoring.penalty_if_violated;
         }
@@ -98,17 +98,21 @@ export function scoreAndFilterCandidates(candidates, activeRules = [], limit = 2
       if (rule.rule_id === "RULE_LOW_NUMBERS_07") {
         const lowCount = sorted.filter(n => n <= 18).length;
         if (lowCount === 2 || lowCount === 3) {
-          compositeScore *= (rule.scoring?.multiplier || 1.4);
+          compositeScore += (rule.scoring?.multiplier || 1.0);
         } else if (rule.scoring?.penalty_if_violated) {
           compositeScore += rule.scoring.penalty_if_violated;
         }
       }
     }
 
+    // Add random jitter to break ties (0.0000 - 0.0009)
+    const jitter = Math.random() * 0.001;
+    compositeScore += jitter;
+
     return {
       combination: sorted,
       metrics: { sum, parity: `${oddCount}:${5 - oddCount}`, decade_spread: decades },
-      composite_score: parseFloat(compositeScore.toFixed(3))
+      composite_score: parseFloat(compositeScore.toFixed(5))
     };
   });
 
