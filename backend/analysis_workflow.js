@@ -219,6 +219,14 @@ async function evaluateUnevaluatedPredictions(rawDrawHistory) {
     // Get AI-driven evaluation summary
     const summary = await getAIAnalysisSummary(prediction, winningNumbers, bestPoolMatch);
 
+    // Journal this evaluation
+    await appendToJournal({
+      entry_type: "POST_MORTEM_EVALUATION",
+      draw_date: prediction.draw_date,
+      summary: summary,
+      best_pool_match: bestPoolMatch
+    });
+
     prediction.actual_outcome = {
       winning_numbers: winningNumbers,
       actual_sum: actualSum,
