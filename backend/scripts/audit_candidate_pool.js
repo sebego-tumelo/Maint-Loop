@@ -41,12 +41,40 @@ async function runAudit(dateStr) {
 
     // 3. Audit Candidate Pool
     const pool = prediction.candidate_pool || [];
+    const predictedSets = prediction.predicted_sets || [];
+    
+    // Helper to calculate matches
+    const getMatches = (combination) => {
+        const sorted = [...combination].sort((a, b) => a - b);
+        return sorted.filter(n => winningNumbers.includes(n));
+    };
+
+    // Audit AI Selections
+    console.log(`\n--- AI FINAL SELECTIONS (Performance) ---`);
+    predictedSets.forEach(set => {
+        const matches = getMatches(set.numbers);
+        console.log(`Set ${set.rank}: [${set.numbers.join(', ')}] | Matches: ${matches.length} (${matches.join(', ')}) | Rationale: "${set.set_rationale}"`);
+    });
+
     const winners = [];
     const losers = [];
 
+    // Helper to check if a combination was already picked by AI
+    const wasPickedByAI = (candCombo) => {
+        const sortedCand = [...candCombo].sort((a, b) => a - b);
+        return predictedSets.some(set => {
+            const sortedSet = [...set.numbers].sort((a, b) => a - b);
+            return JSON.stringify(sortedCand) === JSON.stringify(sortedSet);
+        });
+    };
+
     pool.forEach(cand => {
       const combination = cand.combination.sort((a, b) => a - b);
-      const matches = combination.filter(n => winningNumbers.includes(n));
+      
+      // Skip if AI already picked this set
+      if (wasPickedByAI(combination)) return;
+
+      const matches = getMatches(combination);
       
       const auditResult = {
         combination,
@@ -63,7 +91,8 @@ async function runAudit(dateStr) {
     });
 
     // 4. Report
-    console.log(`\n--- WINNERS (${winners.length} found) ---`);
+    console.log(`\n--- POOL AUDIT (Missed Opportunities / Excludes AI Picks) ---`);
+    console.log(`--- WINNERS (${winners.length} found) ---`);
     winners.sort((a, b) => b.count - a.count).forEach(w => {
       console.log(`[${w.combination.join(', ')}] | Matches: ${w.count} (${w.matches.join(', ')}) | Score: ${w.score}`);
     });
