@@ -38,14 +38,15 @@ export async function prepareCandidates(poolSize = 20) {
   return { activeRules, topCandidates, recentPredictions, recentJournal };
 }
 
-export async function synthesizePrediction(top20, activeRules, recentPredictions, recentJournal, count = 3, todaysPrediction = null) {
+export async function synthesizePrediction(topCandidates, activeRules, recentPredictions, recentJournal, count = 3, todaysPrediction = null) {
   const existingNumbers = todaysPrediction ? todaysPrediction.predicted_sets.map(s => s.numbers) : [];
+  const poolSize = topCandidates.length;
   
   const agent = new Agent({
     initialState: {
       model: gemmaCloudModel,
       systemPrompt: `You are in MODE B: CANDIDATE GENERATOR & PREDICTION SYNTHESIS.
-        Select the top ${count} sets from the provided top 20 candidates.
+        Select the top ${count} sets from the provided top ${poolSize} candidates.
         
         CRITICAL: Do not select these sets as they are already predicted for today: ${JSON.stringify(existingNumbers)}.
         
@@ -78,7 +79,7 @@ export async function synthesizePrediction(top20, activeRules, recentPredictions
     });
   };
 
-  await agent.prompt(`Analyze these candidates and select the top ${count}: ${JSON.stringify(top20)}`);
+  await agent.prompt(`Analyze these candidates and select the top ${count}: ${JSON.stringify(topCandidates)}`);
   
   const lastMessage = agent.state.messages[agent.state.messages.length - 1];
   const responseText = lastMessage.content.map(p => p.text).join('');
@@ -116,24 +117,24 @@ export async function persistPrediction(parsed, top20, targetCount) {
         )
     );
 
-    // If still not enough sets, fill from top20
+    // If still not enough sets, fill from topCandidates
     let currentTotalCount = prediction.predicted_sets.length + newSets.length;
     if (currentTotalCount < targetCount) {
-      console.log(`ℹ️ Need ${targetCount - currentTotalCount} more sets, filling from top20...`);
-      for (const candidate of top20) {
+      console.log(`ℹ️ Need ${targetCount - currentTotalCount} more sets, filling from pool...`);
+      for (const candidate of topCandidates) {
         if (currentTotalCount >= targetCount) break;
         
         const isDuplicate = prediction.predicted_sets.some(
-          (existingSet) => JSON.stringify(existingSet.numbers.sort((a, b) => a - b)) === JSON.stringify(candidate.numbers.sort((a, b) => a - b))
+          (existingSet) => JSON.stringify(existingSet.numbers.sort((a, b) => a - b)) === JSON.stringify(candidate.combination.sort((a, b) => a - b))
         ) || newSets.some(
-          (newSet) => JSON.stringify(newSet.numbers.sort((a, b) => a - b)) === JSON.stringify(candidate.numbers.sort((a, b) => a - b))
+          (newSet) => JSON.stringify(newSet.numbers.sort((a, b) => a - b)) === JSON.stringify(candidate.combination.sort((a, b) => a - b))
         );
 
         if (!isDuplicate) {
           newSets.push({
-            numbers: candidate.numbers,
-            expected_sum: candidate.expected_sum || 0,
-            parity: candidate.parity || "N/A",
+            numbers: candidate.combination,
+            expected_sum: candidate.metrics.sum || 0,
+            parity: candidate.metrics.parity || "N/A",
             set_rationale: "Automatically generated to fill requested count.",
           });
           currentTotalCount++;
@@ -169,17 +170,17 @@ export async function persistPrediction(parsed, top20, targetCount) {
     // Create new (ensure we have targetCount sets)
     let finalSets = selectedSets;
     if (finalSets.length < targetCount) {
-       console.log(`ℹ️ Need ${targetCount - finalSets.length} more sets, filling from top20...`);
-       for (const candidate of top20) {
+       console.log(`ℹ️ Need ${targetCount - finalSets.length} more sets, filling from pool...`);
+       for (const candidate of topCandidates) {
         if (finalSets.length >= targetCount) break;
         const isDuplicate = finalSets.some(
-          (s) => JSON.stringify(s.numbers.sort((a, b) => a - b)) === JSON.stringify(candidate.numbers.sort((a, b) => a - b))
+          (s) => JSON.stringify(s.numbers.sort((a, b) => a - b)) === JSON.stringify(candidate.combination.sort((a, b) => a - b))
         );
         if (!isDuplicate) {
           finalSets.push({
-            numbers: candidate.numbers,
-            expected_sum: candidate.expected_sum || 0,
-            parity: candidate.parity || "N/A",
+            numbers: candidate.combination,
+            expected_sum: candidate.metrics.sum || 0,
+            parity: candidate.metrics.parity || "N/A",
             set_rationale: "Automatically generated to fill requested count.",
           });
         }
