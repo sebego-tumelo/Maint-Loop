@@ -29,13 +29,13 @@ const gemmaCloudModel = {
   maxTokens: 8192,
 };
 
-export async function prepareCandidates() {
+export async function prepareCandidates(poolSize = 20) {
   const activeRules = await getActiveRules();
   const recentPredictions = await getRecentEvaluatedPredictions();
   const recentJournal = await getRecentJournalEntries(5);
   const rawCandidates = await generateUniqueCandidates(1000);
-  const top20 = scoreAndFilterCandidates(rawCandidates, activeRules.rules);
-  return { activeRules, top20, recentPredictions, recentJournal };
+  const topCandidates = scoreAndFilterCandidates(rawCandidates, activeRules.rules, poolSize);
+  return { activeRules, topCandidates, recentPredictions, recentJournal };
 }
 
 export async function synthesizePrediction(top20, activeRules, recentPredictions, recentJournal, count = 3, todaysPrediction = null) {
@@ -253,11 +253,11 @@ export async function runReflection(recentPredictions, recentJournal) {
   return JSON.parse(jsonMatch[0]).learned_lesson;
 }
 
-export async function runPrediction(boardCount = 3) {
-  console.log('🔮 Starting AI-driven prediction synthesis...');
+export async function runPrediction(boardCount = 3, poolSize = 50) {
+  console.log(`🔮 Starting AI-driven prediction synthesis (Pool Size: ${poolSize})...`);
   
   try {
-    const { activeRules, top20, recentPredictions, recentJournal } = await prepareCandidates();
+    const { activeRules, topCandidates, recentPredictions, recentJournal } = await prepareCandidates(poolSize);
     
     // 1. Run Reflection
     console.log('🧠 Running reflection on recent performance...');
@@ -273,8 +273,8 @@ export async function runPrediction(boardCount = 3) {
 
     // 3. Synthesis
     const todaysPrediction = await getTodaysPrediction();
-    const parsed = await synthesizePrediction(top20, activeRules, recentPredictions, recentJournal, boardCount, todaysPrediction);
-    return await persistPrediction(parsed, top20, boardCount);
+    const parsed = await synthesizePrediction(topCandidates, activeRules, recentPredictions, recentJournal, boardCount, todaysPrediction);
+    return await persistPrediction(parsed, topCandidates, boardCount);
   } catch (error) {
     console.error('❌ Error during AI prediction:', error);
     throw error;

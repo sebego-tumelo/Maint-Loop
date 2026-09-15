@@ -55,7 +55,7 @@ export async function generateUniqueCandidates(count = 1000) {
 /**
  * Scores candidates purely against observed rules
  */
-export function scoreAndFilterCandidates(candidates, activeRules = []) {
+export function scoreAndFilterCandidates(candidates, activeRules = [], limit = 20) {
   const scoredCandidates = candidates.map(candidate => {
     let compositeScore = 1.0;
     const sorted = [...candidate].sort((a, b) => a - b);
@@ -114,5 +114,5 @@ export function scoreAndFilterCandidates(candidates, activeRules = []) {
 
   return scoredCandidates
     .sort((a, b) => b.composite_score - a.composite_score)
-    .slice(0, 20);
+    .slice(0, limit);
 }
