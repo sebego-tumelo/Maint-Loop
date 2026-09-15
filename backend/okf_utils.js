@@ -35,7 +35,9 @@ export async function appendToJournal(journalDraft) {
     await JournalEntry.create({
       entry_type: journalDraft.entry_type || 'AGENT_ENTRY',
       summary: journalDraft.summary,
-      learned_lesson: journalDraft.learned_lesson
+      learned_lesson: journalDraft.learned_lesson,
+      draw_date: journalDraft.draw_date,         // NEW
+      best_pool_match: journalDraft.best_pool_match // NEW
     });
     console.log(`📝 [OKF] Journal entry appended: ${journalDraft.entry_type || 'AGENT_ENTRY'}`);
   } catch (err) {
