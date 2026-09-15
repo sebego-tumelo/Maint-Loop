@@ -1,4 +1,5 @@
 import express from 'express';
+import { runAnalysis } from '../analysis_workflow.js';
 import { DrawResult } from '../models/DrawResult.js';
 
 const router = express.Router();
@@ -54,7 +55,13 @@ router.post('/manual-ingest', authMiddleware, async (req, res) => {
     );
 
     console.log(`✅ Successfully upserted Draw Issue: ${drawData.issue}. (DB ID: ${result._id})`);
-    res.json({ message: `Successfully processed draw ${drawData.issue}.` });
+    
+    // Trigger Analysis after ingestion
+    runAnalysis()
+      .then(() => console.log('✅ Automated analysis after ingestion completed.'))
+      .catch(err => console.error('❌ Automated analysis after ingestion failed:', err));
+
+    res.json({ message: `Successfully processed draw ${drawData.issue} and triggered analysis.` });
   } catch (error) {
     console.error('❌ Ingestion failed:', error);
     res.status(500).json({ error: error.message });

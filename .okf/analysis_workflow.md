@@ -19,9 +19,12 @@ type: concept
    - Uses `backend/okf_utils.js` to persist analysis findings and rule mutations to the Knowledge Base.
    - Updates `LottoMetadata` in the database to reflect the latest analysis state.
 
-## Pipeline Execution Workflow (`runAnalysis`)
+## Trigger Mechanism
 
-The `runAnalysis` function follows these steps asynchronously:
+The analysis pipeline is triggered **automatically** upon successful manual data ingestion.
+
+1. **Manual Ingestion**: A new `DrawResult` is upserted via `POST /api/manual-ingest`.
+2. **Automated Analysis**: Upon success, `runAnalysis()` is invoked to update predictions and rules based on the newly available data.
 
 1. **Data Retrieval**: Fetches current statistical data (`syncAndGetStats()`) and the active configuration rules (`getActiveRules()`).
 

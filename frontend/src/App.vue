@@ -14,7 +14,7 @@ import ManualIngestModal from './components/ManualIngestModal.vue';
 
 import { computeFinancialStats } from './utils/lottoEngine';
 import { mapBackendPredictionToFrontend } from './utils/dataMapper';
-import { isStale, ensureAnalysisComplete } from './services/api';
+import { isStale } from './services/api';
 
 // Reactive state
 const store = useLottoStore();
@@ -46,17 +46,7 @@ onMounted(async () => {
     
     isLoading.value = true;
     
-    // 1. Ensure Analysis is up-to-date (in background)
-    isAnalyzing.value = true;
-    ensureAnalysisComplete().then(() => {
-        isAnalyzing.value = false;
-        store.fetchResults();
-    }).catch(err => {
-        isAnalyzing.value = false;
-        console.error("Background analysis failed", err);
-    });
-
-    // 2. Fetch App Data
+    // 1. Fetch App Data
     await Promise.all([
       store.fetchResults(),
       store.fetchPredictions(),
