@@ -11,17 +11,17 @@ const NEW_RULES = [
   {
     rule_id: "RULE_CONSECUTIVE_PAIRS_04",
     description: "Favor sets with at least one pair of consecutive numbers.",
-    scoring: { multiplier: 1.3, penalty_if_violated: -0.5 }
+    scoring: { multiplier: 1.3, penalty_if_violated: -0.2 }
   },
   {
     rule_id: "RULE_SUM_WINDOW_TIGHTENED_02",
     description: "Favor sets with sums between 71 and 110.",
-    scoring: { multiplier: 1.5, penalty_if_violated: -1.0 }
+    scoring: { multiplier: 1.5, penalty_if_violated: -0.3 }
   },
   {
     rule_id: "RULE_LOW_NUMBERS_07",
     description: "Favor sets with 2 or 3 numbers in the 1-18 range.",
-    scoring: { multiplier: 1.4, penalty_if_violated: -0.8 }
+    scoring: { multiplier: 1.4, penalty_if_violated: -0.3 }
   }
 ];
 

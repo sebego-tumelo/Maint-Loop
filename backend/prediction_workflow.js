@@ -33,7 +33,7 @@ export async function prepareCandidates(poolSize = 20) {
   const activeRules = await getActiveRules();
   const recentPredictions = await getRecentEvaluatedPredictions();
   const recentJournal = await getRecentJournalEntries(10);
-  const rawCandidates = await generateUniqueCandidates(1000);
+  const rawCandidates = await generateUniqueCandidates(10000);
   const topCandidates = scoreAndFilterCandidates(rawCandidates, activeRules.rules, poolSize);
   return { activeRules, topCandidates, recentPredictions, recentJournal };
 }
