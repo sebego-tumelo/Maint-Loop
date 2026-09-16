@@ -53,7 +53,10 @@ async function runAudit(dateStr) {
     console.log(`\n--- AI FINAL SELECTIONS (Performance) ---`);
     predictedSets.forEach(set => {
         const matches = getMatches(set.numbers);
-        console.log(`Set ${set.rank}: [${set.numbers.join(', ')}] | Matches: ${matches.length} (${matches.join(', ')}) | Rationale: "${set.set_rationale}"`);
+        // Find the corresponding score from the pool for this set if it exists
+        const poolSet = pool.find(c => JSON.stringify([...c.combination].sort((a,b) => a-b)) === JSON.stringify([...set.numbers].sort((a,b) => a-b)));
+        const score = poolSet ? poolSet.composite_score : 'N/A';
+        console.log(`Set ${set.rank}: [${set.numbers.join(', ')}] | Matches: ${matches.length} (${matches.join(', ')}) | Score: ${score}`);
     });
 
     const winners = [];
