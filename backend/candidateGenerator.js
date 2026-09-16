@@ -59,6 +59,7 @@ export function scoreAndFilterCandidates(candidates, activeRules = [], limit = 2
   const scoredCandidates = candidates.map(candidate => {
     let compositeScore = 1.0;
     const sorted = [...candidate].sort((a, b) => a - b);
+    const satisfied_rules = [];
     
     const sum = sorted.reduce((a, b) => a + b, 0);
     const oddCount = sorted.filter(n => n % 2 !== 0).length;
@@ -69,12 +70,15 @@ export function scoreAndFilterCandidates(candidates, activeRules = [], limit = 2
       if (rule.rule_id === "RULE_DECADE_SPREAD_01") {
         if (decades < 3 && rule.scoring?.penalty_if_violated) {
           compositeScore += rule.scoring.penalty_if_violated;
+        } else if (decades >= 3) {
+            satisfied_rules.push(rule.rule_id);
         }
       }
 
       if (rule.rule_id === "RULE_SUM_WINDOW_TIGHTENED_02") {
         if (sum >= 71 && sum <= 110) {
           compositeScore += (rule.scoring?.multiplier || 1.5);
+          satisfied_rules.push(rule.rule_id);
         } else if (rule.scoring?.penalty_if_violated) {
           compositeScore += rule.scoring.penalty_if_violated;
         }
@@ -83,6 +87,7 @@ export function scoreAndFilterCandidates(candidates, activeRules = [], limit = 2
       if (rule.rule_id === "RULE_EVEN_ODD_BALANCE_05") {
         if (oddCount === 2 || oddCount === 3) {
           compositeScore += (rule.scoring?.multiplier || 0.5);
+          satisfied_rules.push(rule.rule_id);
         }
       }
 
@@ -90,6 +95,7 @@ export function scoreAndFilterCandidates(candidates, activeRules = [], limit = 2
         const hasConsecutive = sorted.some((n, i) => i > 0 && n === sorted[i-1] + 1);
         if (hasConsecutive) {
           compositeScore += (rule.scoring?.multiplier || 1.0);
+          satisfied_rules.push(rule.rule_id);
         } else if (rule.scoring?.penalty_if_violated) {
           compositeScore += rule.scoring.penalty_if_violated;
         }
@@ -99,6 +105,7 @@ export function scoreAndFilterCandidates(candidates, activeRules = [], limit = 2
         const lowCount = sorted.filter(n => n <= 18).length;
         if (lowCount === 2 || lowCount === 3) {
           compositeScore += (rule.scoring?.multiplier || 1.0);
+          satisfied_rules.push(rule.rule_id);
         } else if (rule.scoring?.penalty_if_violated) {
           compositeScore += rule.scoring.penalty_if_violated;
         }
@@ -111,7 +118,7 @@ export function scoreAndFilterCandidates(candidates, activeRules = [], limit = 2
 
     return {
       combination: sorted,
-      metrics: { sum, parity: `${oddCount}:${5 - oddCount}`, decade_spread: decades },
+      metrics: { sum, parity: `${oddCount}:${5 - oddCount}`, decade_spread: decades, satisfied_rules },
       composite_score: parseFloat(compositeScore.toFixed(5))
     };
   });
