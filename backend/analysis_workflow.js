@@ -152,7 +152,8 @@ export async function evaluatePredictionFinancials(drawDate) {
     const winningNumbers = drawResult.winningNumbers;
     const matchCount = set.numbers.filter(n => winningNumbers.includes(n)).length;
     const division = drawResult.prizeDivisions.find(pd => {
-      const pdMatches = parseInt(pd.matches.replace('Match ', ''));
+      // Robustly extract the number from strings like "MATCH 5" or "Match 5"
+      const pdMatches = parseInt(pd.matches.replace(/[^0-9]/g, ''));
       return pdMatches === matchCount;
     });
     if (division) {
