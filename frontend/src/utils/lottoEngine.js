@@ -118,10 +118,15 @@ export function computeFinancialStats(predictions, currentActivePrediction) {
   };
 }
 
-// Format ZAR currency (rounded to nearest Rand)
+// Format ZAR currency (formatted with spaces and decimal if needed)
 export function formatZAR(amount) {
-  const rounded = Math.round(amount);
-  return amount < 0 ? `-R${Math.abs(rounded)}` : `R${rounded}`;
+  const absAmount = Math.abs(amount);
+  const formatted = absAmount.toLocaleString('en-ZA', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+  }).replace(/\u00A0/g, ' ').replace(',', '.');
+  
+  return amount < 0 ? `-R${formatted}` : `R${formatted}`;
 }
 
 // Normalize financial values from cents to Rand
