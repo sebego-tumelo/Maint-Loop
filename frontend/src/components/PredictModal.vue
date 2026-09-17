@@ -175,6 +175,7 @@ const handleCloseModal = () => {
             </span>
           </div>
 
+          <!-- Quick Shortcuts -->
           <div class="grid grid-cols-3 gap-2">
             <button
               v-for="num in [1, 3, 5]"
@@ -191,6 +192,19 @@ const handleCloseModal = () => {
             >
               {{ num }} Board{{ num > 1 ? 's' : '' }}
             </button>
+          </div>
+
+          <!-- Manual Adjuster -->
+          <div class="flex items-center justify-between p-2 rounded-[16px] bg-canvas-peach/20 border border-ui-charcoal">
+            <button 
+              @click="boardCount = Math.max(1, boardCount - 1)"
+              class="w-8 h-8 rounded-full bg-white border border-ui-charcoal flex items-center justify-center hover:bg-canvas-peach"
+            >-</button>
+            <span class="ui-heading text-sm">{{ boardCount }}</span>
+            <button 
+              @click="boardCount = Math.min(50, boardCount + 1)"
+              class="w-8 h-8 rounded-full bg-white border border-ui-charcoal flex items-center justify-center hover:bg-canvas-peach"
+            >+</button>
           </div>
         </div>
 
