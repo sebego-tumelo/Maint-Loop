@@ -137,7 +137,7 @@ export async function evaluatePredictionFinancials(drawDate) {
 
   // Fetch all results via API instead of DB query
   const { rawDrawHistory } = await syncAndGetStats();
-  const drawResult = rawDrawHistory.find(r => r.date === `drawDate`);
+  const drawResult = rawDrawHistory.find(r => r.date === drawDate);
   
   if (!drawResult) throw new Error(`No draw result found for date: ${drawDate}`);
   
