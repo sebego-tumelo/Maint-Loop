@@ -22,7 +22,9 @@ The `useLottoStore` handles the state for lottery results and predictions.
 ### Actions
 
 - `fetchResults()`: Fetches results from the backend and updates `results` state.
-- `fetchPredictions()`: Fetches predictions from the backend, maps them to the frontend format, and updates `predictions` state.
+- `fetchPredictions()`: Fetches predictions from the backend, enforces a 20-item limit, persists to `localStorage`, and updates `predictions` state.
+- `updatePredictions(newPrediction)`: Adds a new prediction, enforces a 20-item limit (FIFO), and persists to `localStorage`.
+- `loadFromLocalStorage()`: Loads predictions from `localStorage` on application initialization.
 
 ### Getters
 

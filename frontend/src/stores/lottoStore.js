@@ -12,6 +12,17 @@ export const useLottoStore = defineStore('lotto', () => {
   const error = ref(null);
 
   // Actions
+  function saveToLocalStorage(preds) {
+    localStorage.setItem('lotto_predictions', JSON.stringify(preds));
+  }
+
+  function loadFromLocalStorage() {
+    const stored = localStorage.getItem('lotto_predictions');
+    if (stored) {
+      predictions.value = JSON.parse(stored);
+    }
+  }
+
   async function fetchResults() {
     loading.value = true;
     try {
@@ -27,12 +38,24 @@ export const useLottoStore = defineStore('lotto', () => {
     loading.value = true;
     try {
       const data = await fetchPredictionsApi();
-      predictions.value = data.map(mapBackendPredictionToFrontend);
+      const frontendPreds = data.map(mapBackendPredictionToFrontend);
+      
+      // Enforce limit: newest are kept, oldest dropped
+      const limited = frontendPreds.slice(-20);
+      predictions.value = limited;
+      saveToLocalStorage(limited);
     } catch (err) {
       error.value = err;
     } finally {
       loading.value = false;
     }
+  }
+
+  function updatePredictions(newPred) {
+    // Add newest, limit to 20
+    const updated = [newPred, ...predictions.value].slice(0, 20);
+    predictions.value = updated;
+    saveToLocalStorage(updated);
   }
 
   // Getters
@@ -78,6 +101,8 @@ export const useLottoStore = defineStore('lotto', () => {
     error,
     fetchResults,
     fetchPredictions,
+    updatePredictions,
+    loadFromLocalStorage,
     latestResult,
     activePrediction,
     financialStats,

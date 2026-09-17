@@ -43,7 +43,7 @@ const latestDraw = computed(() => {
 // Fetch data on mount
 onMounted(async () => {
   try {
-    
+    store.loadFromLocalStorage(); // Load cached data first
     isLoading.value = true;
     
     // 1. Fetch App Data
@@ -83,14 +83,7 @@ const installApp = async () => {
 
 const handleSavePrediction = (newPredictionData) => {
   const newPredictionFrontend = mapBackendPredictionToFrontend(newPredictionData);
-  
-  // Update predictions list in store
-  const index = store.predictions.findIndex(p => p.id === newPredictionFrontend.id);
-  if (index !== -1) {
-    store.predictions[index] = newPredictionFrontend;
-  } else {
-    store.predictions = [newPredictionFrontend, ...store.predictions];
-  }
+  store.updatePredictions(newPredictionFrontend);
 };
 
 // Removed handleSimulateAndApplyDraw
