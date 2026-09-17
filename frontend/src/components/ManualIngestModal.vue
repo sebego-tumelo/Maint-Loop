@@ -1,12 +1,14 @@
 <script setup>
 import { ref } from 'vue';
 import { X, Upload, Loader2, CheckCircle, AlertTriangle } from 'lucide-vue-next';
+import { useLottoStore } from '../stores/lottoStore';
 
 const props = defineProps({
   isOpen: Boolean,
   onClose: Function
 });
 
+const store = useLottoStore();
 const jsonInput = ref('');
 const apiKey = ref('');
 const status = ref(''); // 'idle', 'loading', 'success', 'error'
@@ -30,7 +32,13 @@ const submitIngest = async () => {
 
     if (response.ok) {
       status.value = 'success';
-      message.value = result.message;
+      message.value = result.message || 'Data ingested';
+      
+      // Update store with ingested results
+      if (result.results) {
+        store.updateResults(result.results);
+      }
+      
       jsonInput.value = ''; // clear
     } else {
       status.value = 'error';

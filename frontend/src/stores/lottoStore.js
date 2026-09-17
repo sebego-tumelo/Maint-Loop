@@ -12,26 +12,44 @@ export const useLottoStore = defineStore('lotto', () => {
   const error = ref(null);
 
   // Actions
-  function saveToLocalStorage(preds) {
-    localStorage.setItem('lotto_predictions', JSON.stringify(preds));
+  function saveToLocalStorage() {
+    localStorage.setItem('lotto_predictions', JSON.stringify(predictions.value));
+    localStorage.setItem('lotto_results', JSON.stringify(results.value));
   }
 
   function loadFromLocalStorage() {
-    const stored = localStorage.getItem('lotto_predictions');
-    if (stored) {
-      predictions.value = JSON.parse(stored);
+    const storedPreds = localStorage.getItem('lotto_predictions');
+    if (storedPreds) {
+      predictions.value = JSON.parse(storedPreds);
+    }
+    const storedResults = localStorage.getItem('lotto_results');
+    if (storedResults) {
+      results.value = JSON.parse(storedResults);
     }
   }
 
   async function fetchResults() {
     loading.value = true;
     try {
-      results.value = await fetchResultsApi();
+      const data = await fetchResultsApi();
+      // Enforce limit: newest are kept, oldest dropped
+      const limited = data.slice(-20);
+      results.value = limited;
+      saveToLocalStorage();
     } catch (err) {
       error.value = err;
     } finally {
       loading.value = false;
     }
+  }
+
+  function updateResults(newResults) {
+    // Assuming newResults might be one or more.
+    // If it's a list, merge and limit to 20.
+    const merged = [...newResults, ...results.value].sort((a,b) => new Date(b.date) - new Date(a.date));
+    const limited = merged.slice(0, 20);
+    results.value = limited;
+    saveToLocalStorage();
   }
 
   async function fetchPredictions() {
@@ -43,7 +61,7 @@ export const useLottoStore = defineStore('lotto', () => {
       // Enforce limit: newest are kept, oldest dropped
       const limited = frontendPreds.slice(-20);
       predictions.value = limited;
-      saveToLocalStorage(limited);
+      saveToLocalStorage();
     } catch (err) {
       error.value = err;
     } finally {
@@ -55,7 +73,7 @@ export const useLottoStore = defineStore('lotto', () => {
     // Add newest, limit to 20
     const updated = [newPred, ...predictions.value].slice(0, 20);
     predictions.value = updated;
-    saveToLocalStorage(updated);
+    saveToLocalStorage();
   }
 
   // Getters
@@ -101,6 +119,7 @@ export const useLottoStore = defineStore('lotto', () => {
     error,
     fetchResults,
     fetchPredictions,
+    updateResults,
     updatePredictions,
     loadFromLocalStorage,
     latestResult,
