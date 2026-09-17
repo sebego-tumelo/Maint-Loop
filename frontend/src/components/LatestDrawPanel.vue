@@ -118,9 +118,8 @@ const isDropdownOpen = ref(false);
         id="prize-divisions-table"
         class="mt-3 p-3 rounded-[24px] bg-canvas-peach/20 border border-ui-charcoal space-y-2 transition-all"
       >
-        <div class="grid grid-cols-4 text-[9px] uppercase font-extrabold tracking-wider text-ui-charcoal/70 px-2 py-1 border-b border-ui-charcoal/20">
-          <div>Div</div>
-          <div class="text-center">Matches</div>
+        <div class="grid grid-cols-3 text-[9px] uppercase font-extrabold tracking-wider text-ui-charcoal/70 px-2 py-1 border-b border-ui-charcoal/20">
+          <div>Division</div>
           <div class="text-center">Winners</div>
           <div class="text-right">Prize</div>
         </div>
@@ -129,13 +128,11 @@ const isDropdownOpen = ref(false);
           <div
             v-for="div in draw.prizeDivisions"
             :key="div.division"
-            class="grid grid-cols-4 items-center text-xs px-2 py-2 rounded-[16px] bg-white border border-ui-charcoal"
+            class="grid grid-cols-3 items-center text-xs px-2 py-2 rounded-[16px] bg-white border border-ui-charcoal"
           >
-            <div class="ui-heading text-ui-charcoal">
-              {{ div.label }}
-            </div>
-            <div class="text-center text-[10px] font-semibold text-ui-charcoal/70">
-              {{ div.match }}
+            <div class="flex flex-col">
+              <span class="ui-heading text-ui-charcoal">{{ div.label }}</span>
+              <span class="text-[9px] font-semibold text-ui-charcoal/70">{{ div.match }}</span>
             </div>
             <div class="text-center text-[10px] font-semibold text-ui-charcoal">
               {{ div.winners.toLocaleString() }}
