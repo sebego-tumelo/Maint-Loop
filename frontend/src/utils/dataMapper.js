@@ -14,9 +14,9 @@ export function mapBackendResultToFrontend(result) {
     prizeDivisions: (result.winLevels || []).map((level, index) => ({
       division: index + 1,
       label: `Div ${index + 1}`,
-      match: level.winLevelName || 'N/A',
+      match: level.matches || 'N/A',
       matches: level.winLevelName || 'N/A',
-      winners: level.winNum || 0,
+      winners: level.winCount || 0,
       payout: normalizeFinancials(level.winAmount || 0),
       prize: {
          amount: normalizeFinancials(level.winAmount || 0)
