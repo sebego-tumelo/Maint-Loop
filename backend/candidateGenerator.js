@@ -53,11 +53,11 @@ export async function generateUniqueCandidates(count = 1000) {
 }
 
 /**
- * Scores candidates purely against observed rules
+ * Scores candidates based on selected strategy
  */
-export function scoreAndFilterCandidates(candidates, activeRules = [], limit = 20) {
+export function scoreAndFilterCandidates(candidates, activeRules = [], limit = 20, strategy = 'ADDITIVE_JITTER') {
   const scoredCandidates = candidates.map(candidate => {
-    let compositeScore = 1.0;
+    let compositeScore = strategy === 'MULTIPLICATIVE_DEFAULT' ? 1.0 : 0.0;
     const sorted = [...candidate].sort((a, b) => a - b);
     const satisfied_rules = [];
     
@@ -69,7 +69,8 @@ export function scoreAndFilterCandidates(candidates, activeRules = [], limit = 2
     for (const rule of activeRules) {
       if (rule.rule_id === "RULE_DECADE_SPREAD_01") {
         if (decades < 3 && rule.scoring?.penalty_if_violated) {
-          compositeScore += rule.scoring.penalty_if_violated;
+          if (strategy === 'MULTIPLICATIVE_DEFAULT') compositeScore *= (1 + rule.scoring.penalty_if_violated);
+          else compositeScore += rule.scoring.penalty_if_violated;
         } else if (decades >= 3) {
             satisfied_rules.push(rule.rule_id);
         }
@@ -77,16 +78,19 @@ export function scoreAndFilterCandidates(candidates, activeRules = [], limit = 2
 
       if (rule.rule_id === "RULE_SUM_WINDOW_TIGHTENED_02") {
         if (sum >= 71 && sum <= 110) {
-          compositeScore += (rule.scoring?.multiplier || 1.5);
+          if (strategy === 'MULTIPLICATIVE_DEFAULT') compositeScore *= (rule.scoring?.multiplier || 1.5);
+          else compositeScore += (rule.scoring?.multiplier || 1.5);
           satisfied_rules.push(rule.rule_id);
         } else if (rule.scoring?.penalty_if_violated) {
-          compositeScore += rule.scoring.penalty_if_violated;
+          if (strategy === 'MULTIPLICATIVE_DEFAULT') compositeScore *= (1 + rule.scoring.penalty_if_violated);
+          else compositeScore += rule.scoring.penalty_if_violated;
         }
       }
 
       if (rule.rule_id === "RULE_EVEN_ODD_BALANCE_05") {
         if (oddCount === 2 || oddCount === 3) {
-          compositeScore += (rule.scoring?.multiplier || 0.5);
+          if (strategy === 'MULTIPLICATIVE_DEFAULT') compositeScore *= (rule.scoring?.multiplier || 1.20);
+          else compositeScore += (rule.scoring?.multiplier || 0.5);
           satisfied_rules.push(rule.rule_id);
         }
       }
@@ -94,27 +98,33 @@ export function scoreAndFilterCandidates(candidates, activeRules = [], limit = 2
       if (rule.rule_id === "RULE_CONSECUTIVE_PAIRS_04") {
         const hasConsecutive = sorted.some((n, i) => i > 0 && n === sorted[i-1] + 1);
         if (hasConsecutive) {
-          compositeScore += (rule.scoring?.multiplier || 1.0);
+          if (strategy === 'MULTIPLICATIVE_DEFAULT') compositeScore *= (rule.scoring?.multiplier || 1.3);
+          else compositeScore += (rule.scoring?.multiplier || 1.0);
           satisfied_rules.push(rule.rule_id);
         } else if (rule.scoring?.penalty_if_violated) {
-          compositeScore += rule.scoring.penalty_if_violated;
+          if (strategy === 'MULTIPLICATIVE_DEFAULT') compositeScore *= (1 + rule.scoring.penalty_if_violated);
+          else compositeScore += rule.scoring.penalty_if_violated;
         }
       }
 
       if (rule.rule_id === "RULE_LOW_NUMBERS_07") {
         const lowCount = sorted.filter(n => n <= 18).length;
         if (lowCount === 2 || lowCount === 3) {
-          compositeScore += (rule.scoring?.multiplier || 1.0);
+          if (strategy === 'MULTIPLICATIVE_DEFAULT') compositeScore *= (rule.scoring?.multiplier || 1.4);
+          else compositeScore += (rule.scoring?.multiplier || 1.0);
           satisfied_rules.push(rule.rule_id);
         } else if (rule.scoring?.penalty_if_violated) {
-          compositeScore += rule.scoring.penalty_if_violated;
+          if (strategy === 'MULTIPLICATIVE_DEFAULT') compositeScore *= (1 + rule.scoring.penalty_if_violated);
+          else compositeScore += rule.scoring.penalty_if_violated;
         }
       }
     }
 
-    // Add random jitter to break ties (0.0000 - 0.0009)
-    const jitter = Math.random() * 0.001;
-    compositeScore += jitter;
+    // Add random jitter to break ties only in JITTER mode
+    if (strategy === 'ADDITIVE_JITTER') {
+      const jitter = Math.random() * 0.001;
+      compositeScore += jitter;
+    }
 
     return {
       combination: sorted,
