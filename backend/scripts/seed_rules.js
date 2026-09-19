@@ -22,6 +22,16 @@ const NEW_RULES = [
     rule_id: "RULE_LOW_NUMBERS_07",
     description: "Favor sets with 2 or 3 numbers in the 1-18 range.",
     scoring: { multiplier: 1.4, penalty_if_violated: -0.3 }
+  },
+  {
+    rule_id: "RULE_DECADE_SPREAD_01",
+    description: "Favor sets spanning at least 3 decades.",
+    scoring: { penalty_if_violated: 0.1 }
+  },
+  {
+    rule_id: "RULE_EVEN_ODD_BALANCE_05",
+    description: "Favor sets with 2 or 3 odd numbers.",
+    scoring: { multiplier: 1.2 }
   }
 ];
 
