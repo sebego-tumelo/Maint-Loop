@@ -128,12 +128,43 @@ export function scoreAndFilterCandidates(candidates, activeRules = [], limit = 2
 
     return {
       combination: sorted,
-      metrics: { sum, parity: `${oddCount}:${5 - oddCount}`, decade_spread: decades, satisfied_rules },
+      metrics: { sum, parity: `${oddCount}:${5 - oddCount}`, decade_spread: decades, satisfied_rules: satisfied_rules.sort() },
       composite_score: parseFloat(compositeScore.toFixed(5))
     };
   });
 
-  return scoredCandidates
-    .sort((a, b) => b.composite_score - a.composite_score)
-    .slice(0, limit);
+  // Group by rule signature (cluster)
+  const clusters = {};
+  scoredCandidates.forEach(cand => {
+      const clusterKey = cand.metrics.satisfied_rules.join('|') || 'NONE';
+      if (!clusters[clusterKey]) clusters[clusterKey] = [];
+      clusters[clusterKey].push(cand);
+  });
+
+  // Sort candidates within each cluster
+  for (const key in clusters) {
+      clusters[key].sort((a, b) => b.composite_score - a.composite_score);
+  }
+
+  // Portfolio Selection: Take top from each cluster
+  const portfolio = [];
+  const clusterKeys = Object.keys(clusters);
+  
+  // Pick top from each cluster
+  clusterKeys.forEach(key => {
+      if (clusters[key].length > 0) {
+          portfolio.push(clusters[key].shift());
+      }
+  });
+
+  // Fill remaining slots from top remaining candidates
+  const remaining = [];
+  clusterKeys.forEach(key => remaining.push(...clusters[key]));
+  remaining.sort((a, b) => b.composite_score - a.composite_score);
+
+  while (portfolio.length < limit && remaining.length > 0) {
+      portfolio.push(remaining.shift());
+  }
+
+  return portfolio;
 }
