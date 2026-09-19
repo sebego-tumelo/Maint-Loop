@@ -265,36 +265,13 @@ export async function runReflection(recentPredictions, recentJournal) {
   return JSON.parse(jsonMatch[0]);
 }
 
-export async function runPrediction(boardCount = 3, poolSize = 50, uiStrategy = 'balanced') {
-  console.log(`🔮 Starting AI-driven prediction synthesis (Strategy: ${uiStrategy})...`);
+export async function runPrediction(boardCount = 3, poolSize = 50) {
+  console.log(`🔮 Starting AI-driven prediction synthesis (Autonomous Mode)...`);
   
   try {
-    const { rules, system_info } = await getActiveRules();
-    
-    // Deep copy rules to avoid modifying DB directly
-    let modifiedRules = JSON.parse(JSON.stringify(rules));
-    
-    // Strategy Mapping Logic: Adjust rule weights based on UI strategy
-    if (uiStrategy === 'hot') {
-        // Boost 'low numbers' rule or similar frequency rules
-        modifiedRules.forEach(rule => {
-            if (rule.rule_id === "RULE_LOW_NUMBERS_07") {
-                rule.scoring.multiplier = (rule.scoring.multiplier || 1.0) * 1.5;
-            }
-        });
-    } else if (uiStrategy === 'frequency') {
-        // Boost 'decade spread' rule
-        modifiedRules.forEach(rule => {
-            if (rule.rule_id === "RULE_DECADE_SPREAD_01") {
-                rule.scoring.penalty_if_violated = (rule.scoring.penalty_if_violated || 0.1) * 2;
-            }
-        });
-    }
-
     const { activeRules, topCandidates, recentPredictions, recentJournal } = await prepareCandidates(
         poolSize, 
-        'ADDITIVE_JITTER', 
-        { rules: modifiedRules, system_info }
+        'ADDITIVE_JITTER'
     );
     
     // 1. Run Reflection
@@ -319,7 +296,7 @@ export async function runPrediction(boardCount = 3, poolSize = 50, uiStrategy = 
     const parsed = await synthesizePrediction(topCandidates, activeRules, recentPredictions, recentJournal, boardCount, todaysPrediction);
     
     // Pass the strategy to persistPrediction
-    return await persistPrediction(parsed, topCandidates, boardCount, uiStrategy);
+    return await persistPrediction(parsed, topCandidates, boardCount, 'autonomous');
   } catch (error) {
     console.error('❌ Error during AI prediction:', error);
     throw error;
