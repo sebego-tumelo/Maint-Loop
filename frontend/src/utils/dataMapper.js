@@ -33,6 +33,7 @@ export function mapBackendPredictionToFrontend(pred) {
     boardsCount: pred.predicted_sets.length,
     cost: pred.financials.total_cost_rand,
     status: pred.actual_outcome.evaluated ? 'evaluated' : 'pending',
+    strategyUsed: pred.strategy_used || 'balanced',
     evaluatedDrawId: pred.actual_outcome.evaluated ? pred.draw_date : null, // Simplified
     totalWon: pred.financials.total_payout_rand,
     netProfit: pred.financials.net_profit_loss_rand,

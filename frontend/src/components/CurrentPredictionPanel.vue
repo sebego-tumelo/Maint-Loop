@@ -90,6 +90,9 @@ const predictionCount = computed(() => currentPrediction.value?.sets?.length || 
               <span class="text-[10px] font-bold text-ui-charcoal/70 bg-white px-2 py-0.5 rounded-full border border-ui-charcoal">
                 Synergy: <strong class="text-ui-charcoal">{{ set.confidenceScore || 82 }}%</strong>
               </span>
+              <span class="text-[10px] font-bold text-ui-charcoal/70 bg-white px-2 py-0.5 rounded-full border border-ui-charcoal uppercase">
+                Strategy: <strong class="text-ui-charcoal">{{ currentPrediction.strategyUsed }}</strong>
+              </span>
             </div>
 
             <div v-if="isEvaluated" class="flex items-center gap-1">
