@@ -2,6 +2,7 @@ import { Agent } from '@mariozechner/pi-agent-core';
 import { streamSimple } from '@mariozechner/pi-ai';
 import { Prediction } from './models/Prediction.js';
 import { LottoMetadata } from './models/LottoMetadata.js';
+import { RulePerformance } from './models/RulePerformance.js';
 import { syncAndGetStats } from './utils.js';
 import { 
   getActiveRules, 
@@ -65,6 +66,10 @@ export async function runAnalysis() {
     console.log('  -> 1. Data Retrieval: Fetching stats and active rules...');
     const { stats, activeRulesObj } = await fetchAnalysisData();
     
+    // Fetch Rule Performance for the most recent draw to inform analysis
+    const latestDrawDate = stats.latestResult ? new Date(stats.latestResult.date) : new Date();
+    const rulePerformance = await RulePerformance.find({ draw_date: latestDrawDate });
+    
     // 2. Prediction Evaluation
     console.log('  -> 2. Prediction Evaluation: Evaluating unevaluated predictions...');
     await evaluateUnevaluatedPredictions(stats.rawDrawHistory);
@@ -80,7 +85,7 @@ export async function runAnalysis() {
     };
     const agent = setupAgent(activeRulesObj);
 
-    // UPDATED: Include reflection in the prompt
+    // UPDATED: Include reflection and Rule Performance in the prompt
     const instruction = `
       Analyze this dataset: ${JSON.stringify(limitedStats)}. 
       
@@ -88,7 +93,10 @@ export async function runAnalysis() {
       Based on the last prediction made, here is the evaluation: 
       "${reflectionSummary}"
       
-      Based on this performance review and the dataset, perform rule discovery and propose updates to rule weights.`;
+      RULE PERFORMANCE METRICS (Last Draw):
+      ${JSON.stringify(rulePerformance)}
+      
+      Based on this performance review, the dataset, and the specific rule performance metrics, perform rule discovery and propose updates to rule weights.`;
       
     console.log('DEBUG: Sending prompt to agent:', instruction.substring(0, 500) + '...');
     
