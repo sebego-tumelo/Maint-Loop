@@ -31,6 +31,9 @@ const PredictionSchema = new mongoose.Schema({
     }
   ],
 
+  // Strategy used for generation
+  strategy_used: { type: String, default: 'balanced' },
+
   // Financial Ledger
   financials: {
     total_cost_rand: { type: Number, default: 9 }, // 3 sets * R3 = R9

@@ -94,7 +94,7 @@ export async function synthesizePrediction(topCandidates, activeRules, recentPre
   return JSON.parse(jsonMatch[0]);
 }
 
-export async function persistPrediction(parsed, top20, targetCount) {
+export async function persistPrediction(parsed, top20, targetCount, strategyUsed = 'balanced') {
   // Save to Journal
   await appendToJournal({
     entry_type: "PREDICTION_SYNTHESIS",
@@ -214,6 +214,7 @@ export async function persistPrediction(parsed, top20, targetCount) {
         net_profit_loss_rand: -(finalSets.length * 3),
         roi_percentage: -100.0,
       },
+      strategy_used: strategyUsed,
     });
     await prediction.save();
     return { ...prediction.toObject(), _id: prediction._id };
@@ -306,8 +307,8 @@ export async function runPrediction(boardCount = 3, poolSize = 50, uiStrategy = 
     const todaysPrediction = await getTodaysPrediction();
     const parsed = await synthesizePrediction(topCandidates, activeRules, recentPredictions, recentJournal, boardCount, todaysPrediction);
     
-    // Pass the strategy to persistPrediction if needed for logging
-    return await persistPrediction(parsed, topCandidates, boardCount);
+    // Pass the strategy to persistPrediction
+    return await persistPrediction(parsed, topCandidates, boardCount, uiStrategy);
   } catch (error) {
     console.error('❌ Error during AI prediction:', error);
     throw error;

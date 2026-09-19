@@ -32,5 +32,13 @@ Strategies are applied in `scoreAndFilterCandidates` within `backend/candidateGe
 ### Contextual Synthesis
 The AI is instructed to treat `composite_score` as a high-precision statistical anchor, prioritizing candidates with higher scores while maintaining portfolio diversity by checking the `satisfied_rules` metric.
 
-### Configuration
-The strategy can be selected when calling `runPrediction(boardCount, poolSize, strategyId)`.
+### 3. Dynamic Strategy Modifiers (UI-selectable)
+These strategies do not replace the core scoring mechanism but instead adjust the rule-based weights before candidate evaluation in `backend/prediction_workflow.js`.
+
+- **`hot`**:
+  - **Effect**: Increases the scoring multiplier for `RULE_LOW_NUMBERS_07` by 1.5x.
+  - **Goal**: Prioritizes combinations containing lower-range numbers, assuming they are currently "hot."
+- **`frequency`**:
+  - **Effect**: Doubles the penalty for violating `RULE_DECADE_SPREAD_01`.
+  - **Goal**: Forces the selection engine to strictly adhere to balanced decade distributions, prioritizing combinations that satisfy this rule over those that don't.
+
