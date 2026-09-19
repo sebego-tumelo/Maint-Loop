@@ -1,7 +1,7 @@
 import { Agent } from '@mariozechner/pi-agent-core';
 import { streamSimple } from '@mariozechner/pi-ai';
 import { generateUniqueCandidates, scoreAndFilterCandidates } from './candidateGenerator.js';
-import { getActiveRules, getRecentJournalEntries, appendToJournal } from './okf_utils.js';
+import { getActiveRules, getRecentJournalEntries, appendToJournal, updateRulesFile } from './okf_utils.js';
 import { Prediction } from './models/Prediction.js';
 
 export async function getTodaysPrediction() {
@@ -222,7 +222,7 @@ export async function persistPrediction(parsed, top20, targetCount, strategyUsed
 }
 
 export async function runReflection(recentPredictions, recentJournal) {
-  if (recentPredictions.length === 0) return "No recent performance to reflect on.";
+  if (recentPredictions.length === 0) return { learned_lesson: "No recent performance to reflect on.", adjustments: [] };
 
   const lastPrediction = recentPredictions[0];
   const lastJournal = recentJournal.length > 0 ? recentJournal[0] : "No recent journal context.";
@@ -237,7 +237,13 @@ export async function runReflection(recentPredictions, recentJournal) {
       Actual Result: ${JSON.stringify(lastPrediction.actual_outcome.winning_numbers)}
       Previous Journal Strategy: ${JSON.stringify(lastJournal)}
 
-      Return ONLY a JSON object with: { "learned_lesson": "A concise strategic lesson learned based on this outcome." }`,
+      Return ONLY a JSON object with: { 
+        "learned_lesson": "A concise strategic lesson learned based on this outcome.",
+        "adjustments": [
+          { "rule_id": "...", "action": "BOOST_WEIGHT" | "PENALIZE_WEIGHT", "justification": "..." },
+          ...
+        ]
+      }`,
       messages: [],
     }
   });
@@ -254,9 +260,9 @@ export async function runReflection(recentPredictions, recentJournal) {
   const lastMessage = agent.state.messages[agent.state.messages.length - 1];
   const responseText = lastMessage.content.map(p => p.text).join('');
   const jsonMatch = responseText.match(/\{.*\}/s);
-  if (!jsonMatch) return "Reflection failed.";
+  if (!jsonMatch) return { learned_lesson: "Reflection failed.", adjustments: [] };
   
-  return JSON.parse(jsonMatch[0]).learned_lesson;
+  return JSON.parse(jsonMatch[0]);
 }
 
 export async function runPrediction(boardCount = 3, poolSize = 50, uiStrategy = 'balanced') {
@@ -293,15 +299,20 @@ export async function runPrediction(boardCount = 3, poolSize = 50, uiStrategy = 
     
     // 1. Run Reflection
     console.log('🧠 Running reflection on recent performance...');
-    const learnedLesson = await runReflection(recentPredictions, recentJournal);
+    const reflectionResult = await runReflection(recentPredictions, recentJournal);
     
-    // 2. Persist Reflection to Journal
+    // 2. Persist Reflection to Journal and Apply Rule Adjustments
     await appendToJournal({
       entry_type: "REFLECTION",
       summary: "Strategic reflection based on previous performance.",
-      learned_lesson: learnedLesson
+      learned_lesson: reflectionResult.learned_lesson
     });
-    console.log('✅ Reflection persisted.');
+    
+    if (reflectionResult.adjustments && reflectionResult.adjustments.length > 0) {
+        console.log('⚙️ Applying automated rule adjustments...');
+        await updateRulesFile(reflectionResult.adjustments);
+    }
+    console.log('✅ Reflection persisted and rule adjustments applied.');
 
     // 3. Synthesis
     const todaysPrediction = await getTodaysPrediction();
