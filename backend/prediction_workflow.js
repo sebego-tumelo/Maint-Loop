@@ -258,11 +258,37 @@ export async function runReflection(recentPredictions, recentJournal) {
   return JSON.parse(jsonMatch[0]).learned_lesson;
 }
 
-export async function runPrediction(boardCount = 3, poolSize = 50, strategy = 'ADDITIVE_JITTER') {
-  console.log(`🔮 Starting AI-driven prediction synthesis (Pool Size: ${poolSize}, Strategy: ${strategy})...`);
+export async function runPrediction(boardCount = 3, poolSize = 50, uiStrategy = 'balanced') {
+  console.log(`🔮 Starting AI-driven prediction synthesis (Strategy: ${uiStrategy})...`);
   
   try {
-    const { activeRules, topCandidates, recentPredictions, recentJournal } = await prepareCandidates(poolSize, strategy);
+    const { rules, system_info } = await getActiveRules();
+    
+    // Deep copy rules to avoid modifying DB directly
+    let modifiedRules = JSON.parse(JSON.stringify(rules));
+    
+    // Strategy Mapping Logic: Adjust rule weights based on UI strategy
+    if (uiStrategy === 'hot') {
+        // Boost 'low numbers' rule or similar frequency rules
+        modifiedRules.forEach(rule => {
+            if (rule.rule_id === "RULE_LOW_NUMBERS_07") {
+                rule.scoring.multiplier = (rule.scoring.multiplier || 1.0) * 1.5;
+            }
+        });
+    } else if (uiStrategy === 'frequency') {
+        // Boost 'decade spread' rule
+        modifiedRules.forEach(rule => {
+            if (rule.rule_id === "RULE_DECADE_SPREAD_01") {
+                rule.scoring.penalty_if_violated = (rule.scoring.penalty_if_violated || 0.1) * 2;
+            }
+        });
+    }
+
+    const { activeRules, topCandidates, recentPredictions, recentJournal } = await prepareCandidates(
+        poolSize, 
+        'ADDITIVE_JITTER', 
+        { rules: modifiedRules, system_info }
+    );
     
     // 1. Run Reflection
     console.log('🧠 Running reflection on recent performance...');
