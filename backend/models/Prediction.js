@@ -25,7 +25,8 @@ const PredictionSchema = new mongoose.Schema({
         metrics: {
             sum: { type: Number },
             parity: { type: String },
-            decade_spread: { type: Number }
+            decade_spread: { type: Number },
+            satisfied_rules: [{ type: String }]
         },
         composite_score: { type: Number }
     }
