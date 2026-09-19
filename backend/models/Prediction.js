@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const PredictionSchema = new mongoose.Schema({
-  draw_date: { type: String, required: true, unique: true }, // e.g., "2026-08-13"
+  draw_date: { type: and  String, required: true, unique: true }, // e.g., "2026-08-13"
   
   // AI Thoughts & Executive Rationale
   summary: { type: String, required: true }, // High-level summary of the decision process
