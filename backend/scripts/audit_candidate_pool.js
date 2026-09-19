@@ -40,10 +40,7 @@ async function performAudit(prediction) {
   const pool = prediction.candidate_pool || [];
   const predictedSets = prediction.predicted_sets || [];
   
-  // Track Rule Performance for this Audit
-  const ruleStats = {}; // rule_id -> { satisfied: 0, winning: 0 }
-
-  // Helper to calculate matches
+// Helper to calculate matches
   const getMatches = (combination) => {
       const sorted = [...combination].sort((a, b) => a - b);
       return sorted.filter(n => winningNumbers.includes(n));
@@ -86,38 +83,12 @@ async function performAudit(prediction) {
       score: cand.composite_score
     };
 
-    // Update Rule Stats
-    if (cand.metrics && cand.metrics.satisfied_rules) {
-        cand.metrics.satisfied_rules.forEach(ruleId => {
-            if (!ruleStats[ruleId]) ruleStats[ruleId] = { satisfied: 0, winning: 0 };
-            ruleStats[ruleId].satisfied++;
-            if (matches.length > 0) ruleStats[ruleId].winning++;
-        });
-    }
-
     if (matches.length > 0) {
       winners.push(auditResult);
     } else {
       losers.push(auditResult);
     }
   });
-
-  // Persist Rule Performance
-  for (const [ruleId, stats] of Object.entries(ruleStats)) {
-      await RulePerformance.updateOne(
-          { rule_id: ruleId, draw_date: new Date(dateStr) },
-          { 
-              $inc: { times_satisfied: stats.satisfied, times_part_of_winning_set: stats.winning },
-          },
-          { upsert: true }
-      );
-      // Calculate/Update success rate
-      const doc = await RulePerformance.findOne({ rule_id: ruleId, draw_date: new Date(dateStr) });
-      if (doc && doc.times_satisfied > 0) {
-          doc.success_rate = doc.times_part_of_winning_set / doc.times_satisfied;
-          await doc.save();
-      }
-  }
 
   // 4. Report
   console.log(`\n--- POOL AUDIT (Missed Opportunities / Excludes AI Picks) ---`);

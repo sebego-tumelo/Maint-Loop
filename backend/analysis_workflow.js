@@ -189,7 +189,6 @@ async function evaluateUnevaluatedPredictions(rawDrawHistory) {
   }
 
   const history = rawDrawHistory || [];
-  console.log('latest historical draw data:', history[0]);
   for (const prediction of unevaluated) {
     const historicalResult = history.find(r => r.date === prediction.draw_date);
     
@@ -200,13 +199,39 @@ async function evaluateUnevaluatedPredictions(rawDrawHistory) {
 
     console.log(`📊 Evaluating prediction for ${prediction.draw_date}...`);
     
-    // Calculate metrics
     const winningNumbers = historicalResult.winningNumbers;
     const actualSum = winningNumbers.reduce((a, b) => a + b, 0);
-    
-    // Simple intersection count
     const getMatches = (set) => set.filter(n => winningNumbers.includes(n));
     
+    // --- NEW: Persist Rule Performance during evaluation ---
+    const ruleStats = {}; // rule_id -> { satisfied: 0, winning: 0 }
+    (prediction.candidate_pool || []).forEach(cand => {
+        const matches = getMatches(cand.combination);
+        if (cand.metrics && cand.metrics.satisfied_rules) {
+            cand.metrics.satisfied_rules.forEach(ruleId => {
+                if (!ruleStats[ruleId]) ruleStats[ruleId] = { satisfied: 0, winning: 0 };
+                ruleStats[ruleId].satisfied++;
+                if (matches.length > 0) ruleStats[ruleId].winning++;
+            });
+        }
+    });
+
+    for (const [ruleId, stats] of Object.entries(ruleStats)) {
+        await RulePerformance.updateOne(
+            { rule_id: ruleId, draw_date: new Date(prediction.draw_date) },
+            { 
+                $inc: { times_satisfied: stats.satisfied, times_part_of_winning_set: stats.winning },
+            },
+            { upsert: true }
+        );
+        const doc = await RulePerformance.findOne({ rule_id: ruleId, draw_date: new Date(prediction.draw_date) });
+        if (doc && doc.times_satisfied > 0) {
+            doc.success_rate = doc.times_part_of_winning_set / doc.times_satisfied;
+            await doc.save();
+        }
+    }
+    // ---------------------------------------------------------
+
     // Determine outcomes for each set
     const evaluationResults = prediction.predicted_sets.map(set => ({
       ...set,
@@ -222,7 +247,7 @@ async function evaluateUnevaluatedPredictions(rawDrawHistory) {
     }));
     
     // Prepare for AI-driven summary
-    const bestMatch = evaluationResults.reduce((prev, curr) => (curr.match_count > prev.match_count ? curr : prev));
+    const bestMatch = evaluationResults.reduce((prev, curr) => (curr.match_count > prev.match_count ? curr : prev), {match_count: 0});
     const bestPoolMatch = poolEvaluationResults.reduce((prev, curr) => (curr.match_count > prev.match_count ? curr : prev), {match_count: 0});
     
     // Get AI-driven evaluation summary
