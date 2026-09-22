@@ -81,6 +81,8 @@ class Simulator {
               winningNumbers,
               successfulSetsCount: performance.successfulSetsCount,
               failedSetsCount: performance.failedSetsCount,
+              success_rate: performance.success_rate,
+              failure_rate: performance.failure_rate,
               selectedSetsPerformance: performance.selectedSetsPerformance
           };
           

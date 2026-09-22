@@ -58,6 +58,11 @@ export const Backtester = {
       stats.successRate = stats.satisfied > 0 ? stats.winning / stats.satisfied : 0;
     }
 
+    // Calculate overall portfolio success/failure rates
+    const total = performance.successfulSetsCount + performance.failedSetsCount;
+    performance.success_rate = total > 0 ? ((performance.successfulSetsCount / total) * 100).toFixed(0) + '%' : '0%';
+    performance.failure_rate = total > 0 ? ((performance.failedSetsCount / total) * 100).toFixed(0) + '%' : '100%';
+
     return performance;
   }
 };
