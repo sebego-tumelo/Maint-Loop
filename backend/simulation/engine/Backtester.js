@@ -1,4 +1,4 @@
-import { scoreAndFilterCandidates } from '../../backend/candidateGenerator.js';
+import { scoreAndFilterCandidates } from '../../candidateGenerator.js';
 
 // Backtester.js: The Judge. Evaluates performance against historical draws.
 export const Backtester = {

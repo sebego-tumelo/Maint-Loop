@@ -7,11 +7,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load configuration from backend/.env
-dotenv.config({ path: path.join(__dirname, '../../backend/.env') });
+dotenv.config({ path: path.join(process.cwd(), 'backend', '.env') });
 
-import { DrawResult } from '../models/DrawResult.js';
-import { LottoMetadata } from '../models/LottoMetadata.js';
-import { syncAndGetStats } from '../utils.js';
+import { DrawResult } from '../../models/DrawResult.js';
+import { LottoMetadata } from '../../models/LottoMetadata.js';
+import { syncAndGetStats } from '../../utils.js';
 
 export const DataGateway = {
   getHistoricalDraws: async () => {

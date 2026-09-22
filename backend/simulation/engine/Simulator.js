@@ -24,14 +24,17 @@ class Simulator {
     // Initialize results file
     await fs.writeFile(RESULTS_PATH, JSON.stringify({}, null, 2));
     
-    // 1. Initialization: Load historical data and initial configuration
-    const historicalDraws = await DataGateway.getHistoricalDraws();
+    // 1. Initialization: Load historical data (use subset if provided)
+    const historicalDraws = config.subset || await DataGateway.getHistoricalDraws();
     const rulesConfig = JSON.parse(await fs.readFile(RULES_PATH, 'utf-8'));
     const rules = rulesConfig.rules;
     
     // 2. Master Loop
     for (let i = 0; i < historicalDraws.length; i++) {
       const draw = historicalDraws[i];
+      
+      console.log('\n\x1b[34m--------------------------------------------------\x1b[0m');
+      console.log(`Processing Draw ${draw.drawNumber || 'N/A'} (${draw.date})...`);
       
       // 3. Integration
       const rawCandidates = await this.generateCandidates(1000); 
@@ -70,14 +73,22 @@ class Simulator {
   }
 
   async saveAuditTrail(date, winningNumbers, performance) {
-      const auditTrail = JSON.parse(await fs.readFile(RESULTS_PATH, 'utf-8'));
-      auditTrail[date] = {
-          winningNumbers,
-          successfulSetsCount: performance.successfulSetsCount,
-          failedSetsCount: performance.failedSetsCount,
-          selectedSetsPerformance: performance.selectedSetsPerformance
-      };
-      await fs.writeFile(RESULTS_PATH, JSON.stringify(auditTrail, null, 2));
+      try {
+          const content = await fs.readFile(RESULTS_PATH, 'utf-8');
+          const auditTrail = JSON.parse(content);
+          
+          auditTrail[date] = {
+              winningNumbers,
+              successfulSetsCount: performance.successfulSetsCount,
+              failedSetsCount: performance.failedSetsCount,
+              selectedSetsPerformance: performance.selectedSetsPerformance
+          };
+          
+          await fs.writeFile(RESULTS_PATH, JSON.stringify(auditTrail, null, 2));
+          console.log(`Simulator: Saved audit trail for ${date}`);
+      } catch (err) {
+          console.error(`Simulator: Error saving audit trail for ${date}:`, err);
+      }
   }
 
   // Simplified candidate generator for simulation
