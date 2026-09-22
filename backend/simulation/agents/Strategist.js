@@ -23,8 +23,6 @@
                                                                                                                                                           
    export default {                                                                                                                                       
      reviewPerformance: async (report) => {                                                                                                               
-       console.log("Strategist: Reviewing aggregate simulation performance...");                                                                          
-                                                                                                                                                          
        const agent = new Agent({                                                                                                                          
          initialState: {                                                                                                                                  
            model: gemmaCloudModel,                                                                                                                        
@@ -59,20 +57,22 @@
                                                                                                                                                           
        if (jsonMatch) {                                                                                                                                   
          const parsed = JSON.parse(jsonMatch[0]);                                                                                                         
-         console.log("Strategist Summary:", parsed.summary);                                                                                              
                                                                                                                                                           
          // Apply adjustments to weights.json                                                                                                             
+         let adjustmentLogs = [];
          if (parsed.adjustments) {                                                                                                                        
            const weights = JSON.parse(await fs.readFile(WEIGHTS_PATH, 'utf-8'));                                                                          
            for (const adj of parsed.adjustments) {                                                                                                        
              if (weights[adj.rule_id]) {                                                                                                                  
                const factor = adj.action === 'BOOST_WEIGHT' ? 1.1 : 0.9;                                                                                  
                weights[adj.rule_id].scoring.multiplier *= factor;                                                                                         
-               console.log(`Strategist: Applied ${adj.action} to ${adj.rule_id}. Reason: ${adj.reason}`);                                                 
+               adjustmentLogs.push(`Strategist: Applied ${adj.action} to ${adj.rule_id}. Reason: ${adj.reason}`);                                                 
              }                                                                                                                                            
            }                                                                                                                                              
            await fs.writeFile(WEIGHTS_PATH, JSON.stringify(weights, null, 2));                                                                            
-         }                                                                                                                                                
-       }                                                                                                                                                  
+         }
+         return { summary: parsed.summary, adjustments: adjustmentLogs };
+       }
+       return { summary: "Analysis failed", adjustments: [] };
      }                                                                                                                                                    
-   };           
+   };

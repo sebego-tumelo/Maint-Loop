@@ -12,17 +12,17 @@ export const Optimizer = {
    * Updates weights based on performance data using a gradient descent approach.
    * @param {Object} performance - The output from Backtester.evaluate()
    * @param {number} learningRate - Sensitivity of weight updates (default 0.05)
+   * @returns {Promise<Array<string>>} Array of log messages
    */
   updateWeights: async (performance, learningRate = 0.05) => {
     // 1. Read existing weights
     const weights = JSON.parse(await fs.readFile(WEIGHTS_PATH, 'utf-8'));
+    const logs = [];
     
     // 2. Iterate through rules present in performance data
     for (const [ruleId, stats] of Object.entries(performance.ruleStats)) {
       if (!weights[ruleId]) continue;
 
-      // Target rate: We define a "neutral" success rate for a rule as the overall win rate
-      // or a specific target. Here we assume 0.2 (20% success rate) as a baseline target.
       const targetRate = 0.2; 
       const gradient = stats.successRate - targetRate;
 
@@ -36,10 +36,11 @@ export const Optimizer = {
       // Update in memory
       weights[ruleId].scoring.multiplier = parseFloat(newMultiplier.toFixed(3));
       
-      console.log(`Optimizer: ${ruleId} success rate ${stats.successRate.toFixed(2)}. Multiplier: ${oldMultiplier} -> ${newMultiplier.toFixed(3)}`);
+      logs.push(`Optimizer: ${ruleId} success rate ${stats.successRate.toFixed(2)}. Multiplier: ${oldMultiplier} -> ${newMultiplier.toFixed(3)}`);
     }
 
     // 4. Persistence
     await fs.writeFile(WEIGHTS_PATH, JSON.stringify(weights, null, 2));
+    return logs;
   }
 };

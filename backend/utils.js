@@ -5,7 +5,9 @@ export async function syncAndGetStats(models = { DrawResult, LottoMetadata }) {
   const { DrawResult, LottoMetadata } = models;
   
   // Fetch from DB instead of external API
+console.log("DEBUG: Executing DrawResult.find()");
   const data = await DrawResult.find().sort({ 'issue': -1 });
+console.log("DEBUG: DrawResult.find() resolved with " + data.length + " docs");
 
   // Map to the format expected by the frontend
   const mappedData = data.filter(doc => doc.drawTime).map(doc => ({
