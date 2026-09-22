@@ -9,22 +9,38 @@ const __dirname = path.dirname(__filename);
 const RESULTS_PATH = path.join(__dirname, 'results/audit_trail.json');
 
 async function dryRun() {
-    console.log("Starting dry run for Jan 2019...");
+    const [,, startRange, endRange] = process.argv;
     
-    // Initialize results file
-    await fs.writeFile(RESULTS_PATH, JSON.stringify({}, null, 2));
+    if (!startRange || !endRange) {
+        console.error("Usage: node dry_run.js <YYYY-MM> <YYYY-MM>");
+        process.exit(1);
+    }
     
-    // Fetch historical data
-    const historicalDraws = await DataGateway.getHistoricalDraws();
+    console.log(`Starting dry run from ${startRange} to ${endRange}...`);
     
-    // Filter for January 2019
-    const jan2019 = historicalDraws.filter(d => d.date.startsWith('2019-01'));
-    
-    console.log(`Found ${jan2019.length} draws for Jan 2019.`);
-    
-    // Run simulation specifically on this subset
-    await Simulator.runSimulation({ subset: jan2019 });
-    
-    console.log("Dry run complete. Audit trail saved to results/audit_trail.json");
+    try {
+        console.log("Initializing results file at:", RESULTS_PATH);
+        await fs.writeFile(RESULTS_PATH, JSON.stringify({}, null, 2));
+        console.log("Results file initialized.");
+        
+        // Fetch historical data
+        console.log("Calling getHistoricalDraws..."); 
+        const historicalDraws = await DataGateway.getHistoricalDraws(); 
+        console.log("getHistoricalDraws returned " + historicalDraws.length + " items");
+        
+        // Filter for range
+        const subset = historicalDraws.filter(d => d.date && d.date >= startRange && d.date <= endRange + '-31');
+        
+        console.log(`Found ${subset.length} draws from ${startRange} to ${endRange}.`);
+        
+        // Run simulation specifically on this subset
+        await Simulator.runSimulation({ subset });
+        
+        console.log("Dry run complete. Audit trail saved to results/audit_trail.json");
+    } catch (error) {
+        console.error("Dry run failed:", error);
+    } finally {
+        process.exit(0);
+    }
 }
 dryRun();
