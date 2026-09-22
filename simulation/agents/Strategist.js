@@ -1,5 +1,5 @@
 // Strategist.js: Periodic LLM Reviewer
-module.exports = {
+export default {
   reviewPerformance: async (report) => {
     // TODO: Implement LLM logic to pivot strategy
   }

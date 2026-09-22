@@ -1,7 +1,7 @@
 // Simulator.js: Master Time Loop (Chronological replay)
-const DataGateway = require('./DataGateway');
-const Backtester = require('./Backtester');
-const Optimizer = require('./Optimizer');
+import DataGateway from './DataGateway.js';
+import Backtester from './Backtester.js';
+import Optimizer from './Optimizer.js';
 
 class Simulator {
   async run() {
@@ -10,4 +10,4 @@ class Simulator {
   }
 }
 
-module.exports = new Simulator();
+export default new Simulator();
