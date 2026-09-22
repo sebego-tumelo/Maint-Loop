@@ -96,6 +96,8 @@ export async function runAnalysis() {
       RULE PERFORMANCE METRICS (Last Draw):
       ${JSON.stringify(rulePerformance)}
       
+      CRITICAL ANALYSIS: Detect if high 'composite_score' values are correlating with actual losses. If winning sets have low/negative scores and AI-selected sets have high scores, you MUST MASSIVELY PENALIZE the rules contributing to high scores and investigate why low-score combinations are winning.
+      
       Based on this performance review, the dataset, and the specific rule performance metrics, perform rule discovery and propose updates to rule weights.`;
       
     console.log('DEBUG: Sending prompt to agent:', instruction.substring(0, 500) + '...');
