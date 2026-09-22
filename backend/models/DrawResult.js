@@ -16,7 +16,7 @@ const winNumSchema = new mongoose.Schema({
   drawSeq: String
 });
 
-const DrawResultSchema = new mongoose.Schema({
+export const DrawResultSchema = new mongoose.Schema({
   gameId: { type: Number, required: true },
   issue: { type: Number, required: true },
   drawTime: { type: Date, required: true },

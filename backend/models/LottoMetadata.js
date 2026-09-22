@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const lottoMetadataSchema = new mongoose.Schema({
+export const LottoMetadataSchema = new mongoose.Schema({
   lastUpdated: { type: Date, default: Date.now },
   totalRecords: Number,
   yearsProcessed: [Number],
@@ -14,4 +14,4 @@ const lottoMetadataSchema = new mongoose.Schema({
   }
 });
 
-export const LottoMetadata = mongoose.model('LottoMetadata', lottoMetadataSchema);
+export const LottoMetadata = mongoose.model('LottoMetadata', LottoMetadataSchema);

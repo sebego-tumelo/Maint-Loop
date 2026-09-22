@@ -1,12 +1,14 @@
 import { LottoMetadata } from './models/LottoMetadata.js';
 import { DrawResult } from './models/DrawResult.js';
 
-export async function syncAndGetStats() {
+export async function syncAndGetStats(models = { DrawResult, LottoMetadata }) {
+  const { DrawResult, LottoMetadata } = models;
+  
   // Fetch from DB instead of external API
   const data = await DrawResult.find().sort({ 'issue': -1 });
 
   // Map to the format expected by the frontend
-  const mappedData = data.map(doc => ({
+  const mappedData = data.filter(doc => doc.drawTime).map(doc => ({
     id: doc._id,
     drawNumber: doc.issue,
     date: doc.drawTime.toISOString().split('T')[0],

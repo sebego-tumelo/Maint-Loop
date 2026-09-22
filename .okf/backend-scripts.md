@@ -20,3 +20,12 @@ node backend/scripts/audit_candidate_pool.js --latest
 # Audit the N most recent predictions
 node backend/scripts/audit_candidate_pool.js --recent N
 ```
+
+## `check_draw_results.js`
+This script retrieves and displays the matching numbers and financial performance for a specific draw date.
+
+### Usage
+```bash
+# Check results for a specific date
+node backend/scripts/check_draw_results.js YYYY-MM-DD
+```
