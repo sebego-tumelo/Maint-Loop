@@ -13,10 +13,11 @@ export const Backtester = {
     const winningNumbers = drawResult.winningNumbers;
     const performance = {
       ruleStats: {},
-      selectedSetsPerformance: [], // New: Detailed per-set match counts
+      selectedSetsPerformance: [],
       totalCandidates: candidates.length,
       successfulSetsCount: 0,
-      failedSetsCount: 0
+      failedSetsCount: 0,
+      bestMatch: 0
     };
 
     candidates.forEach(cand => {
@@ -24,6 +25,10 @@ export const Backtester = {
       const matches = cand.combination.filter(n => winningNumbers.includes(n));
       const matchCount = matches.length;
       const isWinner = matchCount > 0;
+
+      if (matchCount > performance.bestMatch) {
+          performance.bestMatch = matchCount;
+      }
 
       // Track set performance
       performance.selectedSetsPerformance.push({
