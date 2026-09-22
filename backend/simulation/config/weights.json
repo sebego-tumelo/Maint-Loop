@@ -1,31 +1,31 @@
 {
   "RULE_CONSECUTIVE_PAIRS_04": {
     "scoring": {
-      "multiplier": 3,
+      "multiplier": 1,
       "penalty_if_violated": 0
     }
   },
   "RULE_SUM_WINDOW_TIGHTENED_02": {
     "scoring": {
-      "multiplier": 3,
+      "multiplier": 1,
       "penalty_if_violated": 0
     }
   },
   "RULE_LOW_NUMBERS_07": {
     "scoring": {
-      "multiplier": 3,
+      "multiplier": 1,
       "penalty_if_violated": 0
     }
   },
   "RULE_DECADE_SPREAD_01": {
     "scoring": {
-      "multiplier": 3,
+      "multiplier": 1,
       "penalty_if_violated": 0
     }
   },
   "RULE_EVEN_ODD_BALANCE_05": {
     "scoring": {
-      "multiplier": 3,
+      "multiplier": 1,
       "penalty_if_violated": 0
     }
   }
