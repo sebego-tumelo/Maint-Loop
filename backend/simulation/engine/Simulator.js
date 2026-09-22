@@ -21,6 +21,11 @@ class Simulator {
   async runSimulation(config) {
     console.log("Starting simulation...");
     
+    // Reset weights if not a dry run
+    if (!config.subset) {
+        await this.resetWeights();
+    }
+    
     // Initialize results file
     await fs.writeFile(RESULTS_PATH, JSON.stringify({}, null, 2));
     
@@ -102,6 +107,18 @@ class Simulator {
         candidates.push([...new Set(nums)].slice(0,5).sort((a,b)=>a-b));
     }
     return candidates;
+  }
+
+  async resetWeights() {
+    console.log("Simulator: Resetting weights to base values...");
+    const baseWeights = {
+        "RULE_CONSECUTIVE_PAIRS_04": { "scoring": { "multiplier": 1, "penalty_if_violated": 0 } },
+        "RULE_SUM_WINDOW_TIGHTENED_02": { "scoring": { "multiplier": 1, "penalty_if_violated": 0 } },
+        "RULE_LOW_NUMBERS_07": { "scoring": { "multiplier": 1, "penalty_if_violated": 0 } },
+        "RULE_DECADE_SPREAD_01": { "scoring": { "multiplier": 1, "penalty_if_violated": 0 } },
+        "RULE_EVEN_ODD_BALANCE_05": { "scoring": { "multiplier": 1, "penalty_if_violated": 0 } }
+    };
+    await fs.writeFile(WEIGHTS_PATH, JSON.stringify(baseWeights, null, 2));
   }
 }
 
