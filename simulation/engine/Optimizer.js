@@ -9,20 +9,37 @@ const WEIGHTS_PATH = path.join(__dirname, '../config/weights.json');
 
 export const Optimizer = {
   /**
-   * @param {Object} performanceData - Success rates per rule
-   * @param {number} learningRate - Configurable factor
+   * Updates weights based on performance data using a gradient descent approach.
+   * @param {Object} performance - The output from Backtester.evaluate()
+   * @param {number} learningRate - Sensitivity of weight updates (default 0.05)
    */
-  updateWeights: async (performanceData, learningRate = 0.01) => {
+  updateWeights: async (performance, learningRate = 0.05) => {
     // 1. Read existing weights
-    const weightsData = JSON.parse(await fs.readFile(WEIGHTS_PATH, 'utf-8'));
+    const weights = JSON.parse(await fs.readFile(WEIGHTS_PATH, 'utf-8'));
     
-    // 2. Weight Calculation: NewMultiplier = OldMultiplier * (1 + (SuccessRate - TargetRate) * LearningRate)
-    // 3. Constraints: Safety Rails (Math.max(0.1, newMultiplier))
-    console.log("Optimizer: Updating weights based on performance data.");
+    // 2. Iterate through rules present in performance data
+    for (const [ruleId, stats] of Object.entries(performance.ruleStats)) {
+      if (!weights[ruleId]) continue;
 
-    // TODO: Implement deterministic gradient update logic
+      // Target rate: We define a "neutral" success rate for a rule as the overall win rate
+      // or a specific target. Here we assume 0.2 (20% success rate) as a baseline target.
+      const targetRate = 0.2; 
+      const gradient = stats.successRate - targetRate;
+
+      // Apply gradient update
+      const oldMultiplier = weights[ruleId].scoring.multiplier || 1.0;
+      let newMultiplier = oldMultiplier * (1 + gradient * learningRate);
+
+      // 3. Constraints: Safety Rails (Keep multipliers between 0.1 and 3.0)
+      newMultiplier = Math.max(0.1, Math.min(3.0, newMultiplier));
+
+      // Update in memory
+      weights[ruleId].scoring.multiplier = parseFloat(newMultiplier.toFixed(3));
+      
+      console.log(`Optimizer: ${ruleId} success rate ${stats.successRate.toFixed(2)}. Multiplier: ${oldMultiplier} -> ${newMultiplier.toFixed(3)}`);
+    }
 
     // 4. Persistence
-    await fs.writeFile(WEIGHTS_PATH, JSON.stringify(weightsData, null, 2));
+    await fs.writeFile(WEIGHTS_PATH, JSON.stringify(weights, null, 2));
   }
 };

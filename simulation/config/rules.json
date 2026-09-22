@@ -1,3 +1,9 @@
 {
-  "rules": []
+  "rules": [
+    { "rule_id": "RULE_CONSECUTIVE_PAIRS_04", "description": "Favor sets with at least one pair of consecutive numbers." },
+    { "rule_id": "RULE_SUM_WINDOW_TIGHTENED_02", "description": "Favor sets with sums between 71 and 110." },
+    { "rule_id": "RULE_LOW_NUMBERS_07", "description": "Favor sets with 2 or 3 numbers in the 1-18 range." },
+    { "rule_id": "RULE_DECADE_SPREAD_01", "description": "Favor sets spanning at least 3 decades." },
+    { "rule_id": "RULE_EVEN_ODD_BALANCE_05", "description": "Favor sets with 2 or 3 odd numbers." }
+  ]
 }
