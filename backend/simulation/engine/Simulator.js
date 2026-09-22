@@ -38,7 +38,6 @@ class Simulator {
     for (let i = 0; i < historicalDraws.length; i++) {
       const draw = historicalDraws[i];
       
-      console.log('\n\x1b[34m--------------------------------------------------\x1b[0m');
       console.log(`Processing Draw ${draw.drawNumber || 'N/A'} (${draw.date})...`);
       
       // 3. Integration
@@ -69,6 +68,14 @@ class Simulator {
             LastSuccessRate: performance.ruleStats[ruleId]?.successRate?.toFixed(3) || 'N/A'
         }));
         console.table(tableData);
+        
+        // Frequency of matches
+        const frequency = {};
+        performance.selectedSetsPerformance.forEach(set => {
+            const m = set.matchCount;
+            frequency[m] = (frequency[m] || 0) + 1;
+        });
+        console.log("Match Frequency:", frequency);
         
         await Strategist.reviewPerformance({ iteration: i, performance });
       }
