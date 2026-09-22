@@ -57,8 +57,11 @@ class Simulator {
       await Optimizer.updateWeights(performance);
 
       // 4. Macro-Loop Control
+
+      // 4. Macro-Loop Control
       if (i > 0 && i % 50 === 0) {
         console.log(`\n--- Simulator: Macro-Loop check-in at iteration ${i} ---`);
+        console.log(`Date Range: ${historicalDraws[i-50].date} to ${draw.date}`);
         
         // Load current weights for display
         const currentWeights = JSON.parse(await fs.readFile(WEIGHTS_PATH, 'utf-8'));
@@ -69,13 +72,16 @@ class Simulator {
         }));
         console.table(tableData);
         
-        // Frequency of matches
-        const frequency = {};
+        // Frequency of matches (all numbers 0-5)
+        const frequency = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
         performance.selectedSetsPerformance.forEach(set => {
             const m = set.matchCount;
-            frequency[m] = (frequency[m] || 0) + 1;
+            if (frequency.hasOwnProperty(m)) {
+                frequency[m]++;
+            }
         });
         console.log("Match Frequency:", frequency);
+        console.log("--------------------------------------------------");
         
         await Strategist.reviewPerformance({ iteration: i, performance });
       }

@@ -8,7 +8,6 @@ export const Backtester = {
    * @param {Array} ruleDefinitions - Active rule definitions
    */
   evaluate: (candidates, drawResult, ruleDefinitions) => {
-    console.log(`Backtester: Evaluating ${candidates.length} candidates against draw ${drawResult.drawNumber}`);
     
     const winningNumbers = drawResult.winningNumbers;
     const performance = {
