@@ -24,22 +24,28 @@ async function ingestData() {
         let inputRaw;
         if (option === '2') {
             console.log('Paste your JSON (end with Ctrl+D):');
-            // Using a simpler approach for pasting
             inputRaw = await new Promise((resolve, reject) => {
                 let data = '';
-                process.stdin.on('data', chunk => data += chunk);
-                process.stdin.on('end', () => resolve(data));
+                process.stdin.on('data', chunk => {
+                    data += chunk;
+                    process.stdout.write('.'); // Simple progress indicator
+                });
+                process.stdin.on('end', () => {
+                    process.stdout.write('\nProcessing JSON data...\n');
+                    resolve(data);
+                });
                 process.stdin.on('error', reject);
             });
         } else {
+            console.log('Reading input.json...');
             inputRaw = await fs.readFile(path.join(__dirname, 'input.json'), 'utf-8');
         }
 
+        console.log('Parsing JSON...');
         const input = JSON.parse(inputRaw);
         const data = input.data;
 
-        // Map JSON to DrawResult schema
-        const doc = {
+        console.log('Mapping data...');
             gameId: data.winNotice.gameId,
             issue: data.winNotice.issue,
             drawTime: new Date(data.winNotice.drawTime),
