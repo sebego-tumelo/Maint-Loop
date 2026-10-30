@@ -44,27 +44,38 @@ async function ingestData() {
 
         console.log('Parsing JSON...');
         const input = JSON.parse(inputRaw);
-        const data = input.data;
+        
+        // Handle both single object and array of objects
+        const items = Array.isArray(input) ? input : [input];
+        console.log(`Found ${items.length} draw result(s) to ingest.`);
 
-        console.log('Mapping data...');
-        const doc = {
-            gameId: data.winNotice.gameId,
-            issue: data.winNotice.issue,
-            drawTime: new Date(data.winNotice.drawTime),
-            winLevels: data.winNotice.winLevels,
-            winNums: data.winNotice.winNums,
-            winPoolInfo: data.winPoolInfoVo,
-            isLatestIssue: data.isLatestIssue,
-            rawResponse: data
-        };
+        for (const item of items) {
+            const data = item.data;
+            if (!data || !data.winNotice) {
+                console.warn('Skipping invalid item (missing data or winNotice)');
+                continue;
+            }
 
-        // Persist
-        await DrawResult.findOneAndUpdate(
-            { gameId: doc.gameId, issue: doc.issue },
-            doc,
-            { upsert: true, returnDocument: 'after' }
-        );
-        console.log('SUCCESS: Persisted draw result to MongoDB');
+            console.log(`Mapping data for issue: ${data.winNotice.issue}...`);
+            const doc = {
+                gameId: data.winNotice.gameId,
+                issue: data.winNotice.issue,
+                drawTime: new Date(data.winNotice.drawTime),
+                winLevels: data.winNotice.winLevels,
+                winNums: data.winNotice.winNums,
+                winPoolInfo: data.winPoolInfoVo,
+                isLatestIssue: data.isLatestIssue,
+                rawResponse: data
+            };
+
+            // Persist
+            await DrawResult.findOneAndUpdate(
+                { gameId: doc.gameId, issue: doc.issue },
+                doc,
+                { upsert: true, returnDocument: 'after' }
+            );
+            console.log(`SUCCESS: Persisted issue ${doc.issue} to MongoDB`);
+        }
 
         // Trigger export
         await exportResults();
