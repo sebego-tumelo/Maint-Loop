@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
+import readline from 'readline';
 import { DrawResult } from '../models/DrawResult.js';
 import { exportResults } from './export_draw_results.js';
 
@@ -10,39 +11,66 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-async function ingestAndExport() {
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log('Connected to MongoDB');
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
-  // Load input data
-  const inputRaw = await fs.readFile(path.join(__dirname, 'input.json'), 'utf-8');
-  const input = JSON.parse(inputRaw);
-  const data = input.data;
+async function ingestData() {
+    try {
+        console.log('\nReading input.json...');
+        // Load input data
+        const inputRaw = await fs.readFile(path.join(__dirname, 'input.json'), 'utf-8');
+        const input = JSON.parse(inputRaw);
+        const data = input.data;
 
-  // Map JSON to DrawResult schema
-  const doc = {
-    gameId: data.winNotice.gameId,
-    issue: data.winNotice.issue,
-    drawTime: new Date(data.winNotice.drawTime),
-    winLevels: data.winNotice.winLevels,
-    winNums: data.winNotice.winNums,
-    winPoolInfo: data.winPoolInfoVo,
-    isLatestIssue: data.isLatestIssue,
-    rawResponse: data
-  };
+        // Map JSON to DrawResult schema
+        const doc = {
+            gameId: data.winNotice.gameId,
+            issue: data.winNotice.issue,
+            drawTime: new Date(data.winNotice.drawTime),
+            winLevels: data.winNotice.winLevels,
+            winNums: data.winNotice.winNums,
+            winPoolInfo: data.winPoolInfoVo,
+            isLatestIssue: data.isLatestIssue,
+            rawResponse: data
+        };
 
-  // Persist
-  await DrawResult.findOneAndUpdate(
-    { gameId: doc.gameId, issue: doc.issue },
-    doc,
-    { upsert: true, new: true }
-  );
-  console.log('Persisted draw result to MongoDB');
+        // Persist
+        await DrawResult.findOneAndUpdate(
+            { gameId: doc.gameId, issue: doc.issue },
+            doc,
+            { upsert: true, returnDocument: 'after' }
+        );
+        console.log('SUCCESS: Persisted draw result to MongoDB');
 
-  // Trigger export
-  await exportResults();
-  
-  await mongoose.disconnect();
+        // Trigger export
+        await exportResults();
+        console.log('SUCCESS: Updated export files');
+        return true;
+    } catch (error) {
+        console.error('FAILURE: Ingestion failed:', error.message);
+        return false;
+    }
 }
 
-ingestAndExport().catch(console.error);
+async function main() {
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log('Connected to MongoDB');
+
+    const askToContinue = () => {
+        rl.question('\nWould you like to ingest again? (y/n): ', async (answer) => {
+            if (answer.toLowerCase() === 'y') {
+                await ingestData();
+                askToContinue();
+            } else {
+                console.log('Exiting...');
+                await mongoose.disconnect();
+                rl.close();
+            }
+        });
+    };
+
+    // Initial ingest
+    await ingestData();
+    askToContinue();
+}
+
+main().catch(console.error);
