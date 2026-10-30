@@ -23,15 +23,16 @@ async function ingestData() {
         
         let inputRaw;
         if (option === '2') {
-            console.log('Paste your JSON (end with Ctrl+D):');
+            console.log('Paste your JSON, then press Ctrl+D (twice if needed):');
             inputRaw = await new Promise((resolve, reject) => {
                 let data = '';
+                // Read from stdin until end
+                process.stdin.resume();
                 process.stdin.on('data', chunk => {
                     data += chunk;
-                    process.stdout.write('.'); // Simple progress indicator
                 });
                 process.stdin.on('end', () => {
-                    process.stdout.write('\nProcessing JSON data...\n');
+                    console.log('\nJSON received. Processing...');
                     resolve(data);
                 });
                 process.stdin.on('error', reject);
