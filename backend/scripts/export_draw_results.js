@@ -73,6 +73,13 @@ async function exportResults() {
   }
 
   for (const [year, lines] of Object.entries(groupedByYear)) {
+    // Sort lines by date descending
+    lines.sort((a, b) => {
+        const dateA = a.split('    ')[0];
+        const dateB = b.split('    ')[0];
+        return dateB.localeCompare(dateA);
+    });
+    
     const filePath = path.join(dataDir, `daily_lotto-past-draws-archive ${year}.txt`);
     const content = `Date    SERIES\n` + lines.join('\n');
     await fs.writeFile(filePath, content);
