@@ -15,9 +15,26 @@ const rl = readline.createInterface({ input: process.stdin, output: process.stdo
 
 async function ingestData() {
     try {
-        console.log('\nReading input.json...');
-        // Load input data
-        const inputRaw = await fs.readFile(path.join(__dirname, 'input.json'), 'utf-8');
+        console.log('\n--- Ingest Draw Result ---');
+        console.log('1. Read from input.json');
+        console.log('2. Paste JSON');
+        
+        const option = await new Promise(resolve => rl.question('Select option (1/2): ', resolve));
+        
+        let inputRaw;
+        if (option === '2') {
+            console.log('Paste your JSON (end with Ctrl+D):');
+            // Using a simpler approach for pasting
+            inputRaw = await new Promise((resolve, reject) => {
+                let data = '';
+                process.stdin.on('data', chunk => data += chunk);
+                process.stdin.on('end', () => resolve(data));
+                process.stdin.on('error', reject);
+            });
+        } else {
+            inputRaw = await fs.readFile(path.join(__dirname, 'input.json'), 'utf-8');
+        }
+
         const input = JSON.parse(inputRaw);
         const data = input.data;
 
@@ -56,6 +73,8 @@ async function main() {
     console.log('Connected to MongoDB');
 
     async function askToContinue() {
+        // Need to create a new interface or re-setup stdin to be able to ask again
+        // because we consumed stdin for pasting
         return new Promise((resolve) => {
             rl.question('\nWould you like to ingest again? (y/n): ', async (answer) => {
                 if (answer.toLowerCase() === 'y') {
