@@ -55,22 +55,25 @@ async function main() {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB');
 
-    const askToContinue = () => {
-        rl.question('\nWould you like to ingest again? (y/n): ', async (answer) => {
-            if (answer.toLowerCase() === 'y') {
-                await ingestData();
-                askToContinue();
-            } else {
-                console.log('Exiting...');
-                await mongoose.disconnect();
-                rl.close();
-            }
+    async function askToContinue() {
+        return new Promise((resolve) => {
+            rl.question('\nWould you like to ingest again? (y/n): ', async (answer) => {
+                if (answer.toLowerCase() === 'y') {
+                    await ingestData();
+                    resolve(await askToContinue());
+                } else {
+                    console.log('Exiting...');
+                    await mongoose.disconnect();
+                    rl.close();
+                    resolve();
+                }
+            });
         });
-    };
+    }
 
     // Initial ingest
     await ingestData();
-    askToContinue();
+    await askToContinue();
 }
 
 main().catch(console.error);
