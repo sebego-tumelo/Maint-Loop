@@ -1,0 +1,95 @@
+{
+    "code": 0,
+    "data": {
+        "winNotice": {
+            "gameId": 11001,
+            "issue": 2758,
+            "winLevels": [
+                {
+                    "winCount": 1,
+                    "winAmount": 50267410,
+                    "winLevelName": "DIV 1",
+                    "winLevelId": 1,
+                    "addWinAmount": 0,
+                    "matches": "MATCH 5"
+                },
+                {
+                    "winCount": 413,
+                    "winAmount": 34770,
+                    "winLevelName": "DIV 2",
+                    "winLevelId": 2,
+                    "addWinAmount": 0,
+                    "matches": "MATCH 4"
+                },
+                {
+                    "winCount": 11903,
+                    "winAmount": 1800,
+                    "winLevelName": "DIV 3",
+                    "winLevelId": 3,
+                    "addWinAmount": 0,
+                    "matches": "MATCH 3"
+                },
+                {
+                    "winCount": 115439,
+                    "winAmount": 490,
+                    "winLevelName": "DIV 4",
+                    "winLevelId": 4,
+                    "addWinAmount": 0,
+                    "matches": "MATCH 2"
+                }
+            ],
+            "drawTime": "2026-10-03T19:00:00Z",
+            "winNums": [
+                {
+                    "winNum": "6",
+                    "winNumFlag": 0,
+                    "numSn": "1",
+                    "drawSeq": "1"
+                },
+                {
+                    "winNum": "36",
+                    "winNumFlag": 0,
+                    "numSn": "2",
+                    "drawSeq": "1"
+                },
+                {
+                    "winNum": "15",
+                    "winNumFlag": 0,
+                    "numSn": "3",
+                    "drawSeq": "1"
+                },
+                {
+                    "winNum": "31",
+                    "winNumFlag": 0,
+                    "numSn": "4",
+                    "drawSeq": "1"
+                },
+                {
+                    "winNum": "22",
+                    "winNumFlag": 0,
+                    "numSn": "5",
+                    "drawSeq": "1"
+                }
+            ]
+        },
+        "winPoolInfoVo": {
+            "nextJackpot": 40000000,
+            "saleMoney": 295943100,
+            "salesIncome": 143621186,
+            "issueCnt": 0,
+            "drawMachineId": "RNG2",
+            "drawTime": "2026-10-03T19:00:00Z",
+            "rolloverAmount": 0,
+            "latter": 0,
+            "winPoolName": "DAILY LOTTO",
+            "nextDrawTime": "2026-10-04T19:00:00Z",
+            "drawIssue": 2758,
+            "winPoolId": 100
+        },
+        "plusFlag": 0,
+        "logo": "https://obs-567.obs.af-south-1.myhuaweicloud.com:443/phoenix-ilot-trade-bucket-product%2Fimg%2Fgame%2F11001%2FNational+Lottery+New+Logo+Games+-+Heather_Daily+Lotto+2.png",
+        "isLatestIssue": false
+    },
+    "msg": "ok",
+    "r": true
+}

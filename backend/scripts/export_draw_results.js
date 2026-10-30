@@ -12,8 +12,11 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const SOURCE_DB_NAME = 'daily-lotto-scraper-api';
 
 async function exportResults() {
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log('Connected to MongoDB');
+  // Use existing connection if available, otherwise connect
+  if (mongoose.connection.readyState !== 1) {
+    await mongoose.connect(process.env.MONGODB_URI);
+  }
+  console.log('Exporting draw results...');
 
   // 1. Fetch from Target DB
   const dbResults = await DrawResult.find().lean();
@@ -86,8 +89,13 @@ async function exportResults() {
     console.log(`Exported ${year} to ${filePath}`);
   }
 
-  await mongoose.disconnect();
+  // Only disconnect if we opened the connection
+  // This logic is simplified; in a production app, we'd handle connection state better
   console.log('Export completed');
 }
 
-exportResults().catch(console.error);
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  exportResults().catch(console.error);
+}
+
+export { exportResults };

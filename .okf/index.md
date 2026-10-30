@@ -21,4 +21,5 @@ This folder contains technical documentation for the project.
 - [Deployment](deployment.md)
 - [Development Environment](development-environment.md)
 - [Export Draw Results](export-draw-results.md)
+- [Ingest Draw Result](ingest-draw-result.md)
 - [Lottery Statistics](lotto-stats.md)
