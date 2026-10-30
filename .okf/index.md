@@ -20,4 +20,5 @@ This folder contains technical documentation for the project.
 - [Database Schema](database-schema.md)
 - [Deployment](deployment.md)
 - [Development Environment](development-environment.md)
+- [Export Draw Results](export-draw-results.md)
 - [Lottery Statistics](lotto-stats.md)
