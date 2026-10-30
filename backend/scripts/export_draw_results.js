@@ -4,7 +4,10 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { DrawResult } from '../models/DrawResult.js';
 
-dotenv.config();
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 async function exportResults() {
   await mongoose.connect(process.env.MONGODB_URI);
@@ -29,7 +32,7 @@ async function exportResults() {
   }
 
   // Create data directory
-  const dataDir = path.join(process.cwd(), 'data');
+  const dataDir = path.join(path.dirname(__dirname), 'data');
   try {
       await fs.mkdir(dataDir, { recursive: true });
   } catch (err) {
