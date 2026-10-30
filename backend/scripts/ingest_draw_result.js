@@ -46,6 +46,7 @@ async function ingestData() {
         const data = input.data;
 
         console.log('Mapping data...');
+        const doc = {
             gameId: data.winNotice.gameId,
             issue: data.winNotice.issue,
             drawTime: new Date(data.winNotice.drawTime),
